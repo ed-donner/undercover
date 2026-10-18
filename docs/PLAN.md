@@ -124,7 +124,7 @@ Replaces the hello-world agent with one that decides claims, and adds the backen
 
 Agent (`agent/main.py`, with `agent/tools.py` if the file gets long):
 
-- **Tools** call the backend through `httpx` and return JSON text: `get_claim`, `get_policy`, `get_customer`, `get_policy_wording`, `record_decision`, `pay_claim`. `pay_claim` returns the backend's error message instead of raising, so the agent sees why a payment was refused and can finish with "waiting for sign-off". That is the one place the tools catch an error.
+- **Tools** call the backend through `httpx` and return JSON text: `get_claim`, `get_policy`, `get_customer`, `get_policy_wording`, `record_decision`, `pay_claim`. Each tool returns the backend's error message instead of raising, so the agent sees why a call was refused, such as a payment held for sign-off, and can carry on. That is the one place the tools handle an error.
 - **Instructions** are fetched with `get_instructions` at the start of `run`. `backend/instructions.md` is finished here. It tells the agent to: read the claim, then its policy, the customer's history and the wording; check the dates, the benefit, the exclusions and the limits section by section; work out the payout by the wording's section 10, showing each step; approve, decline or refer (refer when it needs someone's judgment or more information, such as a missing document); give two or three sentences and the section of the wording; record the decision; pay an approve of $1,000 or less; and not pay anything over $1,000. It says amounts are in US dollars and that the claims manual does not exist for this agent.
 - **`run(claim_id, thread_id, llm=None)`** keeps its signature. It calls `start_claim`, streams the agent with `stream_mode="updates"`, posts a step for each tool call, tool result and model message, and returns the final reply. If the run raises, it posts an error step and re-raises.
 - **Model**: unchanged, `openai/gpt-6-luna` with low reasoning, or `MODEL_NAME`.
@@ -134,16 +134,16 @@ Backend additions: `run_claim` and `run_queue` start the agent with FastAPI back
 
 Success criteria:
 
-- [ ] `uv run pytest -q` passes; tests use a scripted stub model and never call a model
-- [ ] A stub run that calls `get_claim`, `get_policy`, `get_customer`, `get_policy_wording`, `record_decision`, `pay_claim` and then replies ends with CLM-1001 `decided`, one payment, and a step for every call and result in order
-- [ ] A stub run that tries `pay_claim` for $1,250.00 before sign-off gets the refusal back as a tool result, no payment exists, and the claim is still `waiting_for_sign_off`
-- [ ] A stub run whose model raises leaves an error step, and `start_claim` can start the claim again
-- [ ] A test confirms the agent has no tool that reads `data/evals/`, and the tool list has exactly the six above
-- [ ] `run_claim` on a decided claim returns 409; on a waiting claim it returns 202 and, with a stub agent, the claim ends decided; `run_queue` with a stub agent decides every waiting claim
-- [ ] `backend/instructions.md` is under about 60 lines and mentions the $1,000 limit, the three outcomes, the payout steps and the explanation format
+- [x] `uv run pytest -q` passes; tests use a scripted stub model and never call a model
+- [x] A stub run that calls `get_claim`, `get_policy`, `get_customer`, `get_policy_wording`, `record_decision`, `pay_claim` and then replies ends with CLM-1001 `decided`, one payment, and a step for every call and result in order
+- [x] A stub run that tries `pay_claim` for $1,250.00 before sign-off gets the refusal back as a tool result, no payment exists, and the claim is still `waiting_for_sign_off`
+- [x] A stub run whose model raises leaves an error step, and `start_claim` can start the claim again
+- [x] A test confirms the agent has no tool that reads `data/evals/`, and the tool list has exactly the six above
+- [x] `run_claim` on a decided claim returns 409; on a waiting claim it returns 202 and, with a stub agent, the claim ends decided; `run_queue` with a stub agent decides every waiting claim
+- [x] `backend/instructions.md` is under about 60 lines and mentions the $1,000 limit, the three outcomes, the payout steps and the explanation format
 - [ ] Live check, after you say it is fine to spend the tokens: `uv run -m agent.main CLM-1001` with the dev backend running ends with CLM-1001 decided, or waiting for sign-off, with an explanation of two or three sentences naming a section of the wording, and `GET /api/claims/CLM-1001/steps` lists what it did. I repeat this on one claim whose payout should be over $1,000, if the queue has one, and check that its payment is held
-- [ ] Ruff, pyright and 80% coverage pass
-- [ ] Committed, with the pre-commit hook passing
+- [x] Ruff, pyright and 80% coverage pass
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 4: Dashboard foundation and the queue
 

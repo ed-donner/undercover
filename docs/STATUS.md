@@ -8,9 +8,11 @@ Built from `docs/PLAN.md`, phase by phase.
 
 - Phase 2, claim workflow and payment rule: start, decision, payment, sign-off and steps. `pay_claim` refuses with a 409 unless the claim has an approved decision, the amount equals the payout, it is unpaid and, over $1,000, a handler has signed off. A sign-off records the payment.
 
+- Phase 3, the agent: `agent/main.py` has six tools over the backend API, fetches its instructions from the backend and records each step as it works. `uv run -m agent.main CLM-1001` runs it on one claim, and the backend's `run_claim` and `run_queue` run it in the background. Tests use a stub model. It has not yet been run against a real model.
+
 ## Still to build
 
-The agent, the dashboard and the end-to-end tests. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
+The dashboard and the end-to-end tests. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
 
 ## Run it
 

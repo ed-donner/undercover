@@ -146,3 +146,7 @@ class Step(BaseModel):
     kind: StepKind
     text: str
     created_at: str
+
+
+class QueueRun(BaseModel):
+    waiting: int

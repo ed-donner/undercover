@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
-from backend import claims, workflow
+from backend import claims, runner, workflow
 from backend.db import DATA, get_db, init_db
 from backend.models import (
     ClaimDetail,
@@ -19,6 +19,7 @@ from backend.models import (
     Payment,
     PaymentRequest,
     Policy,
+    QueueRun,
     SignOffRequest,
     Step,
     StepRequest,
@@ -130,3 +131,21 @@ def sign_off_claim(claim_id: str, request: SignOffRequest, db: Db) -> ClaimDetai
 def add_step(claim_id: str, request: StepRequest, db: Db) -> Step:
     """Record one step the agent took on a claim."""
     return workflow.add_step(db, claim_id, request)
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_claim", status_code=202)
+def run_claim(claim_id: str, background: BackgroundTasks, db: Db) -> ClaimDetail:
+    """Start the agent on a waiting claim."""
+    if workflow.status_of(db, claim_id) != "waiting":
+        raise HTTPException(409, "The claim is not waiting")
+    workflow.start(db, claim_id)
+    background.add_task(runner.run_claim, claim_id)
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/queue/run", operation_id="run_queue", status_code=202)
+def run_queue(background: BackgroundTasks, db: Db) -> QueueRun:
+    """Start the agent on every waiting claim, one after another."""
+    waiting = sum(1 for claim in claims.summaries(db) if claim.status == "waiting")
+    background.add_task(runner.run_waiting)
+    return QueueRun(waiting=waiting)

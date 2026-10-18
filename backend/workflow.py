@@ -133,3 +133,18 @@ def steps(db: sqlite3.Connection, claim_id: str) -> list[Step]:
         (claim_id,),
     ).fetchall()
     return [Step(**row) for row in rows]
+
+
+def claim_next_waiting(db: sqlite3.Connection) -> str | None:
+    """Take the first waiting claim, marking it in progress, or return None."""
+    with db:
+        row = db.execute(
+            "SELECT claim_id FROM claims WHERE status = 'waiting' ORDER BY claim_id"
+        ).fetchone()
+        if row is None:
+            return None
+        db.execute(
+            "UPDATE claims SET status = 'in_progress' WHERE claim_id = ?",
+            (row["claim_id"],),
+        )
+    return row["claim_id"]
