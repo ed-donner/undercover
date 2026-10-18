@@ -201,12 +201,12 @@ Proves the whole thing together without a model, and brings the documents up to 
 
 Success criteria:
 
-- [ ] `npm run e2e` passes, using the ports and database above, and does not change `backend/undercover.db`
-- [ ] The large-approve test fails if I temporarily remove the over-limit check from `pay_claim` (checked once, then restored; not committed)
-- [ ] `docs/STATUS.md` matches what is built; every phase's boxes in this file are ticked
-- [ ] `npm run check` passes, including ruff, pyright, pytest at 80% or better, Prettier, ESLint, tsc, vitest at 80% or better and Playwright, and I report the output
-- [ ] `git status` shows no stray files (no database, no `test-results`)
-- [ ] Committed, with the pre-commit hook passing. Nothing is pushed
+- [x] `npm run e2e` passes, using the ports and database above, and does not change `backend/undercover.db`
+- [x] The large-approve test fails if I temporarily remove the over-limit check from `pay_claim` (checked once, then restored; not committed)
+- [x] `docs/STATUS.md` matches what is built; every phase's boxes in this file are ticked
+- [x] `npm run check` passes, including ruff, pyright, pytest at 80% or better, Prettier, ESLint, tsc, vitest at 80% or better and Playwright, and I report the output
+- [x] `git status` shows no stray files (no database, no `test-results`)
+- [x] Committed, with the pre-commit hook passing. Nothing is pushed
 
 ## Not in the pilot
 
