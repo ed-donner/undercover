@@ -12,9 +12,11 @@ Built from `docs/PLAN.md`, phase by phase.
 
 - Phase 4, dashboard foundation and queue: the brand theme (light and dark), a typed API layer, a hash router and the queue screen with status counts, a status filter, run buttons and 3 second polling. The header shows whether the backend is up.
 
+- Phase 5, claim screen, sign-off and instructions: `#/claims/CLM-1001` shows the claim, the agent's decision and reasons, its steps (refreshed every 2 seconds until it finishes), the policy and the customer's history. A claim waiting for sign-off has a panel where a handler signs off and releases the payment. `#/instructions` shows the agent's instructions read only.
+
 ## Still to build
 
-The claim screen with sign-off, the instructions screen and the end-to-end tests. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
+The end-to-end tests and the README. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
 
 ## Run it
 

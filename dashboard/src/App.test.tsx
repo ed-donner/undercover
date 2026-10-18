@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { claimRoutes, detail } from "./fixtures";
 import { mockApi } from "./mockApi";
 
 afterEach(() => {
@@ -29,4 +30,23 @@ it("says when a page does not exist", () => {
   mockApi({});
   render(<App />);
   expect(screen.getByText("Page not found.")).toBeDefined();
+});
+
+it("shows the instructions page", async () => {
+  window.location.hash = "#/instructions";
+  mockApi({
+    "GET /api/health": { status: "ok" },
+    "GET /api/instructions": { text: "Be careful." },
+  });
+  render(<App />);
+  expect(await screen.findByText("Be careful.")).toBeDefined();
+});
+
+it("shows a claim page", async () => {
+  window.location.hash = "#/claims/CLM-1001";
+  mockApi({ "GET /api/health": { status: "ok" }, ...claimRoutes(detail()) });
+  render(<App />);
+  expect(
+    await screen.findByText("My flight home was canceled by the airline."),
+  ).toBeDefined();
 });

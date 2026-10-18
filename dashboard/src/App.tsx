@@ -1,9 +1,24 @@
 import { health } from "./api";
+import { ClaimView } from "./ClaimView";
+import { Instructions } from "./Instructions";
 import { Queue } from "./Queue";
-import { useRoute } from "./route";
+import { type Route, useRoute } from "./route";
 import { usePolled } from "./usePolled";
 
 const HEALTH_MS = 10000;
+
+function Page({ route }: Readonly<{ route: Route }>) {
+  switch (route.name) {
+    case "queue":
+      return <Queue />;
+    case "claim":
+      return <ClaimView id={route.id} />;
+    case "instructions":
+      return <Instructions />;
+    default:
+      return <p>Page not found.</p>;
+  }
+}
 
 export function App() {
   const route = useRoute();
@@ -15,12 +30,18 @@ export function App() {
   return (
     <>
       <header className="header">
-        <a className="brand" href="#/">
-          UnderCover
-        </a>
+        <nav className="nav">
+          <a className="brand" href="#/">
+            UnderCover
+          </a>
+          <a href="#/">Queue</a>
+          <a href="#/instructions">Instructions</a>
+        </nav>
         <span className="mono backend">Backend: {backend}</span>
       </header>
-      <main>{route.name === "queue" ? <Queue /> : <p>Page not found.</p>}</main>
+      <main>
+        <Page route={route} />
+      </main>
     </>
   );
 }

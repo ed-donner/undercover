@@ -259,3 +259,140 @@ td a.mono {
     display: none;
   }
 }
+
+.nav {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+h3 {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+}
+
+.quote {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin: 8px 0 12px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 20px;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.history {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.signoff {
+  background: var(--coral);
+  color: #073b4c;
+}
+
+.signoff h2,
+.signoff p {
+  margin-top: 0;
+}
+
+select {
+  font: inherit;
+  color: #073b4c;
+  background: #ffffff;
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 14px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 100px 80px 1fr;
+  gap: 12px;
+}
+
+.step-time,
+.step-kind {
+  color: var(--muted);
+}
+
+.step-time {
+  white-space: nowrap;
+}
+
+.step-text {
+  overflow-wrap: anywhere;
+}
+
+.step-error .step-kind,
+.step-error .step-text {
+  color: var(--alert-text);
+}
+
+.instructions {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 0;
+}
+
+details {
+  margin: 4px 0;
+}
+
+summary {
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .step {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .nav {
+    gap: 16px;
+  }
+}

@@ -40,3 +40,20 @@ export function decisionText(
   const label = OUTCOME_LABELS[decision];
   return payout ? `${label}, ${money(payout)}` : label;
 }
+
+export const dateText = (iso: string) =>
+  new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
+    dateStyle: "long",
+  });
+
+export const timeText = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-US");
+
+const ADD_ON_LABELS: Record<string, string> = {
+  adventure_sports: "Adventure Sports",
+  pre_existing_waiver: "Pre-Existing Condition Waiver",
+  electronics_plus: "Electronics Plus",
+};
+
+export const addOnText = (addOn: string) =>
+  ADD_ON_LABELS[addOn] ?? claimType(addOn);

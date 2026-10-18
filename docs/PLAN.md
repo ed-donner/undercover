@@ -176,14 +176,14 @@ Builds the other two screens and the sign-off action. This is where the team rea
 
 Success criteria:
 
-- [ ] `npm run check:ts` passes with 80% coverage
-- [ ] Vitest tests cover: each section of the claim view, the steps timeline and its polling stop when the claim is decided, the sign-off panel appearing only for the held status, a successful sign-off, a failed sign-off, and the instructions view
-- [ ] With the dev servers running and claims put in each state with `curl` (start, decision, payment, steps), the Playwright MCP server shows the claim view in the four states: Waiting with a Run button, In progress with steps arriving, Waiting for sign-off with the panel, and Decided with the decision and payment
-- [ ] I sign off a held $1,250.00 claim as Dana Whitfield in the browser; the claim then shows Decided, a $1,250.00 payment and Dana's name, and the queue shows the same
-- [ ] The instructions page shows the text of `backend/instructions.md`, with nothing to edit
-- [ ] No screen shows a customer's email, phone, address or date of birth
-- [ ] The claim view has no horizontal scroll at 1280 and 390 pixels wide, and no console errors
-- [ ] Committed, with the pre-commit hook passing
+- [x] `npm run check:ts` passes with 80% coverage
+- [x] Vitest tests cover: each section of the claim view, the steps timeline and its polling stop when the claim is decided, the sign-off panel appearing only for the held status, a successful sign-off, a failed sign-off, and the instructions view
+- [x] With the dev servers running and claims put in each state with `curl` (start, decision, payment, steps), the Playwright MCP server shows the claim view in the four states: Waiting with a Run button, In progress with steps arriving, Waiting for sign-off with the panel, and Decided with the decision and payment
+- [x] I sign off a held $1,250.00 claim as Dana Whitfield in the browser; the claim then shows Decided, a $1,250.00 payment and Dana's name, and the queue shows the same
+- [x] The instructions page shows the text of `backend/instructions.md`, with nothing to edit
+- [x] No screen shows a customer's email, phone, address or date of birth
+- [x] The claim view has no horizontal scroll at 1280 and 390 pixels wide, and no console errors
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 6: End-to-end tests, docs and final check
 
