@@ -105,18 +105,18 @@ Rules in the code:
 
 Success criteria:
 
-- [ ] `uv run pytest -q backend` passes with tests for every rule below
-- [ ] Starting a waiting claim makes it `in_progress`; starting it again is allowed; starting a decided claim returns 409
-- [ ] Recording a decline for CLM-1001 sets it `decided`, stores the explanation and policy section, and a later `pay_claim` on it returns 409
-- [ ] Recording an approve of $200.00 sets `decided`; `pay_claim` for $200.00 returns 200 and the claim shows the payment; `pay_claim` again returns 409; `pay_claim` for $199.00 on another approved claim returns 409
-- [ ] Recording an approve of $1,250.00 sets `waiting_for_sign_off`
-- [ ] **`pay_claim` for $1,250.00 on that claim returns 409 and no payment exists**, checked with a test and with `curl` against the running backend
-- [ ] `sign_off_claim` with an unknown handler returns 404; with HND-01 it sets `decided` and records one payment of $1,250.00 and one sign-off by HND-01; calling it again returns 409
-- [ ] An approve of exactly $1,000.00 does not wait for sign-off (the limit is "over $1,000"), and $1,000.01 does
-- [ ] A decline with a payout of 50 returns 422; a request with a missing field returns 422
-- [ ] `add_step` and `list_steps` return steps in the order they were added, each with a time
-- [ ] Ruff, pyright and 80% coverage pass
-- [ ] Committed, with the pre-commit hook passing
+- [x] `uv run pytest -q backend` passes with tests for every rule below
+- [x] Starting a waiting claim makes it `in_progress`; starting it again is allowed; starting a decided claim returns 409
+- [x] Recording a decline for CLM-1001 sets it `decided`, stores the explanation and policy section, and a later `pay_claim` on it returns 409
+- [x] Recording an approve of $200.00 sets `decided`; `pay_claim` for $200.00 returns 200 and the claim shows the payment; `pay_claim` again returns 409; `pay_claim` for $199.00 on another approved claim returns 409
+- [x] Recording an approve of $1,250.00 sets `waiting_for_sign_off`
+- [x] **`pay_claim` for $1,250.00 on that claim returns 409 and no payment exists**, checked with a test and with `curl` against the running backend
+- [x] `sign_off_claim` with an unknown handler returns 404; with HND-01 it sets `decided` and records one payment of $1,250.00 and one sign-off by HND-01; calling it again returns 409
+- [x] An approve of exactly $1,000.00 does not wait for sign-off (the limit is "over $1,000"), and $1,000.01 does
+- [x] A decline with a payout of 50 returns 422; a request with a missing field returns 422
+- [x] `add_step` and `list_steps` return steps in the order they were added, each with a time
+- [x] Ruff, pyright and 80% coverage pass
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 3: The agent
 

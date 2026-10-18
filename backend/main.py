@@ -8,14 +8,20 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
 
-from backend import claims
+from backend import claims, workflow
 from backend.db import DATA, get_db, init_db
 from backend.models import (
     ClaimDetail,
     ClaimSummary,
     Customer,
+    DecisionRequest,
     Handler,
+    Payment,
+    PaymentRequest,
     Policy,
+    SignOffRequest,
+    Step,
+    StepRequest,
     Text,
 )
 
@@ -85,3 +91,42 @@ def get_instructions() -> Text:
 def list_handlers(db: Db) -> list[Handler]:
     """List the claims handlers."""
     return claims.handlers(db)
+
+
+@app.get("/api/claims/{claim_id}/steps", operation_id="list_steps")
+def list_steps(claim_id: str, db: Db) -> list[Step]:
+    """List what the agent did on a claim, step by step."""
+    return workflow.steps(db, claim_id)
+
+
+@app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
+def start_claim(claim_id: str, db: Db) -> ClaimDetail:
+    """Mark a claim as in progress because the agent has started on it."""
+    workflow.start(db, claim_id)
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/claims/{claim_id}/decision", operation_id="record_decision")
+def record_decision(claim_id: str, request: DecisionRequest, db: Db) -> ClaimDetail:
+    """Record the decision, payout and reasons for a claim in progress."""
+    workflow.decide(db, claim_id, request)
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
+def pay_claim(claim_id: str, request: PaymentRequest, db: Db) -> Payment:
+    """Pay an approved claim the given amount, once any sign-off it needs is in."""
+    return workflow.pay(db, claim_id, request.amount)
+
+
+@app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
+def sign_off_claim(claim_id: str, request: SignOffRequest, db: Db) -> ClaimDetail:
+    """Sign off a payout over the limit as a handler, which releases the payment."""
+    workflow.sign_off(db, claim_id, request.handler_id)
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/claims/{claim_id}/steps", operation_id="add_step")
+def add_step(claim_id: str, request: StepRequest, db: Db) -> Step:
+    """Record one step the agent took on a claim."""
+    return workflow.add_step(db, claim_id, request)
