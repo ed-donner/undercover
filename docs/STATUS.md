@@ -1,6 +1,6 @@
 # Status
 
-The claims pilot is built to `docs/PLAN.md`, with one check outstanding: the agent has not been run against a real model (see below). `npm run check` passes.
+The claims pilot is built to `docs/PLAN.md`, every success criterion is ticked, and `npm run check` passes.
 
 ## What is built
 
@@ -10,9 +10,13 @@ The claims pilot is built to `docs/PLAN.md`, with one check outstanding: the age
 - `e2e/`: Playwright tests on their own ports (8100 and 5273) and a throwaway database. They stand in for the agent through the API.
 - `backend/instructions.md`: the agent's instructions, shown in the dashboard.
 
-## Not yet checked
+## Live run
 
-The live run of the agent against a real model (Phase 3). The agent is tested with a stub model only. To try it: put `OPENROUTER_API_KEY` in `.env`, run `npm run dev`, then use Run agent on a claim in the dashboard, or `uv run -m agent.main CLM-1001`.
+Run once against `openai/gpt-6-luna` on 2026-10-18, with a fresh queue:
+
+- CLM-1001 (trip delay): approved, $420.00 paid. The decision, section and steps were recorded. Its explanation contained a made-up "p.m." for the departure time.
+- CLM-1003 (emergency medical, $3,800 claimed): approved for $3,750.00 (less the $50 deductible), left waiting for sign-off, no payment made, and the agent did not try to pay.
+- On both, the model called `get_customer` with a wrong id, got a 404 and carried on. On CLM-1003 it never read the customer's history, which its instructions require.
 
 ## Run it
 

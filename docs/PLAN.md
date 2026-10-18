@@ -141,7 +141,7 @@ Success criteria:
 - [x] A test confirms the agent has no tool that reads `data/evals/`, and the tool list has exactly the six above
 - [x] `run_claim` on a decided claim returns 409; on a waiting claim it returns 202 and, with a stub agent, the claim ends decided; `run_queue` with a stub agent decides every waiting claim
 - [x] `backend/instructions.md` is under about 60 lines and mentions the $1,000 limit, the three outcomes, the payout steps and the explanation format
-- [ ] Live check, after you say it is fine to spend the tokens: `uv run -m agent.main CLM-1001` with the dev backend running ends with CLM-1001 decided, or waiting for sign-off, with an explanation of two or three sentences naming a section of the wording, and `GET /api/claims/CLM-1001/steps` lists what it did. I repeat this on one claim whose payout should be over $1,000, if the queue has one, and check that its payment is held
+- [x] Live check, after you say it is fine to spend the tokens: `uv run -m agent.main CLM-1001` with the dev backend running ends with CLM-1001 decided, or waiting for sign-off, with an explanation of two or three sentences naming a section of the wording, and `GET /api/claims/CLM-1001/steps` lists what it did. I repeat this on one claim whose payout should be over $1,000, if the queue has one, and check that its payment is held
 - [x] Ruff, pyright and 80% coverage pass
 - [x] Committed, with the pre-commit hook passing
 
