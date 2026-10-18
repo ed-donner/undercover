@@ -157,14 +157,14 @@ Builds the look, the data layer and the first screen. The queue comes first beca
 
 Success criteria:
 
-- [ ] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with 80% coverage
-- [ ] Vitest tests with a mocked `fetch` cover: rendering 25 rows, the status counts, the status filter, the status chips, the run buttons calling the right endpoints, and an empty and an error state
-- [ ] `npm run dev` starts; with the Playwright MCP server I open `http://localhost:5173/` and see 25 claims, four status counts that add up to 25 with Waiting at 25, and a screenshot in light mode that uses the brand colors and fonts
-- [ ] Switching the browser to dark mode gives the `#04232E` page with black panels and readable text (screenshot checked)
-- [ ] Filtering to Decided shows an empty state; the filter and counts update when a claim's status changes (checked by starting one with `curl` and watching the page poll)
-- [ ] The page has no horizontal scroll at 1280 and 390 pixels wide
-- [ ] The browser console has no errors
-- [ ] Committed, with the pre-commit hook passing
+- [x] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with 80% coverage
+- [x] Vitest tests with a mocked `fetch` cover: rendering 25 rows, the status counts, the status filter, the status chips, the run buttons calling the right endpoints, and an empty and an error state
+- [x] `npm run dev` starts; with the Playwright MCP server I open `http://localhost:5173/` and see 25 claims, four status counts that add up to 25 with Waiting at 25, and a screenshot in light mode that uses the brand colors and fonts
+- [x] Switching the browser to dark mode gives the `#04232E` page with black panels and readable text (screenshot checked)
+- [x] Filtering to Decided shows an empty state; the filter and counts update when a claim's status changes (checked by starting one with `curl` and watching the page poll)
+- [x] The page has no horizontal scroll at 1280 and 390 pixels wide
+- [x] The browser console has no errors
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 5: Claim detail, sign-off and instructions
 

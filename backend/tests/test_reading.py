@@ -1,10 +1,11 @@
 import re
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from backend.db import DATA, init_db
+from backend.db import DATA, connect, init_db
 
 ROOT = Path(__file__).parent.parent.parent
 
@@ -99,3 +100,12 @@ def test_the_answer_key_is_out_of_reach(client: TestClient):
             if "tests" not in source.parts:
                 assert not pattern.search(source.read_text(encoding="utf-8")), source
     assert client.get("/api/claims/CLM-1001").json()["decision"] is None
+
+
+def test_a_connection_works_across_the_threads_a_request_uses(client: TestClient):
+    db = connect()
+    query = "SELECT COUNT(*) FROM claims"
+    with ThreadPoolExecutor() as pool:
+        count = pool.submit(lambda: db.execute(query).fetchone()[0]).result()
+        pool.submit(db.close).result()
+    assert count == 25

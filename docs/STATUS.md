@@ -10,9 +10,11 @@ Built from `docs/PLAN.md`, phase by phase.
 
 - Phase 3, the agent: `agent/main.py` has six tools over the backend API, fetches its instructions from the backend and records each step as it works. `uv run -m agent.main CLM-1001` runs it on one claim, and the backend's `run_claim` and `run_queue` run it in the background. Tests use a stub model. It has not yet been run against a real model.
 
+- Phase 4, dashboard foundation and queue: the brand theme (light and dark), a typed API layer, a hash router and the queue screen with status counts, a status filter, run buttons and 3 second polling. The header shows whether the backend is up.
+
 ## Still to build
 
-The dashboard and the end-to-end tests. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
+The claim screen with sign-off, the instructions screen and the end-to-end tests. The `agent/` and `dashboard/` folders are still the hello-world skeleton.
 
 ## Run it
 
