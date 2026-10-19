@@ -5,6 +5,7 @@ The claims pilot is built to `docs/PLAN.md`, every success criterion is ticked, 
 ## Harness build (in progress, `docs/PLAN_HARNESS.md`)
 
 - Phase 1 done: the backend serves the wording and the manual by section (`list_sections`, `read_section`), and `get_instructions` returns the queue agent's and the claim agent's instructions (`backend/instructions/`).
+- Phase 2 done: runs with a to-do list and a cap (`start_run`, `write_todos`, `take_claim`, `list_missed_claims`, `finish_run`), `fail_claim` (back in the queue, then Needs a handler on the second failure), a strict `start_claim` and a sweep at startup. The dashboard does not show these yet.
 
 ## What is built
 

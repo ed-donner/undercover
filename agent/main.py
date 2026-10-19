@@ -132,8 +132,7 @@ def record_steps(claim_id: str, message: AnyMessage) -> None:
 
 
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
-    """Run the agent on one claim and return its final reply."""
-    request("POST", f"/api/claims/{claim_id}/start").raise_for_status()
+    """Run the agent on one claim that is in progress and return its final reply."""
     instructions = request("GET", "/api/instructions").json()["claim"]
     agent = create_agent(llm or model(), tools=TOOLS, system_prompt=instructions)
     final = ""
@@ -155,4 +154,5 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
 
 
 if __name__ == "__main__":
+    request("POST", f"/api/claims/{sys.argv[1]}/start").raise_for_status()
     print(run(sys.argv[1], uuid.uuid4().hex))

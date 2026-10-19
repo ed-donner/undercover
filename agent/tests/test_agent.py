@@ -1,10 +1,11 @@
+from contextlib import nullcontext
+
 import pytest
 from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from agent import main
-from backend.main import app
 
 CLAIM = "CLM-1001"
 
@@ -42,7 +43,8 @@ def stub(*replies: AIMessage) -> StubModel:
 
 @pytest.fixture(autouse=True)
 def backend_in_process(client: TestClient, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
+    monkeypatch.setattr(main, "backend", lambda: nullcontext(client))
+    client.post(f"/api/claims/{CLAIM}/start")
 
 
 def get(client: TestClient, path: str):
@@ -124,14 +126,6 @@ def test_run_records_an_error_and_can_be_retried(client: TestClient):
         CLAIM, "thread-3", stub(decision("decline", 0), AIMessage(content="Declined."))
     )
     assert get(client, "")["status"] == "decided"
-
-
-def test_run_will_not_start_a_decided_claim(client: TestClient):
-    main.run(
-        CLAIM, "thread-4", stub(decision("decline", 0), AIMessage(content="Declined."))
-    )
-    with pytest.raises(Exception, match="409"):
-        main.run(CLAIM, "thread-5", stub())
 
 
 def test_model_name(monkeypatch: pytest.MonkeyPatch):

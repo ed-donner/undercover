@@ -4,7 +4,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Status = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
+Status = Literal[
+    "waiting", "in_progress", "waiting_for_sign_off", "decided", "needs_handler"
+]
 Outcome = Literal["approve", "decline", "refer"]
 
 
@@ -143,7 +145,7 @@ class SignOffRequest(BaseModel):
     handler_id: str
 
 
-StepKind = Literal["tool_call", "tool_result", "message", "error"]
+StepKind = Literal["tool_call", "tool_result", "message", "error", "read"]
 
 
 class StepRequest(BaseModel):
@@ -160,3 +162,39 @@ class Step(BaseModel):
 
 class QueueRun(BaseModel):
     waiting: int
+
+
+TodoStatus = Literal["todo", "in_progress", "done", "left_for_handler"]
+RunStatus = Literal["running", "finished", "failed"]
+
+
+class Todo(BaseModel):
+    text: str = Field(min_length=1)
+    status: TodoStatus
+
+
+class Run(BaseModel):
+    run_id: int
+    limit: int
+    status: RunStatus
+    summary: str
+    started_at: str
+    finished_at: str | None
+    todos: list[Todo]
+
+
+class StartRunRequest(BaseModel):
+    limit: int = Field(ge=1)
+
+
+class TodosRequest(BaseModel):
+    todos: list[Todo]
+
+
+class FinishRunRequest(BaseModel):
+    summary: str
+    status: Literal["finished", "failed"]
+
+
+class FailRequest(BaseModel):
+    reason: str = Field(min_length=1)

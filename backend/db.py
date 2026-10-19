@@ -55,6 +55,32 @@ CREATE TABLE IF NOT EXISTS sign_offs (
     handler_id TEXT NOT NULL,
     signed_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS runs (
+    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    claim_limit INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT
+);
+CREATE TABLE IF NOT EXISTS todos (
+    run_id INTEGER NOT NULL,
+    position INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    status TEXT NOT NULL,
+    PRIMARY KEY (run_id, position)
+);
+CREATE TABLE IF NOT EXISTS run_claims (
+    run_id INTEGER NOT NULL,
+    claim_id TEXT NOT NULL,
+    PRIMARY KEY (run_id, claim_id)
+);
+CREATE TABLE IF NOT EXISTS failures (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    claim_id TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    failed_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS steps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     claim_id TEXT NOT NULL,

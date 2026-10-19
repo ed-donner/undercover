@@ -26,8 +26,8 @@ def status_of(db: sqlite3.Connection, claim_id: str) -> Status:
 
 
 def start(db: sqlite3.Connection, claim_id: str) -> None:
-    if status_of(db, claim_id) in ("waiting_for_sign_off", "decided"):
-        raise HTTPException(409, "The claim has already been decided")
+    if status_of(db, claim_id) != "waiting":
+        raise HTTPException(409, "The claim is not waiting")
     with db:
         db.execute(
             "UPDATE claims SET status = 'in_progress' WHERE claim_id = ?", (claim_id,)
@@ -133,6 +133,38 @@ def steps(db: sqlite3.Connection, claim_id: str) -> list[Step]:
         (claim_id,),
     ).fetchall()
     return [Step(**row) for row in rows]
+
+
+MAX_FAILURES = 2
+
+
+def fail(db: sqlite3.Connection, claim_id: str, reason: str) -> None:
+    """Put a failed claim back in the queue, or leave it for a handler."""
+    if status_of(db, claim_id) != "in_progress":
+        raise HTTPException(409, "The claim is not in progress")
+    failed_at = now()
+    with db:
+        db.execute(
+            "INSERT INTO failures (claim_id, reason, failed_at) VALUES (?, ?, ?)",
+            (claim_id, reason, failed_at),
+        )
+        failures = db.execute(
+            "SELECT COUNT(*) FROM failures WHERE claim_id = ?", (claim_id,)
+        ).fetchone()[0]
+        left = failures >= MAX_FAILURES
+        outcome = (
+            f"Failed {failures} times: left for a handler."
+            if left
+            else f"Failed {failures} of {MAX_FAILURES} tries: back in the queue."
+        )
+        db.execute(
+            "INSERT INTO steps (claim_id, kind, text, created_at) VALUES (?, ?, ?, ?)",
+            (claim_id, "error", f"{outcome} {reason}", failed_at),
+        )
+        db.execute(
+            "UPDATE claims SET status = ? WHERE claim_id = ?",
+            ("needs_handler" if left else "waiting", claim_id),
+        )
 
 
 def claim_next_waiting(db: sqlite3.Connection) -> str | None:

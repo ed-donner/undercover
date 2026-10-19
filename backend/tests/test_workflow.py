@@ -35,7 +35,7 @@ def hold_large_claim(client: TestClient, payout: float = 1250.0) -> None:
 def test_start(client: TestClient):
     assert status(client) == "waiting"
     assert start(client).json()["status"] == "in_progress"
-    assert start(client).status_code == 200
+    assert start(client).status_code == 409
     assert start(client, "CLM-9999").status_code == 404
 
 

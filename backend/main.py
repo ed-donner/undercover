@@ -2,30 +2,35 @@
 
 import sqlite3
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, closing
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
-from backend import claims, documents, runner, workflow
-from backend.db import DATA, get_db, init_db
+from backend import claims, documents, runner, runs, workflow
+from backend.db import DATA, connect, get_db, init_db
 from backend.models import (
     ClaimDetail,
     ClaimSummary,
     Customer,
     DecisionRequest,
+    FailRequest,
+    FinishRunRequest,
     Handler,
     Instructions,
     Payment,
     PaymentRequest,
     Policy,
     QueueRun,
+    Run,
     Section,
     SignOffRequest,
+    StartRunRequest,
     Step,
     StepRequest,
     Text,
+    TodosRequest,
 )
 
 INSTRUCTIONS = Path(__file__).parent / "instructions"
@@ -36,6 +41,8 @@ Db = Annotated[sqlite3.Connection, Depends(get_db)]
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
+    with closing(connect()) as db:
+        runs.sweep(db)
     yield
 
 
@@ -155,6 +162,50 @@ def sign_off_claim(claim_id: str, request: SignOffRequest, db: Db) -> ClaimDetai
 def add_step(claim_id: str, request: StepRequest, db: Db) -> Step:
     """Record one step the agent took on a claim."""
     return workflow.add_step(db, claim_id, request)
+
+
+@app.post("/api/claims/{claim_id}/fail", operation_id="fail_claim")
+def fail_claim(claim_id: str, request: FailRequest, db: Db) -> ClaimDetail:
+    """Record a failed attempt, which puts the claim back or leaves it for a handler."""
+    workflow.fail(db, claim_id, request.reason)
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/runs", operation_id="start_run", status_code=201)
+def start_run(request: StartRunRequest, db: Db) -> Run:
+    """Start a run of the queue agent, capped at the given number of claims."""
+    return runs.start(db, request.limit)
+
+
+@app.get("/api/runs/latest", operation_id="get_latest_run")
+def get_latest_run(db: Db) -> Run:
+    """Get the latest run with its to-do list and summary."""
+    return found(runs.latest(db), "Run")
+
+
+@app.put("/api/runs/{run_id}/todos", operation_id="write_todos")
+def write_todos(run_id: int, request: TodosRequest, db: Db) -> Run:
+    """Replace the run's to-do list with the given items."""
+    return runs.write_todos(db, run_id, request.todos)
+
+
+@app.post("/api/runs/{run_id}/claims/{claim_id}", operation_id="take_claim")
+def take_claim(run_id: int, claim_id: str, db: Db) -> Run:
+    """Hand a waiting claim to the run, unless that would go over its cap."""
+    runs.take(db, run_id, claim_id)
+    return runs.one(db, run_id)
+
+
+@app.get("/api/runs/{run_id}/missed", operation_id="list_missed_claims")
+def list_missed_claims(run_id: int, db: Db) -> list[ClaimSummary]:
+    """List the waiting claims the run could still take within its cap."""
+    return runs.missed(db, run_id)
+
+
+@app.post("/api/runs/{run_id}/finish", operation_id="finish_run")
+def finish_run(run_id: int, request: FinishRunRequest, db: Db) -> Run:
+    """Close the run with a summary for the handlers."""
+    return runs.finish(db, run_id, request.summary, request.status)
 
 
 @app.post("/api/claims/{claim_id}/run", operation_id="run_claim", status_code=202)

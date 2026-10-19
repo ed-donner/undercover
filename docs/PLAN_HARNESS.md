@@ -106,24 +106,24 @@ Builds the rules in the backend and proves them by calling the API, before any a
 - `runs`, `todos`, `run_claims` and `failures` tables, created with the others.
 - The operations `start_run`, `get_latest_run`, `write_todos`, `take_claim`, `list_missed_claims`, `finish_run` and `fail_claim`.
 - The `needs_handler` status in `Status` and the models; `start_claim` made strict.
-- The startup sweep.
-- `run_queue` takes `limit`; the runner is changed in phase 4, so for now it keeps the existing behavior behind the new signature.
+- The startup sweep: it releases every claim left in progress, not only those of a run, since a restart stops all agents.
+- `run_queue` takes `limit` in phase 4, together with the runner and the dashboard button that calls it, so the app works after every commit. The agent's `run` no longer starts the claim; its callers do.
 
 Success criteria:
 
-- [ ] `uv run pytest -q backend` passes with a test for each rule below
-- [ ] `start_run` with a `limit` of 0 returns 422; a second `start_run` while one is running returns 409; after `finish_run` it is allowed
-- [ ] `write_todos` replaces the list, keeps the order given, accepts only the four statuses (a fifth returns 422), and `get_latest_run` returns it with the run's limit, status and summary
-- [ ] With a limit of 2, `take_claim` accepts CLM-1001 and CLM-1002 and refuses CLM-1003 with 409; taking CLM-1001 again after it went back to waiting is allowed
-- [ ] `take_claim` on an in-progress or decided claim returns 409
-- [ ] `list_missed_claims` shows the waiting claims the run could still take: all 25 at the start of a limit-5 run is capped to 5 names, and it is empty once 5 different claims have been taken and none of them is waiting
-- [ ] `fail_claim` on an in-progress claim records an error step with the reason and sets the status to waiting; a second `fail_claim` sets it to needs a handler; a third returns 409. On a waiting or decided claim it returns 409
-- [ ] `start_claim` on an in-progress claim returns 409; on a needs-a-handler claim returns 409
-- [ ] A claim with a decision cannot be given a second decision (409), and a paid claim cannot be paid again (409), re-checked after a `fail_claim` attempt on it
-- [ ] The startup sweep marks a leftover running run failed and puts its in-progress claims through `fail_claim` (a test creates the leftover state and starts the app)
-- [ ] The queue list and `ClaimSummary` accept the new status
-- [ ] Ruff, pyright and 80% coverage pass
-- [ ] Committed, with the pre-commit hook passing
+- [x] `uv run pytest -q backend` passes with a test for each rule below
+- [x] `start_run` with a `limit` of 0 returns 422; a second `start_run` while one is running returns 409; after `finish_run` it is allowed
+- [x] `write_todos` replaces the list, keeps the order given, accepts only the four statuses (a fifth returns 422), and `get_latest_run` returns it with the run's limit, status and summary
+- [x] With a limit of 2, `take_claim` accepts CLM-1001 and CLM-1002 and refuses CLM-1003 with 409; taking CLM-1001 again after it went back to waiting is allowed
+- [x] `take_claim` on an in-progress or decided claim returns 409
+- [x] `list_missed_claims` shows the waiting claims the run could still take: all 25 at the start of a limit-5 run is capped to 5 names, and it is empty once 5 different claims have been taken and none of them is waiting
+- [x] `fail_claim` on an in-progress claim records an error step with the reason and sets the status to waiting; a second `fail_claim` sets it to needs a handler; a third returns 409. On a waiting or decided claim it returns 409
+- [x] `start_claim` on an in-progress claim returns 409; on a needs-a-handler claim returns 409
+- [x] A claim with a decision cannot be given a second decision (409), and a paid claim cannot be paid again (409), re-checked after a `fail_claim` attempt on it
+- [x] The startup sweep marks a leftover running run failed and puts its in-progress claims through `fail_claim` (a test creates the leftover state and starts the app)
+- [x] The queue list and `ClaimSummary` accept the new status
+- [x] Ruff, pyright and 80% coverage pass
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 3: The claim agent
 
