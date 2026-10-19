@@ -134,7 +134,7 @@ def record_steps(claim_id: str, message: AnyMessage) -> None:
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     """Run the agent on one claim and return its final reply."""
     request("POST", f"/api/claims/{claim_id}/start").raise_for_status()
-    instructions = request("GET", "/api/instructions").json()["text"]
+    instructions = request("GET", "/api/instructions").json()["claim"]
     agent = create_agent(llm or model(), tools=TOOLS, system_prompt=instructions)
     final = ""
     try:

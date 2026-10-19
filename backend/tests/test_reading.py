@@ -65,10 +65,48 @@ def test_get_customer_leaves_out_contact_details(client: TestClient):
 def test_wording_and_instructions(client: TestClient):
     wording = client.get("/api/policy-wording").json()["text"]
     assert wording == (DATA / "policy_wording.md").read_text(encoding="utf-8")
-    instructions = client.get("/api/instructions").json()["text"]
-    assert instructions == (ROOT / "backend" / "instructions.md").read_text(
-        encoding="utf-8"
-    )
+    instructions = client.get("/api/instructions").json()
+    for agent in ("queue", "claim"):
+        assert instructions[agent] == (
+            ROOT / "backend" / "instructions" / f"{agent}.md"
+        ).read_text(encoding="utf-8")
+
+
+def test_sections_of_the_documents(client: TestClient):
+    wording = client.get("/api/documents/wording/sections").json()
+    assert [section["number"] for section in wording] == list(range(13))
+    assert wording[10] == {"number": 10, "title": "How we work out your payment"}
+    manual = client.get("/api/documents/manual/sections").json()
+    assert [section["number"] for section in manual] == list(range(15))
+    assert manual[9]["title"] == "Repeat claims"
+
+
+def test_read_a_section(client: TestClient):
+    text = client.get("/api/documents/manual/sections/9").json()["text"]
+    assert text.startswith("## 9. Repeat claims")
+    assert "third claim within any 12 month period" in text
+    assert "## 10." not in text
+    wording = client.get("/api/documents/wording/sections/10").json()["text"]
+    assert wording.startswith("## 10. How we work out your payment")
+
+
+def test_no_text_is_lost_between_sections(client: TestClient):
+    for document, name in (("wording", "policy_wording"), ("manual", "claims_manual")):
+        whole = (DATA / f"{name}.md").read_text(encoding="utf-8")
+        numbers = [
+            section["number"]
+            for section in client.get(f"/api/documents/{document}/sections").json()
+        ]
+        parts = [
+            client.get(f"/api/documents/{document}/sections/{number}").json()["text"]
+            for number in numbers
+        ]
+        assert "\n\n".join(parts) == whole.strip()
+
+
+def test_unknown_documents_and_sections_are_404(client: TestClient):
+    assert client.get("/api/documents/evidence/sections").status_code == 404
+    assert client.get("/api/documents/manual/sections/99").status_code == 404
 
 
 def test_list_handlers(client: TestClient):

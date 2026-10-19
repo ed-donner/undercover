@@ -8,7 +8,7 @@ from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
-from backend import claims, runner, workflow
+from backend import claims, documents, runner, workflow
 from backend.db import DATA, get_db, init_db
 from backend.models import (
     ClaimDetail,
@@ -16,17 +16,19 @@ from backend.models import (
     Customer,
     DecisionRequest,
     Handler,
+    Instructions,
     Payment,
     PaymentRequest,
     Policy,
     QueueRun,
+    Section,
     SignOffRequest,
     Step,
     StepRequest,
     Text,
 )
 
-INSTRUCTIONS = Path(__file__).parent / "instructions.md"
+INSTRUCTIONS = Path(__file__).parent / "instructions"
 
 Db = Annotated[sqlite3.Connection, Depends(get_db)]
 
@@ -44,6 +46,12 @@ def found[T](item: T | None, name: str) -> T:
     if item is None:
         raise HTTPException(404, f"{name} not found")
     return item
+
+
+def known(document: str) -> str:
+    if document not in documents.FILES:
+        raise HTTPException(404, "Document not found")
+    return document
 
 
 @app.get("/api/health", operation_id="health")
@@ -82,10 +90,26 @@ def get_policy_wording() -> Text:
     return Text(text=(DATA / "policy_wording.md").read_text(encoding="utf-8"))
 
 
+@app.get("/api/documents/{document}/sections", operation_id="list_sections")
+def list_sections(document: str) -> list[Section]:
+    """List the numbered sections of the policy wording or the claims manual."""
+    return documents.listing(known(document))
+
+
+@app.get("/api/documents/{document}/sections/{number}", operation_id="read_section")
+def read_section(document: str, number: int) -> Text:
+    """Read one section of the policy wording or the claims manual."""
+    text = documents.section_text(known(document), number)
+    return Text(text=found(text, "Section"))
+
+
 @app.get("/api/instructions", operation_id="get_instructions")
-def get_instructions() -> Text:
-    """Get the UnderCover Agent's instructions."""
-    return Text(text=INSTRUCTIONS.read_text(encoding="utf-8"))
+def get_instructions() -> Instructions:
+    """Get the instructions of the queue agent and of the claim agent."""
+    return Instructions(
+        queue=(INSTRUCTIONS / "queue.md").read_text(encoding="utf-8"),
+        claim=(INSTRUCTIONS / "claim.md").read_text(encoding="utf-8"),
+    )
 
 
 @app.get("/api/handlers", operation_id="list_handlers")

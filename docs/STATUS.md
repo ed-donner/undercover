@@ -2,6 +2,10 @@
 
 The claims pilot is built to `docs/PLAN.md`, every success criterion is ticked, and `npm run check` passes.
 
+## Harness build (in progress, `docs/PLAN_HARNESS.md`)
+
+- Phase 1 done: the backend serves the wording and the manual by section (`list_sections`, `read_section`), and `get_instructions` returns the queue agent's and the claim agent's instructions (`backend/instructions/`).
+
 ## What is built
 
 - `backend/`: FastAPI and SQLite, seeded from `data/` on first start (never from `data/evals/`). It serves claims, policies, customer history (no contact details), the policy wording, the agent's instructions and the handlers. It runs the claim workflow: start, decision, payment, sign-off and steps. `pay_claim` refuses with a 409 unless the claim has an approved decision, the amount equals the payout, it is unpaid and, over $1,000, a handler has signed off. A sign-off records the payment. `run_claim` and `run_queue` start the agent in the background.

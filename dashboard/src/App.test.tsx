@@ -36,7 +36,7 @@ it("shows the instructions page", async () => {
   window.location.hash = "#/instructions";
   mockApi({
     "GET /api/health": { status: "ok" },
-    "GET /api/instructions": { text: "Be careful." },
+    "GET /api/instructions": { queue: "Be quick.", claim: "Be careful." },
   });
   render(<App />);
   expect(await screen.findByText("Be careful.")).toBeDefined();

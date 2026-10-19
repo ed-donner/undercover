@@ -10,12 +10,14 @@ afterEach(() => {
 
 it("shows the agent's instructions read only", async () => {
   mockApi({
-    "GET /api/instructions": { text: "You are the UnderCover Agent." },
+    "GET /api/instructions": {
+      queue: "You run the queue.",
+      claim: "You work one claim.",
+    },
   });
   render(<Instructions />);
-  expect(
-    await screen.findByText("You are the UnderCover Agent."),
-  ).toBeDefined();
+  expect(await screen.findByText("You run the queue.")).toBeDefined();
+  expect(screen.getByText("You work one claim.")).toBeDefined();
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
 });

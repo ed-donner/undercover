@@ -118,6 +118,16 @@ class Text(BaseModel):
     text: str
 
 
+class Section(BaseModel):
+    number: int
+    title: str
+
+
+class Instructions(BaseModel):
+    queue: str
+    claim: str
+
+
 class DecisionRequest(BaseModel):
     decision: Outcome
     payout: float = Field(ge=0)

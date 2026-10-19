@@ -41,7 +41,7 @@ export const getCustomer = (customerId: string) =>
   request<Customer>("GET", `/api/customers/${customerId}`);
 export const listHandlers = () => request<Handler[]>("GET", "/api/handlers");
 export const getInstructions = () =>
-  request<{ text: string }>("GET", "/api/instructions");
+  request<{ queue: string; claim: string }>("GET", "/api/instructions");
 export const runClaim = (claimId: string) =>
   request<unknown>("POST", `/api/claims/${claimId}/run`);
 export const runQueue = () => request<QueueRun>("POST", "/api/queue/run");

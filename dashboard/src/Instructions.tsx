@@ -15,10 +15,11 @@ export function Instructions() {
   return (
     <>
       <h1>Agent instructions</h1>
-      <p className="muted">
-        What the UnderCover Agent is told on every claim. Read only.
-      </p>
-      <pre className="panel instructions">{data.text}</pre>
+      <p className="muted">What the UnderCover Agent is told. Read only.</p>
+      <h2>Running the queue</h2>
+      <pre className="panel instructions">{data.queue}</pre>
+      <h2>Working a claim</h2>
+      <pre className="panel instructions">{data.claim}</pre>
     </>
   );
 }
