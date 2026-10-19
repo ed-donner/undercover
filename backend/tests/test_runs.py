@@ -25,7 +25,7 @@ def stub_agent(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> list[str]
         )
         return "Declined."
 
-    monkeypatch.setattr(runner, "run_agent", run)
+    monkeypatch.setattr(runner, "work", run)
     return seen
 
 

@@ -129,24 +129,24 @@ Success criteria:
 
 Rebuilds the pilot's agent as the claim agent: one claim, its own lookups, its own failure handling.
 
-- `agent/claim.py`: tools `get_claim`, `get_policy`, `get_customer`, `list_sections`, `read_section`, `record_decision`, `pay_claim` over the backend. The whole-wording tool is gone. The tools still return the backend's error text to the model.
+- `agent/claim_agent.py`: tools `get_claim`, `get_policy`, `get_customer`, `list_sections`, `read_section`, `record_decision`, `pay_claim` over the backend. The whole-wording tool is gone. The tools still return the backend's error text to the model.
 - `claim_run(claim_id, thread_id, llm=None)`: fetches the claim instructions, runs a fresh `create_agent` with the retry and call-limit middleware, records every call, result and message as a step (and a `read` step for each `read_section`), and returns the final reply. It does not start the claim; the caller does. If it raises, it adds an error step and re-raises.
-- `agent/main.py` keeps the model, the backend client and the command line; `DEFAULT_MODEL` becomes `deepseek/deepseek-v4.1-flash`.
+- `agent/harness.py` holds what both agents share: the backend client, the model (`DEFAULT_MODEL` becomes `deepseek/deepseek-v4.1-flash`, with a timeout and no client-side retries so the middleware owns them) and the middleware. `agent/main.py` is the command line.
 - `backend/instructions/claim.md` finished: the manual's working order, what to look up, the three outcomes, the payout steps by section 10 of the wording, the explanation format, the $1,000 limit. At most about 60 lines.
-- `run_claim` in the backend starts the claim, runs `claim_run` and handles failure as in phase 4's `work_claim`, so a single named claim also never stays stuck.
+- `work(claim_id, thread_id)` in `agent/claim_agent.py` runs `claim_run` and handles failure (`fail_claim`, the unpaid small approve, the one-line report). The backend's `run_claim` and the command line call it, and phase 4's `work_claim` tool will too, so a single named claim never stays stuck either.
 
 Success criteria:
 
-- [ ] `uv run pytest -q` passes; tests use a scripted stub model and never call a model
-- [ ] The claim agent has exactly the seven tools above, and none reads `data/evals/` or the whole wording
-- [ ] A stub run that reads a manual section and a wording section, then decides and pays a small claim, ends with CLM-1001 decided, one payment, and a step for every call and result in order
-- [ ] That run leaves two `read` steps, such as "Claims manual, 9. Repeat claims", and `GET /api/claims/CLM-1001/steps` lists them
-- [ ] A stub run that tries to pay $1,250.00 gets the refusal back as a tool result, no payment exists, and the claim is waiting for sign-off
-- [ ] A stub model that raises leaves an error step and the exception propagates; with the retry middleware, a model that fails once and then answers still completes
-- [ ] `DEFAULT_MODEL` is `deepseek/deepseek-v4.1-flash` with low reasoning effort; `MODEL_NAME` overrides it and sends no reasoning effort
-- [ ] `backend/instructions/claim.md` is under about 60 lines, names the $1,000 limit, the three outcomes, the payout steps and the explanation format, tells the agent to use `list_sections` and `read_section`, and contains no figure taken from `data/evals/` (I never opened it)
-- [ ] Ruff, pyright and 80% coverage pass
-- [ ] Committed, with the pre-commit hook passing
+- [x] `uv run pytest -q` passes; tests use a scripted stub model and never call a model
+- [x] The claim agent has exactly the seven tools above, and none reads `data/evals/` or the whole wording
+- [x] A stub run that reads a manual section and a wording section, then decides and pays a small claim, ends with CLM-1001 decided, one payment, and a step for every call and result in order
+- [x] That run leaves two `read` steps, such as "Claims manual, 9. Repeat claims", and `GET /api/claims/CLM-1001/steps` lists them
+- [x] A stub run that tries to pay $1,250.00 gets the refusal back as a tool result, no payment exists, and the claim is waiting for sign-off
+- [x] A stub model that raises leaves an error step and the exception propagates; with the retry middleware, a model that fails once and then answers still completes
+- [x] `DEFAULT_MODEL` is `deepseek/deepseek-v4.1-flash` with low reasoning effort; `MODEL_NAME` overrides it and sends no reasoning effort
+- [x] `backend/instructions/claim.md` is under about 60 lines, names the $1,000 limit, the three outcomes, the payout steps and the explanation format, tells the agent to use `list_sections` and `read_section`, and contains no figure taken from `data/evals/` (I never opened it)
+- [x] Ruff, pyright and 80% coverage pass
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 4: The queue agent
 

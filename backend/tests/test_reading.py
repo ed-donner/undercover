@@ -147,3 +147,19 @@ def test_a_connection_works_across_the_threads_a_request_uses(client: TestClient
         count = pool.submit(lambda: db.execute(query).fetchone()[0]).result()
         pool.submit(db.close).result()
     assert count == 25
+
+
+def test_the_claim_instructions_cover_the_essentials(client: TestClient):
+    text = client.get("/api/instructions").json()["claim"]
+    assert len(text.splitlines()) <= 60
+    for needed in (
+        "$1,000.00",
+        "approve",
+        "decline",
+        "refer",
+        "list_sections",
+        "read_section",
+        "two or three sentences",
+        "eligible amount",
+    ):
+        assert needed in text

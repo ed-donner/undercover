@@ -4,7 +4,7 @@ import logging
 import uuid
 from contextlib import closing
 
-from agent.main import run as run_agent
+from agent.claim_agent import work
 from backend import workflow
 from backend.db import connect
 
@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def run_claim(claim_id: str) -> None:
-    run_agent(claim_id, uuid.uuid4().hex)
+    work(claim_id, uuid.uuid4().hex)
 
 
 def run_waiting() -> None:

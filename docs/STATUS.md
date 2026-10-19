@@ -6,6 +6,7 @@ The claims pilot is built to `docs/PLAN.md`, every success criterion is ticked, 
 
 - Phase 1 done: the backend serves the wording and the manual by section (`list_sections`, `read_section`), and `get_instructions` returns the queue agent's and the claim agent's instructions (`backend/instructions/`).
 - Phase 2 done: runs with a to-do list and a cap (`start_run`, `write_todos`, `take_claim`, `list_missed_claims`, `finish_run`), `fail_claim` (back in the queue, then Needs a handler on the second failure), a strict `start_claim` and a sweep at startup. The dashboard does not show these yet.
+- Phase 3 done: the claim agent (`agent/claim_agent.py`, shared parts in `agent/harness.py`) has seven tools including `list_sections` and `read_section`, records a `read` step for each section it reads, retries model and tool calls, and `work` leaves every claim in a good state when a run fails. The default model is `deepseek/deepseek-v4.1-flash`. `uv run -m agent.main CLM-1001` runs one claim.
 
 ## What is built
 
