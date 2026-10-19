@@ -103,7 +103,7 @@ it("runs the agent on one claim and then reloads", async () => {
 it("runs the agent on all waiting claims", async () => {
   const fetchMock = mockApi({
     "GET /api/claims": CLAIMS,
-    "POST /api/queue/run": { waiting: 1 },
+    "POST /api/queue/run": { run_id: 1 },
   });
   render(<Queue />);
   fireEvent.click(
@@ -111,7 +111,11 @@ it("runs the agent on all waiting claims", async () => {
       name: "Run agent on all waiting claims",
     }),
   );
-  expect(fetchMock).toHaveBeenCalledWith("/api/queue/run", { method: "POST" });
+  expect(fetchMock).toHaveBeenCalledWith("/api/queue/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ limit: 1 }),
+  });
 });
 
 it("has no run buttons when nothing is waiting", async () => {

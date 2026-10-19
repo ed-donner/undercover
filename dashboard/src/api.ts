@@ -4,7 +4,6 @@ import type {
   Customer,
   Handler,
   Policy,
-  QueueRun,
   Step,
 } from "./types";
 
@@ -44,7 +43,8 @@ export const getInstructions = () =>
   request<{ queue: string; claim: string }>("GET", "/api/instructions");
 export const runClaim = (claimId: string) =>
   request<unknown>("POST", `/api/claims/${claimId}/run`);
-export const runQueue = () => request<QueueRun>("POST", "/api/queue/run");
+export const runQueue = (limit: number) =>
+  request<unknown>("POST", "/api/queue/run", { limit });
 export const signOff = (claimId: string, handlerId: string) =>
   request<ClaimDetail>("POST", `/api/claims/${claimId}/sign-off`, {
     handler_id: handlerId,

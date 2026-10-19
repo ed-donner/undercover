@@ -50,7 +50,7 @@ export function Queue() {
           className="primary"
           disabled={count("waiting") === 0}
           onClick={() => {
-            start(runQueue);
+            start(() => runQueue(count("waiting")));
           }}
         >
           Run agent on all waiting claims

@@ -163,3 +163,10 @@ def test_the_claim_instructions_cover_the_essentials(client: TestClient):
         "eligible amount",
     ):
         assert needed in text
+
+
+def test_the_queue_instructions_cover_the_essentials(client: TestClient):
+    text = client.get("/api/instructions").json()["queue"]
+    assert len(text.splitlines()) <= 60
+    for needed in ("write_todos", "work_claim", "check_queue", "summary"):
+        assert needed in text

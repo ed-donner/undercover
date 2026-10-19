@@ -160,10 +160,6 @@ class Step(BaseModel):
     created_at: str
 
 
-class QueueRun(BaseModel):
-    waiting: int
-
-
 TodoStatus = Literal["todo", "in_progress", "done", "left_for_handler"]
 RunStatus = Literal["running", "finished", "failed"]
 

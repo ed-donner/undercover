@@ -22,7 +22,6 @@ from backend.models import (
     Payment,
     PaymentRequest,
     Policy,
-    QueueRun,
     Run,
     Section,
     SignOffRequest,
@@ -219,8 +218,8 @@ def run_claim(claim_id: str, background: BackgroundTasks, db: Db) -> ClaimDetail
 
 
 @app.post("/api/queue/run", operation_id="run_queue", status_code=202)
-def run_queue(background: BackgroundTasks, db: Db) -> QueueRun:
-    """Start the agent on every waiting claim, one after another."""
-    waiting = sum(1 for claim in claims.summaries(db) if claim.status == "waiting")
-    background.add_task(runner.run_waiting)
-    return QueueRun(waiting=waiting)
+def run_queue(request: StartRunRequest, background: BackgroundTasks, db: Db) -> Run:
+    """Start the queue agent on a run capped at the given number of claims."""
+    run = runs.start(db, request.limit)
+    background.add_task(runner.run_queue, run.run_id, run.limit)
+    return run

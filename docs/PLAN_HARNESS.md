@@ -152,29 +152,29 @@ Success criteria:
 
 The agent that works the whole queue, with the to-do list, a claim agent per claim, retries and the check for missed claims.
 
-- `agent/queue.py`: tools `list_waiting_claims`, `write_todos`, `work_claim` and `check_queue`. `work_claim(claim_id)` calls `take_claim`, `start_claim`, `claim_run`, then checks the claim: decided or waiting for sign-off is a success; an exception or a claim still in progress goes to `fail_claim`; a decided, unpaid approve of $1,000 or less is paid. It returns the one-line report.
-- `queue_run(run_id, thread_id, llm=None, claim_llm=None)`: fetches the queue instructions, runs the queue agent with the retry and call-limit middleware and the missed-claims hook, then calls `finish_run` with the final reply. If the agent itself fails, it fails any claim of the run left in progress, calls `finish_run` as `failed` and re-raises.
-- `backend/runner.py` replaces `run_waiting`: `run_queue` in the backend calls `start_run`, and the background task calls `queue_run`.
-- Command line: `uv run -m agent.main queue --limit 5`, which calls `start_run` and prints the summary.
+- `agent/queue_agent.py`: tools (built for one run, so the model never passes a run id) `list_waiting_claims`, `write_todos`, `work_claim` and `check_queue`. `work_claim(claim_id)` calls `take_claim`, `start_claim`, `claim_run`, then checks the claim: decided or waiting for sign-off is a success; an exception or a claim still in progress goes to `fail_claim`; a decided, unpaid approve of $1,000 or less is paid. It returns the one-line report.
+- `queue_run(run_id, limit, thread_id, llm=None, claim_llm=None)`: fetches the queue instructions, runs the queue agent with the retry and call-limit middleware and the missed-claims hook, then calls `finish_run` with the final reply. If the agent itself fails, it calls `finish_run` as `failed` and re-raises. No claim can be left in progress by that, since `work_claim` returns only after `work` has put its claim right.
+- `backend/runner.py` replaces `run_waiting` (and `claim_next_waiting` goes): `run_queue` in the backend takes `limit`, starts the run and the background task calls `queue_run`. The dashboard's run-all button sends the number of waiting claims.
+- Command line: `uv run -m agent.main queue --limit 5` (all waiting claims without `--limit`), which starts the run and prints the summary.
 - `backend/instructions/queue.md` finished: plan the run as a to-do list first and keep it current (item states, and `left_for_handler` for a claim that failed twice), choose the order, work one claim at a time with `work_claim`, call `check_queue` before finishing, write a short summary for the handlers. About 40 lines.
 
 Success criteria:
 
-- [ ] `uv run pytest -q` passes; tests use stub models for both agents and never call a model
-- [ ] The queue agent has exactly the four tools above
-- [ ] **Cap**: a stub run with `limit` 3 that tries to work five claims gets the refusal on the fourth as a tool result; exactly three claims are decided and 22 are still waiting
-- [ ] **To-do list**: a stub run that writes a list, ticks items off and finishes leaves the final list in `get_latest_run`, with the statuses the stub wrote
-- [ ] **One bad claim does not stop the run**: a stub where the claim agent raises on the first claim still decides the other claims in the run, the first claim shows an error step, and no claim is in progress at the end
-- [ ] **Back in the queue and tried again**: a claim whose first attempt raises goes to waiting, and when the stub works it again it is decided; the run's `run_claims` holds it once, so the cap is not used twice
-- [ ] **Failed twice**: a claim that raises on both attempts ends as needs a handler, has two failure rows, and is not offered by `list_waiting_claims` or `list_missed_claims`
-- [ ] A claim agent that finishes without recording a decision counts as a failure, not as done
-- [ ] **No double decision or payment**: a stub run that fails after `record_decision` leaves the claim decided, an approve of $1,000 or less is paid once by the tool, and a repeat of `work_claim` on it returns 409 and changes nothing
-- [ ] **Check for missed claims**: a stub that tries to finish with a waiting claim inside its cap is sent back to work by the hook and then works it; a stub with nothing missed finishes at once
-- [ ] A queue agent that raises ends the run as failed and leaves no claim in progress
-- [ ] `run_queue` in the backend (stub agents) returns 202 with the run, the background task finishes it, and a second call during a run returns 409
-- [ ] `backend/instructions/queue.md` tells the agent to plan a to-do list, to work claims through `work_claim`, to call `check_queue` before finishing, and to write a summary
-- [ ] Ruff, pyright and 80% coverage pass
-- [ ] Committed, with the pre-commit hook passing
+- [x] `uv run pytest -q` passes; tests use stub models for both agents and never call a model
+- [x] The queue agent has exactly the four tools above
+- [x] **Cap**: a stub run with `limit` 3 that tries to work five claims gets the refusal on the fourth as a tool result; exactly three claims are decided and 22 are still waiting
+- [x] **To-do list**: a stub run that writes a list, ticks items off and finishes leaves the final list in `get_latest_run`, with the statuses the stub wrote
+- [x] **One bad claim does not stop the run**: a stub where the claim agent raises on the first claim still decides the other claims in the run, the first claim shows an error step, and no claim is in progress at the end
+- [x] **Back in the queue and tried again**: a claim whose first attempt raises goes to waiting, and when the stub works it again it is decided; the run's `run_claims` holds it once, so the cap is not used twice
+- [x] **Failed twice**: a claim that raises on both attempts ends as needs a handler, has two failure rows, and is not offered by `list_waiting_claims` or `list_missed_claims`
+- [x] A claim agent that finishes without recording a decision counts as a failure, not as done
+- [x] **No double decision or payment**: a stub run that fails after `record_decision` leaves the claim decided, an approve of $1,000 or less is paid once by the tool, and a repeat of `work_claim` on it returns 409 and changes nothing
+- [x] **Check for missed claims**: a stub that tries to finish with a waiting claim inside its cap is sent back to work by the hook and then works it; a stub with nothing missed finishes at once
+- [x] A queue agent that raises ends the run as failed and leaves no claim in progress
+- [x] `run_queue` in the backend (stub agents) returns 202 with the run, the background task finishes it, and a second call during a run returns 409
+- [x] `backend/instructions/queue.md` tells the agent to plan a to-do list, to work claims through `work_claim`, to call `check_queue` before finishing, and to write a summary
+- [x] Ruff, pyright and 80% coverage pass
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 5: Dashboard
 

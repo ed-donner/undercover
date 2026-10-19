@@ -15,10 +15,6 @@ export interface ClaimSummary {
   payout: number | null;
 }
 
-export interface QueueRun {
-  waiting: number;
-}
-
 export interface Item {
   description: string;
   category: string;
