@@ -90,6 +90,40 @@ it("says what a decline and an unpaid approval mean for payment", async () => {
   expect(await screen.findByText("No payment has been made.")).toBeDefined();
 });
 
+it("lists what the agent read", async () => {
+  const claim = detail({ status: "in_progress" });
+  mockApi(
+    claimRoutes(claim, [
+      step(1, "tool_call", "read_section({'document': 'manual'})"),
+      step(2, "read", "Claims manual, 9. Repeat claims"),
+    ]),
+  );
+  render(<ClaimView id="CLM-1001" />);
+  expect(await screen.findByText("What the agent read")).toBeDefined();
+  expect(screen.getAllByText("Claims manual, 9. Repeat claims")).toHaveLength(
+    2,
+  );
+  expect(screen.getByText("Read")).toBeDefined();
+});
+
+it("shows no read panel when the agent read nothing", async () => {
+  mockApi(claimRoutes(detail()));
+  render(<ClaimView id="CLM-1001" />);
+  await screen.findByText("No steps yet.");
+  expect(screen.queryByText("What the agent read")).toBeNull();
+});
+
+it("says when a claim needs a handler", async () => {
+  mockApi(
+    claimRoutes(detail({ status: "needs_handler" }), [
+      step(1, "error", "Failed 2 times: left for a handler."),
+    ]),
+  );
+  render(<ClaimView id="CLM-1001" />);
+  expect(await screen.findByText(/A handler needs to work it/)).toBeDefined();
+  expect(screen.getAllByText("Needs a handler")).toHaveLength(2);
+});
+
 it("runs the agent on a waiting claim", async () => {
   const fetchMock = mockApi({
     ...claimRoutes(detail()),

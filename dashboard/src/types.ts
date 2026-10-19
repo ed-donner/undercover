@@ -1,5 +1,9 @@
 export type Status =
-  "waiting" | "in_progress" | "waiting_for_sign_off" | "decided";
+  | "waiting"
+  | "in_progress"
+  | "waiting_for_sign_off"
+  | "decided"
+  | "needs_handler";
 
 export type Outcome = "approve" | "decline" | "refer";
 
@@ -104,7 +108,29 @@ export interface Handler {
 
 export interface Step {
   id: number;
-  kind: "tool_call" | "tool_result" | "message" | "error";
+  kind: "tool_call" | "tool_result" | "message" | "error" | "read";
   text: string;
   created_at: string;
+}
+
+export type TodoStatus = "todo" | "in_progress" | "done" | "left_for_handler";
+
+export interface Todo {
+  text: string;
+  status: TodoStatus;
+}
+
+export interface Run {
+  run_id: number;
+  limit: number;
+  status: "running" | "finished" | "failed";
+  summary: string;
+  started_at: string;
+  finished_at: string | null;
+  todos: Todo[];
+}
+
+export interface Instructions {
+  queue: string;
+  claim: string;
 }

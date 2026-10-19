@@ -3,7 +3,9 @@ import type {
   ClaimSummary,
   Customer,
   Handler,
+  Instructions,
   Policy,
+  Run,
   Step,
 } from "./types";
 
@@ -40,7 +42,10 @@ export const getCustomer = (customerId: string) =>
   request<Customer>("GET", `/api/customers/${customerId}`);
 export const listHandlers = () => request<Handler[]>("GET", "/api/handlers");
 export const getInstructions = () =>
-  request<{ queue: string; claim: string }>("GET", "/api/instructions");
+  request<Instructions>("GET", "/api/instructions");
+/** The latest run of the queue agent, or null before the first one. */
+export const getLatestRun = () =>
+  request<Run | null>("GET", "/api/runs/latest");
 export const runClaim = (claimId: string) =>
   request<unknown>("POST", `/api/claims/${claimId}/run`);
 export const runQueue = (limit: number) =>

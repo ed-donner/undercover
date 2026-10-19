@@ -177,9 +177,9 @@ def start_run(request: StartRunRequest, db: Db) -> Run:
 
 
 @app.get("/api/runs/latest", operation_id="get_latest_run")
-def get_latest_run(db: Db) -> Run:
-    """Get the latest run with its to-do list and summary."""
-    return found(runs.latest(db), "Run")
+def get_latest_run(db: Db) -> Run | None:
+    """Get the latest run with its to-do list and summary, or null before the first."""
+    return runs.latest(db)
 
 
 @app.put("/api/runs/{run_id}/todos", operation_id="write_todos")

@@ -396,3 +396,67 @@ summary {
     gap: 16px;
   }
 }
+
+.chip-needs_handler,
+.chip-run-failed,
+.chip-todo-left_for_handler {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.chip-todo-todo,
+.chip-run-running {
+  background: var(--marigold);
+}
+
+.chip-todo-in_progress {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.chip-todo-done,
+.chip-run-finished {
+  background: var(--green);
+}
+
+.run {
+  margin-bottom: 16px;
+}
+
+.todos {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.todos li {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.trial {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trial input {
+  width: 4.5em;
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+@media (max-width: 760px) {
+  .todos li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

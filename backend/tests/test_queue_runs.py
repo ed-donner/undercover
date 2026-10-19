@@ -43,7 +43,7 @@ def decline(client: TestClient, claim_id: str):
 
 
 def test_a_run_needs_a_limit_and_runs_one_at_a_time(client: TestClient):
-    assert client.get("/api/runs/latest").status_code == 404
+    assert client.get("/api/runs/latest").json() is None
     assert start_run(client, 0).status_code == 422
     run = start_run(client).json()
     assert run["limit"] == 5

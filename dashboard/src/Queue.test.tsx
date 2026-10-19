@@ -9,7 +9,7 @@ import {
 import { afterEach, expect, it, vi } from "vitest";
 import { mockApi } from "./mockApi";
 import { Queue } from "./Queue";
-import type { ClaimSummary } from "./types";
+import type { ClaimSummary, Run } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -116,6 +116,72 @@ it("runs the agent on all waiting claims", async () => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ limit: 1 }),
   });
+});
+
+const RUN: Run = {
+  run_id: 1,
+  limit: 5,
+  status: "running",
+  summary: "",
+  started_at: "2026-10-19T09:00:00+00:00",
+  finished_at: null,
+  todos: [{ text: "CLM-1001, trip delay", status: "in_progress" }],
+};
+
+it("shows no run panel before the first run", async () => {
+  mockApi({ "GET /api/claims": CLAIMS, "GET /api/runs/latest": null });
+  render(<Queue />);
+  await screen.findByText("CLM-1001", { selector: "a" });
+  expect(screen.queryByText("Current run")).toBeNull();
+});
+
+it("shows the latest run and its to-do list", async () => {
+  mockApi({ "GET /api/claims": CLAIMS, "GET /api/runs/latest": RUN });
+  render(<Queue />);
+  expect(await screen.findByText("Current run")).toBeDefined();
+  expect(screen.getByText("CLM-1001, trip delay")).toBeDefined();
+});
+
+it("does not start another run while one is running", async () => {
+  mockApi({ "GET /api/claims": CLAIMS, "GET /api/runs/latest": RUN });
+  render(<Queue />);
+  await screen.findByText("Current run");
+  for (const name of ["Run agent on all waiting claims", "Run trial"]) {
+    expect(screen.getByRole("button", { name }).hasAttribute("disabled")).toBe(
+      true,
+    );
+  }
+});
+
+it("runs a trial of the number of claims chosen", async () => {
+  const fetchMock = mockApi({
+    "GET /api/claims": CLAIMS,
+    "POST /api/queue/run": { run_id: 1 },
+  });
+  render(<Queue />);
+  const box = await screen.findByLabelText("Claims in a trial");
+  expect((box as HTMLInputElement).value).toBe("5");
+  fireEvent.change(box, { target: { value: "2" } });
+  fireEvent.click(screen.getByRole("button", { name: "Run trial" }));
+  expect(fetchMock).toHaveBeenCalledWith("/api/queue/run", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ limit: 2 }),
+  });
+});
+
+it("counts the claims that need a handler", async () => {
+  mockApi({
+    "GET /api/claims": [claim("CLM-1006", { status: "needs_handler" })],
+  });
+  render(<Queue />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Needs a handler 1" }),
+  );
+  const row = screen.getByRole("row", { name: /CLM-1006/ });
+  expect(within(row).getByText("Needs a handler").className).toContain(
+    "chip-needs_handler",
+  );
 });
 
 it("has no run buttons when nothing is waiting", async () => {

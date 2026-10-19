@@ -5,6 +5,7 @@ const KIND_LABELS: Record<Step["kind"], string> = {
   tool_call: "Tool call",
   tool_result: "Result",
   message: "Message",
+  read: "Read",
   error: "Error",
 };
 
@@ -22,5 +23,21 @@ export function Steps({ steps }: Readonly<{ steps: Step[] }>) {
         </li>
       ))}
     </ol>
+  );
+}
+
+/** The sections of the wording and the manual that the agent read. */
+export function Reads({ steps }: Readonly<{ steps: Step[] }>) {
+  const reads = steps.filter((step) => step.kind === "read");
+  if (reads.length === 0) return null;
+  return (
+    <section className="panel">
+      <h2>What the agent read</h2>
+      <ul className="history">
+        {reads.map((read) => (
+          <li key={read.id}>{read.text}</li>
+        ))}
+      </ul>
+    </section>
   );
 }

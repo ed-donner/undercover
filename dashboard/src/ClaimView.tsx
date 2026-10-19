@@ -5,7 +5,7 @@ import { loadClaimPage, settled } from "./claimPage";
 import { claimType, dateText, money, OUTCOME_LABELS } from "./format";
 import { SignOffPanel } from "./SignOffPanel";
 import { StatusChip } from "./StatusChip";
-import { Steps } from "./Steps";
+import { Reads, Steps } from "./Steps";
 import type { ClaimDetail } from "./types";
 import { usePolled } from "./usePolled";
 
@@ -95,7 +95,17 @@ export function ClaimView({ id }: Readonly<{ id: string }>) {
         {claim.status === "waiting_for_sign_off" && (
           <SignOffPanel claim={claim} onSignedOff={reload} />
         )}
+        {claim.status === "needs_handler" && (
+          <section className="panel">
+            <h2>Needs a handler</h2>
+            <p>
+              The agent could not finish this claim after two tries. A handler
+              needs to work it.
+            </p>
+          </section>
+        )}
         <Outcome claim={claim} />
+        <Reads steps={steps} />
         <section className="panel">
           <h2>What the agent did</h2>
           <Steps steps={steps} />

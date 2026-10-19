@@ -45,7 +45,7 @@ Every operation has an `operation_id`, a one-line docstring and no optional inpu
 | GET `/api/documents/{document}/sections/{number}` | `read_section` | One section's text, heading first; 404 if it does not exist |
 | GET `/api/instructions` | `get_instructions` | Changed: returns the queue agent's and the claim agent's instructions |
 | POST `/api/runs` | `start_run` | Takes `limit` (a whole number, at least 1) and starts a run record; 409 if a run is already running |
-| GET `/api/runs/latest` | `get_latest_run` | The latest run: limit, status, summary and to-do list; 404 if there has been none |
+| GET `/api/runs/latest` | `get_latest_run` | The latest run: limit, status, summary and to-do list; null if there has been none (a 404 would show as an error in the browser console) |
 | PUT `/api/runs/{run_id}/todos` | `write_todos` | Replaces the run's to-do list with the given items (text and status) |
 | POST `/api/runs/{run_id}/claims/{claim_id}` | `take_claim` | Hands a waiting claim to the run; 409 if the claim is not waiting or the run has already taken `limit` different claims |
 | GET `/api/runs/{run_id}/missed` | `list_missed_claims` | Waiting claims the run could still take within its cap; empty means nothing was missed |
@@ -188,14 +188,14 @@ Shows the run, the new status and what the agent read. After the backend because
 
 Success criteria:
 
-- [ ] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with 80% coverage
-- [ ] Vitest tests with a mocked `fetch` cover: the run panel with a list in each of the four item states, no panel before the first run, the summary on a finished run, the trial box sending its number, the run-all button sending the waiting count, the Needs a handler chip and count, the read panel, and the instructions page with both texts
-- [ ] With `npm run dev` and a run put in place with `curl` (`start_run`, `write_todos` with one item in each state), the Playwright MCP server shows the list on `http://localhost:5173/` in light and in dark mode; the chips are readable and use the brand colors
-- [ ] Changing an item with `curl` updates the page within the 3-second poll, without a reload
-- [ ] A claim put through `start_claim` and two `fail_claim` calls shows Needs a handler in the queue and on its page, and the filter finds it
-- [ ] A claim page with `read` steps shows the "What the agent read" panel
-- [ ] The queue page and the claim page have no horizontal scroll at 1280 and 390 pixels wide, and no console errors
-- [ ] Committed, with the pre-commit hook passing
+- [x] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with 80% coverage
+- [x] Vitest tests with a mocked `fetch` cover: the run panel with a list in each of the four item states, no panel before the first run, the summary on a finished run, the trial box sending its number, the run-all button sending the waiting count, the Needs a handler chip and count, the read panel, and the instructions page with both texts
+- [x] With `npm run dev` and a run put in place with `curl` (`start_run`, `write_todos` with one item in each state), the Playwright MCP server shows the list on `http://localhost:5173/` in light and in dark mode; the chips are readable and use the brand colors
+- [x] Changing an item with `curl` updates the page within the 3-second poll, without a reload
+- [x] A claim put through `start_claim` and two `fail_claim` calls shows Needs a handler in the queue and on its page, and the filter finds it
+- [x] A claim page with `read` steps shows the "What the agent read" panel
+- [x] The queue page and the claim page have no horizontal scroll at 1280 and 390 pixels wide, and no console errors
+- [x] Committed, with the pre-commit hook passing
 
 ## Phase 6: End-to-end tests, a live run and the documents
 

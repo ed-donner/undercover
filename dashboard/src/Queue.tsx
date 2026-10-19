@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { listClaims, runClaim, runQueue } from "./api";
+import { getLatestRun, listClaims, runClaim, runQueue } from "./api";
 import {
   claimType,
   decisionText,
@@ -7,6 +7,7 @@ import {
   STATUS_LABELS,
   STATUSES,
 } from "./format";
+import { RunPanel } from "./RunPanel";
 import { StatusChip } from "./StatusChip";
 import type { Status } from "./types";
 import { usePolled } from "./usePolled";
@@ -15,6 +16,8 @@ const REFRESH_MS = 3000;
 
 export function Queue() {
   const { data: claims, error, reload } = usePolled(listClaims, REFRESH_MS);
+  const { data: run } = usePolled(getLatestRun, REFRESH_MS);
+  const [trial, setTrial] = useState(5);
   const [filter, setFilter] = useState<Status | "all">("all");
   const [failed, setFailed] = useState(false);
 
@@ -33,6 +36,7 @@ export function Queue() {
       ? claims
       : claims.filter((claim) => claim.status === filter);
 
+  const running = run?.status === "running";
   const start = (action: () => Promise<unknown>) => {
     setFailed(false);
     action()
@@ -46,16 +50,38 @@ export function Queue() {
     <>
       <div className="toolbar">
         <h1>Claims queue</h1>
-        <button
-          className="primary"
-          disabled={count("waiting") === 0}
-          onClick={() => {
-            start(() => runQueue(count("waiting")));
-          }}
-        >
-          Run agent on all waiting claims
-        </button>
+        <div className="row">
+          <label className="trial">
+            Claims in a trial
+            <input
+              type="number"
+              min={1}
+              value={trial}
+              onChange={(event) => {
+                setTrial(Number(event.target.value));
+              }}
+            />
+          </label>
+          <button
+            disabled={count("waiting") === 0 || running || trial < 1}
+            onClick={() => {
+              start(() => runQueue(trial));
+            }}
+          >
+            Run trial
+          </button>
+          <button
+            className="primary"
+            disabled={count("waiting") === 0 || running}
+            onClick={() => {
+              start(() => runQueue(count("waiting")));
+            }}
+          >
+            Run agent on all waiting claims
+          </button>
+        </div>
       </div>
+      {run && <RunPanel run={run} />}
       {failed && (
         <p role="alert" className="alert">
           The agent could not be started.
