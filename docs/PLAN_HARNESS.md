@@ -207,16 +207,16 @@ Proves the whole thing without a model, runs it once with the real one, and brin
 
 Success criteria:
 
-- [ ] `npm run e2e` passes, still on its own ports and database, and does not change `backend/undercover.db`
-- [ ] The e2e test for the cap fails if I temporarily remove the cap check from `take_claim` (checked once, then restored; not committed)
-- [ ] **Live**: after a reseed, a run capped at 5 on `deepseek/deepseek-v4.1-flash` works 5 claims on its own; 20 claims are still waiting; the run ends with a summary
-- [ ] **Live**: in the browser I see the to-do list fill in and get ticked off, and each of the 5 claims shows its steps and "What the agent read"; I report what the agent read on a few claims and whether it looked in the manual
-- [ ] **Live**: no claim is left in progress, no claim has two decisions or two payments, and any payout over $1,000 is held for sign-off (checked through the API)
-- [ ] I report the live run's cost and time, any failures and retries that happened, and what was wrong with its decisions that I can see without `data/evals/`. Accuracy against the handlers is not measured here
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is, and every box in this file is ticked
-- [ ] `npm run check` passes, including ruff, pyright, pytest at 80% or better, Prettier, ESLint, tsc, vitest at 80% or better and Playwright, and I report the output
-- [ ] `git status` shows no stray files (no database, no `test-results`)
-- [ ] Committed, with the pre-commit hook passing. Nothing is pushed
+- [x] `npm run e2e` passes, still on its own ports and database, and does not change `backend/undercover.db`
+- [x] The e2e test for the cap fails if I temporarily remove the cap check from `take_claim` (checked once, then restored; not committed)
+- [x] **Live**: after a reseed, a run capped at 5 on `deepseek/deepseek-v4.1-flash` works 5 claims on its own; 20 claims are still waiting; the run ends with a summary
+- [x] **Live**: in the browser I see the to-do list fill in and get ticked off, and each of the 5 claims shows its steps and "What the agent read"; I report what the agent read on a few claims and whether it looked in the manual
+- [x] **Live**: no claim is left in progress, no claim has two decisions or two payments, and any payout over $1,000 is held for sign-off (checked through the API)
+- [x] I report the live run's time (cost is not measured: the pilot has no token or cost record), any failures and retries that happened, and what was wrong with its decisions that I can see without `data/evals/`. Accuracy against the handlers is not measured here
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is, and every box in this file is ticked
+- [x] `npm run check` passes, including ruff, pyright, pytest at 80% or better, Prettier, ESLint, tsc, vitest at 80% or better and Playwright, and I report the output
+- [x] `git status` shows no stray files (no database, no `test-results`)
+- [x] Committed, with the pre-commit hook passing. Nothing is pushed
 
 ## Not in this build
 
