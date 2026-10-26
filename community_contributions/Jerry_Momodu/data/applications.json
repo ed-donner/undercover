@@ -1,0 +1,1708 @@
+[
+  {
+    "application_id": "APP-5001",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 10000,
+    "term_months": 36,
+    "purpose": "home improvements",
+    "story": "I want to replace the windows in my house before winter.",
+    "applicant": {
+      "name": "Maya Patel",
+      "age": 34,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Northwind Logistics",
+      "months_in_current_job_or_business": 52,
+      "stated_annual_income": 72000
+    },
+    "credit_file": {
+      "credit_score": 720,
+      "existing_monthly_debt_payments": 400,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Maya Patel, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Northwind Logistics payslips for Maya Patel, July to September 2026. Annual salary $72,000, paid monthly at $6,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Maya Patel, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5002",
+    "applied_on": "2026-10-01",
+    "product": "car",
+    "amount_requested": 25000,
+    "term_months": 60,
+    "purpose": "car purchase",
+    "story": "Buying a two-year-old SUV from a dealer to replace my old car.",
+    "applicant": {
+      "name": "Daniel Okafor",
+      "age": 41,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Harbor Health",
+      "months_in_current_job_or_business": 96,
+      "stated_annual_income": 95000
+    },
+    "credit_file": {
+      "credit_score": 760,
+      "existing_monthly_debt_payments": 600,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Daniel Okafor, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Harbor Health payslips for Daniel Okafor, July to September 2026. Annual salary $95,000, paid monthly at $7,916.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Daniel Okafor, July to September 2026. Regular salary or business deposits, rent and household spending."
+      },
+      {
+        "type": "vehicle_quote",
+        "name": "Vehicle quote",
+        "content": "Dealer quote for a 2024 Toyota RAV4. Price $27,000 including taxes and fees."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5003",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 6000,
+    "term_months": 36,
+    "purpose": "debt consolidation",
+    "story": "I want to pay off two credit cards with one loan.",
+    "applicant": {
+      "name": "Lena Fischer",
+      "age": 29,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "City Bakery",
+      "months_in_current_job_or_business": 30,
+      "stated_annual_income": 41000
+    },
+    "credit_file": {
+      "credit_score": 560,
+      "existing_monthly_debt_payments": 350,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Lena Fischer, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "City Bakery payslips for Lena Fischer, July to September 2026. Annual salary $41,000, paid monthly at $3,416.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Lena Fischer, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5004",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 8000,
+    "term_months": 36,
+    "purpose": "medical bills",
+    "story": "I have some medical bills from earlier this year to pay off.",
+    "applicant": {
+      "name": "Marcus Reed",
+      "age": 45,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Reed Plumbing Supply",
+      "months_in_current_job_or_business": 70,
+      "stated_annual_income": 58000
+    },
+    "credit_file": {
+      "credit_score": 650,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": "2025-12-10"
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Marcus Reed, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Reed Plumbing Supply payslips for Marcus Reed, July to September 2026. Annual salary $58,000, paid monthly at $4,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Marcus Reed, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5005",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 7500,
+    "term_months": 24,
+    "purpose": "wedding",
+    "story": "Paying for part of my wedding next spring.",
+    "applicant": {
+      "name": "Priya Shah",
+      "age": 31,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Bluefin Software",
+      "months_in_current_job_or_business": 40,
+      "stated_annual_income": 88000
+    },
+    "credit_file": {
+      "credit_score": 735,
+      "existing_monthly_debt_payments": 200,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Priya Shah, valid until 2030."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Priya Shah, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5006",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 20000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "Renovating the kitchen.",
+    "applicant": {
+      "name": "Tom Becker",
+      "age": 38,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Becker & Sons Roofing",
+      "months_in_current_job_or_business": 60,
+      "stated_annual_income": 48000
+    },
+    "credit_file": {
+      "credit_score": 650,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Tom Becker, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Becker & Sons Roofing payslips for Tom Becker, July to September 2026. Annual salary $48,000, paid monthly at $4,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Tom Becker, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5007",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 15000,
+    "term_months": 36,
+    "purpose": "debt consolidation",
+    "story": "Consolidating a car loan and a store card.",
+    "applicant": {
+      "name": "Aisha Bello",
+      "age": 36,
+      "residency": "permanent_resident",
+      "employment_type": "employee",
+      "employer": "Greenway Schools",
+      "months_in_current_job_or_business": 84,
+      "stated_annual_income": 60000
+    },
+    "credit_file": {
+      "credit_score": 700,
+      "existing_monthly_debt_payments": 1600,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Aisha Bello, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Greenway Schools payslips for Aisha Bello, July to September 2026. Annual salary $60,000, paid monthly at $5,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Aisha Bello, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5008",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 8000,
+    "term_months": 24,
+    "purpose": "vacation",
+    "story": "A family trip to Japan.",
+    "applicant": {
+      "name": "Kevin Liu",
+      "age": 27,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Metro Transit",
+      "months_in_current_job_or_business": 26,
+      "stated_annual_income": 36000
+    },
+    "credit_file": {
+      "credit_score": 690,
+      "existing_monthly_debt_payments": 1180,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Kevin Liu, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Metro Transit payslips for Kevin Liu, July to September 2026. Annual salary $36,000, paid monthly at $3,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Kevin Liu, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5009",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 12000,
+    "term_months": 36,
+    "purpose": "furniture",
+    "story": "Furnishing a new apartment.",
+    "applicant": {
+      "name": "Sofia Romano",
+      "age": 33,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Romano Interiors",
+      "months_in_current_job_or_business": 44,
+      "stated_annual_income": 85000
+    },
+    "credit_file": {
+      "credit_score": 710,
+      "existing_monthly_debt_payments": 500,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Sofia Romano, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Romano Interiors payslips for Sofia Romano, July to September 2026. Annual salary $70,000, paid monthly at $5,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Sofia Romano, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5010",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 32000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "Adding a deck and redoing the bathroom.",
+    "applicant": {
+      "name": "James Carter",
+      "age": 47,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Carter Engineering",
+      "months_in_current_job_or_business": 120,
+      "stated_annual_income": 66000
+    },
+    "credit_file": {
+      "credit_score": 745,
+      "existing_monthly_debt_payments": 900,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for James Carter, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Carter Engineering payslips for James Carter, July to September 2026. Annual salary $62,000, paid monthly at $5,166.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for James Carter, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5011",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 26000,
+    "term_months": 36,
+    "purpose": "home improvements",
+    "story": "New roof and gutters on our house.",
+    "applicant": {
+      "name": "Elena Petrova",
+      "age": 39,
+      "residency": "citizen",
+      "employment_type": "self_employed",
+      "employer": "Petrova Design (own business)",
+      "months_in_current_job_or_business": 30,
+      "stated_annual_income": 66000
+    },
+    "credit_file": {
+      "credit_score": 710,
+      "existing_monthly_debt_payments": 500,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Elena Petrova, valid until 2030."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2024",
+        "content": "Tax return for Elena Petrova, tax year 2024. Net business income $54,000."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2025",
+        "content": "Tax return for Elena Petrova, tax year 2025. Net business income $66,000."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Elena Petrova, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5012",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 10000,
+    "term_months": 36,
+    "purpose": "equipment",
+    "story": "Buying a new laptop and camera kit for my photography.",
+    "applicant": {
+      "name": "Ryan Murphy",
+      "age": 28,
+      "residency": "citizen",
+      "employment_type": "self_employed",
+      "employer": "Murphy Photo (own business)",
+      "months_in_current_job_or_business": 18,
+      "stated_annual_income": 52000
+    },
+    "credit_file": {
+      "credit_score": 705,
+      "existing_monthly_debt_payments": 250,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ryan Murphy, valid until 2030."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2024",
+        "content": "Tax return for Ryan Murphy, tax year 2024. Net business income $40,000."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2025",
+        "content": "Tax return for Ryan Murphy, tax year 2025. Net business income $52,000."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ryan Murphy, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5013",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 4000,
+    "term_months": 24,
+    "purpose": "car repairs",
+    "story": "My car needs a new transmission.",
+    "applicant": {
+      "name": "Grace Kim",
+      "age": 25,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Sunrise Diner",
+      "months_in_current_job_or_business": 22,
+      "stated_annual_income": 34000
+    },
+    "credit_file": {
+      "credit_score": 600,
+      "existing_monthly_debt_payments": 150,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Grace Kim, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Sunrise Diner payslips for Grace Kim, July to September 2026. Annual salary $34,000, paid monthly at $2,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Grace Kim, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5014",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 9000,
+    "term_months": 36,
+    "purpose": "relocation",
+    "story": "Moving costs for my new job in Denver.",
+    "applicant": {
+      "name": "Arjun Mehta",
+      "age": 30,
+      "residency": "temporary_resident",
+      "employment_type": "employee",
+      "employer": "Summit Analytics",
+      "months_in_current_job_or_business": 14,
+      "stated_annual_income": 110000
+    },
+    "credit_file": {
+      "credit_score": 740,
+      "existing_monthly_debt_payments": 0,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Arjun Mehta, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Summit Analytics payslips for Arjun Mehta, July to September 2026. Annual salary $110,000, paid monthly at $9,166.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Arjun Mehta, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5015",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 15000,
+    "term_months": 36,
+    "purpose": "cryptocurrency",
+    "story": "I want to buy more Bitcoin while the price is low.",
+    "applicant": {
+      "name": "Nathan Cole",
+      "age": 35,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Cole Freight",
+      "months_in_current_job_or_business": 58,
+      "stated_annual_income": 90000
+    },
+    "credit_file": {
+      "credit_score": 780,
+      "existing_monthly_debt_payments": 400,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Nathan Cole, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Cole Freight payslips for Nathan Cole, July to September 2026. Annual salary $90,000, paid monthly at $7,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Nathan Cole, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5016",
+    "applied_on": "2026-10-01",
+    "product": "car",
+    "amount_requested": 30000,
+    "term_months": 60,
+    "purpose": "car purchase",
+    "story": "Buying a used hatchback from a dealer.",
+    "applicant": {
+      "name": "Hannah Weber",
+      "age": 32,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Weber Dental",
+      "months_in_current_job_or_business": 48,
+      "stated_annual_income": 80000
+    },
+    "credit_file": {
+      "credit_score": 730,
+      "existing_monthly_debt_payments": 400,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Hannah Weber, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Weber Dental payslips for Hannah Weber, July to September 2026. Annual salary $80,000, paid monthly at $6,666.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Hannah Weber, July to September 2026. Regular salary or business deposits, rent and household spending."
+      },
+      {
+        "type": "vehicle_quote",
+        "name": "Vehicle quote",
+        "content": "Dealer quote for a 2023 Honda Civic. Price $24,000 including taxes and fees."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5017",
+    "applied_on": "2026-10-01",
+    "product": "car",
+    "amount_requested": 18000,
+    "term_months": 60,
+    "purpose": "car purchase",
+    "story": "Buying a pickup truck for my commute.",
+    "applicant": {
+      "name": "Luis Garcia",
+      "age": 44,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Garcia Landscaping Co",
+      "months_in_current_job_or_business": 90,
+      "stated_annual_income": 75000
+    },
+    "credit_file": {
+      "credit_score": 725,
+      "existing_monthly_debt_payments": 500,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Luis Garcia, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Garcia Landscaping Co payslips for Luis Garcia, July to September 2026. Annual salary $75,000, paid monthly at $6,250.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Luis Garcia, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5018",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 5000,
+    "term_months": 24,
+    "purpose": "moving costs",
+    "story": "Moving to a bigger apartment.",
+    "applicant": {
+      "name": "Olivia Brown",
+      "age": 29,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Brown & Hart Law",
+      "months_in_current_job_or_business": 36,
+      "stated_annual_income": 68000
+    },
+    "credit_file": {
+      "credit_score": 700,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 3,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Olivia Brown, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Brown & Hart Law payslips for Olivia Brown, July to September 2026. Annual salary $68,000, paid monthly at $5,666.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Olivia Brown, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5019",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 6000,
+    "term_months": 36,
+    "purpose": "furniture",
+    "story": "Furnishing my first home.",
+    "applicant": {
+      "name": "Ethan Walsh",
+      "age": 26,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Walsh Media",
+      "months_in_current_job_or_business": 4,
+      "stated_annual_income": 62000
+    },
+    "credit_file": {
+      "credit_score": 715,
+      "existing_monthly_debt_payments": 200,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ethan Walsh, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Walsh Media payslips for Ethan Walsh, July to September 2026. Annual salary $62,000, paid monthly at $5,166.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ethan Walsh, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5020",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 10000,
+    "term_months": 36,
+    "purpose": "debt consolidation",
+    "story": "Combining two credit card balances.",
+    "applicant": {
+      "name": "Chloe Martin",
+      "age": 40,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Martin Consulting",
+      "months_in_current_job_or_business": 75,
+      "stated_annual_income": 60000
+    },
+    "credit_file": {
+      "credit_score": 745,
+      "existing_monthly_debt_payments": 1800,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Chloe Martin, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Martin Consulting payslips for Chloe Martin, July to September 2026. Annual salary $60,000, paid monthly at $5,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Chloe Martin, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5021",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 12000,
+    "term_months": 36,
+    "purpose": "home improvements",
+    "story": "Replacing the furnace. I have no other loans or debts.",
+    "applicant": {
+      "name": "Ben Turner",
+      "age": 37,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Turner Electric",
+      "months_in_current_job_or_business": 64,
+      "stated_annual_income": 70000
+    },
+    "credit_file": {
+      "credit_score": 705,
+      "existing_monthly_debt_payments": 0,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ben Turner, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Turner Electric payslips for Ben Turner, July to September 2026. Annual salary $70,000, paid monthly at $5,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ben Turner, July to September 2026. Regular salary or business deposits, rent and household spending. A payment of $650 goes to QuickCash Loans on the 3rd of every month."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5022",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 5000,
+    "term_months": 24,
+    "purpose": "vacation",
+    "story": "A trip to Italy for our anniversary.",
+    "applicant": {
+      "name": "Zoe Adams",
+      "age": 50,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Adams Pharmacy",
+      "months_in_current_job_or_business": 150,
+      "stated_annual_income": 82000
+    },
+    "credit_file": {
+      "credit_score": 770,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Zoe Adams, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Adams Pharmacy payslips for Zoe Adams, July to September 2026. Annual salary $82,000, paid monthly at $6,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Zoe Adams, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5023",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 9000,
+    "term_months": 36,
+    "purpose": "car repairs",
+    "story": "Fixing my car and catching up on a few bills.",
+    "applicant": {
+      "name": "Samuel Ortiz",
+      "age": 43,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Ortiz Auto Body",
+      "months_in_current_job_or_business": 80,
+      "stated_annual_income": 54000
+    },
+    "credit_file": {
+      "credit_score": 640,
+      "existing_monthly_debt_payments": 350,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": "2024-03-15"
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Samuel Ortiz, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Ortiz Auto Body payslips for Samuel Ortiz, July to September 2026. Annual salary $54,000, paid monthly at $4,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Samuel Ortiz, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5024",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 50000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "A full basement renovation.",
+    "applicant": {
+      "name": "Isabella Rossi",
+      "age": 52,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Rossi Architects",
+      "months_in_current_job_or_business": 200,
+      "stated_annual_income": 150000
+    },
+    "credit_file": {
+      "credit_score": 780,
+      "existing_monthly_debt_payments": 1000,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Isabella Rossi, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Rossi Architects payslips for Isabella Rossi, July to September 2026. Annual salary $150,000, paid monthly at $12,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Isabella Rossi, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5025",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 7000,
+    "term_months": 36,
+    "purpose": "medical bills",
+    "story": "Paying for dental work.",
+    "applicant": {
+      "name": "Noah Jensen",
+      "age": 36,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Jensen Hardware",
+      "months_in_current_job_or_business": 55,
+      "stated_annual_income": 57000
+    },
+    "credit_file": {
+      "credit_score": 690,
+      "existing_monthly_debt_payments": 450,
+      "missed_payments_last_12_months": 2,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Noah Jensen, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Jensen Hardware payslips for Noah Jensen, July to September 2026. Annual salary $57,000, paid monthly at $4,750.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Noah Jensen, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5026",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 18000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "Finishing the attic as a home office.",
+    "applicant": {
+      "name": "Ava Thompson",
+      "age": 35,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Thompson Realty",
+      "months_in_current_job_or_business": 40,
+      "stated_annual_income": 54000
+    },
+    "credit_file": {
+      "credit_score": 660,
+      "existing_monthly_debt_payments": 1550,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ava Thompson, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Thompson Realty payslips for Ava Thompson, July to September 2026. Annual salary $54,000, paid monthly at $4,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ava Thompson, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5027",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 20000,
+    "term_months": 36,
+    "purpose": "debt consolidation",
+    "story": "Paying off a personal loan and a credit card.",
+    "applicant": {
+      "name": "Leo Nguyen",
+      "age": 33,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Nguyen Dental Lab",
+      "months_in_current_job_or_business": 58,
+      "stated_annual_income": 72000
+    },
+    "credit_file": {
+      "credit_score": 700,
+      "existing_monthly_debt_payments": 1972,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Leo Nguyen, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Nguyen Dental Lab payslips for Leo Nguyen, July to September 2026. Annual salary $72,000, paid monthly at $6,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Leo Nguyen, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5028",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 15000,
+    "term_months": 36,
+    "purpose": "furniture",
+    "story": "Furnishing our new house.",
+    "applicant": {
+      "name": "Mia Clarke",
+      "age": 42,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Clarke Accounting",
+      "months_in_current_job_or_business": 110,
+      "stated_annual_income": 60000
+    },
+    "credit_file": {
+      "credit_score": 739,
+      "existing_monthly_debt_payments": 1650,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Mia Clarke, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Clarke Accounting payslips for Mia Clarke, July to September 2026. Annual salary $60,000, paid monthly at $5,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Mia Clarke, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5029",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 6000,
+    "term_months": 24,
+    "purpose": "car repairs",
+    "story": "New tires and brakes, and a clutch.",
+    "applicant": {
+      "name": "Owen Price",
+      "age": 24,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Price Hardware",
+      "months_in_current_job_or_business": 28,
+      "stated_annual_income": 40000
+    },
+    "credit_file": {
+      "credit_score": 620,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Owen Price, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Price Hardware payslips for Owen Price, July to September 2026. Annual salary $40,000, paid monthly at $3,333.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Owen Price, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5030",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 10000,
+    "term_months": 36,
+    "purpose": "wedding",
+    "story": "Paying for our wedding reception.",
+    "applicant": {
+      "name": "Ruby Hall",
+      "age": 30,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Hall Events",
+      "months_in_current_job_or_business": 45,
+      "stated_annual_income": 66000
+    },
+    "credit_file": {
+      "credit_score": 700,
+      "existing_monthly_debt_payments": 500,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ruby Hall, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Hall Events payslips for Ruby Hall, July to September 2026. Annual salary $60,000, paid monthly at $5,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ruby Hall, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5031",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 9000,
+    "term_months": 36,
+    "purpose": "home improvements",
+    "story": "Replacing the fence and the patio.",
+    "applicant": {
+      "name": "Felix Wright",
+      "age": 39,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Wright Machining",
+      "months_in_current_job_or_business": 66,
+      "stated_annual_income": 75000
+    },
+    "credit_file": {
+      "credit_score": 720,
+      "existing_monthly_debt_payments": 400,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Felix Wright, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Wright Machining payslips for Felix Wright, July to September 2026. Annual salary $68,000, paid monthly at $5,666.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Felix Wright, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5032",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 12000,
+    "term_months": 36,
+    "purpose": "home improvements",
+    "story": "Replacing the windows and the front door of my house.",
+    "applicant": {
+      "name": "Nora Evans",
+      "age": 46,
+      "residency": "citizen",
+      "employment_type": "self_employed",
+      "employer": "Evans Pottery (own business)",
+      "months_in_current_job_or_business": 24,
+      "stated_annual_income": 58000
+    },
+    "credit_file": {
+      "credit_score": 725,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Nora Evans, valid until 2030."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2025",
+        "content": "Tax return for Nora Evans, tax year 2025. Net business income $58,000."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Nora Evans, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5033",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 5000,
+    "term_months": 36,
+    "purpose": "medical bills",
+    "story": "Paying for physiotherapy after a sports injury.",
+    "applicant": {
+      "name": "Isaac Hughes",
+      "age": 48,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Hughes Freight",
+      "months_in_current_job_or_business": 88,
+      "stated_annual_income": 50000
+    },
+    "credit_file": {
+      "credit_score": 640,
+      "existing_monthly_debt_payments": 200,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": "2024-10-01"
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Isaac Hughes, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Hughes Freight payslips for Isaac Hughes, July to September 2026. Annual salary $50,000, paid monthly at $4,166.67 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Isaac Hughes, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5034",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 4000,
+    "term_months": 24,
+    "purpose": "moving costs",
+    "story": "Moving across the state for my partner's new job.",
+    "applicant": {
+      "name": "Ella Price",
+      "age": 37,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Lakeside Clinic",
+      "months_in_current_job_or_business": 50,
+      "stated_annual_income": 52000
+    },
+    "credit_file": {
+      "credit_score": 690,
+      "existing_monthly_debt_payments": 250,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": "2024-11-15"
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ella Price, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Lakeside Clinic payslips for Ella Price, July to September 2026. Annual salary $52,000, paid monthly at $4,333.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ella Price, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5035",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 3000,
+    "term_months": 24,
+    "purpose": "car repairs",
+    "story": "My car failed its inspection.",
+    "applicant": {
+      "name": "Jack Morris",
+      "age": 32,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Morris Storage",
+      "months_in_current_job_or_business": 20,
+      "stated_annual_income": 38000
+    },
+    "credit_file": {
+      "credit_score": 570,
+      "existing_monthly_debt_payments": 200,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Jack Morris, valid until 2030."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Jack Morris, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5036",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 7000,
+    "term_months": 24,
+    "purpose": "inventory for my online shop",
+    "story": "I sell handmade candles online alongside my day job and need to buy wax and jars in bulk for the holiday season.",
+    "applicant": {
+      "name": "Lily Foster",
+      "age": 29,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Foster Pediatrics",
+      "months_in_current_job_or_business": 34,
+      "stated_annual_income": 61000
+    },
+    "credit_file": {
+      "credit_score": 735,
+      "existing_monthly_debt_payments": 200,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Lily Foster, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Foster Pediatrics payslips for Lily Foster, July to September 2026. Annual salary $61,000, paid monthly at $5,083.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Lily Foster, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5037",
+    "applied_on": "2026-10-01",
+    "product": "car",
+    "amount_requested": 9000,
+    "term_months": 60,
+    "purpose": "car purchase",
+    "story": "Buying an older car to get to work.",
+    "applicant": {
+      "name": "Caleb Ward",
+      "age": 23,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Ward Warehouse",
+      "months_in_current_job_or_business": 18,
+      "stated_annual_income": 30000
+    },
+    "credit_file": {
+      "credit_score": 650,
+      "existing_monthly_debt_payments": 900,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Caleb Ward, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Ward Warehouse payslips for Caleb Ward, July to September 2026. Annual salary $30,000, paid monthly at $2,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Caleb Ward, July to September 2026. Regular salary or business deposits, rent and household spending."
+      },
+      {
+        "type": "vehicle_quote",
+        "name": "Vehicle quote",
+        "content": "Dealer quote for a 2016 Ford Focus. Price $9,000 including taxes and fees."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5038",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 30000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "Solar panels and a new water heater.",
+    "applicant": {
+      "name": "Emma Scott",
+      "age": 41,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Scott Engineering",
+      "months_in_current_job_or_business": 72,
+      "stated_annual_income": 65000
+    },
+    "credit_file": {
+      "credit_score": 690,
+      "existing_monthly_debt_payments": 400,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Emma Scott, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last six payslips",
+        "content": "Scott Engineering payslips for Emma Scott, July to September 2026. Paid every two weeks at $2,500.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Emma Scott, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5039",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 15000,
+    "term_months": 60,
+    "purpose": "home improvements",
+    "story": "Renovating the bathroom. Business has been great this year.",
+    "applicant": {
+      "name": "Victor Lee",
+      "age": 44,
+      "residency": "citizen",
+      "employment_type": "self_employed",
+      "employer": "Lee Contracting (own business)",
+      "months_in_current_job_or_business": 48,
+      "stated_annual_income": 90000
+    },
+    "credit_file": {
+      "credit_score": 730,
+      "existing_monthly_debt_payments": 600,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Victor Lee, valid until 2030."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2024",
+        "content": "Tax return for Victor Lee, tax year 2024. Net business income $30,000."
+      },
+      {
+        "type": "tax_return",
+        "name": "Tax return 2025",
+        "content": "Tax return for Victor Lee, tax year 2025. Net business income $90,000."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Victor Lee, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5040",
+    "applied_on": "2026-10-01",
+    "product": "car",
+    "amount_requested": 28000,
+    "term_months": 60,
+    "purpose": "car purchase",
+    "story": "Buying a new electric car.",
+    "applicant": {
+      "name": "Ivy Bennett",
+      "age": 38,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Bennett Pharmacy",
+      "months_in_current_job_or_business": 60,
+      "stated_annual_income": 60000
+    },
+    "credit_file": {
+      "credit_score": 740,
+      "existing_monthly_debt_payments": 1650,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Ivy Bennett, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Bennett Pharmacy payslips for Ivy Bennett, July to September 2026. Annual salary $60,000, paid monthly at $5,000.00 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Ivy Bennett, July to September 2026. Regular salary or business deposits, rent and household spending."
+      },
+      {
+        "type": "vehicle_quote",
+        "name": "Vehicle quote",
+        "content": "Dealer quote for a 2026 Hyundai Kona Electric. Price $26,000 including taxes and fees."
+      }
+    ]
+  },
+  {
+    "application_id": "APP-5041",
+    "applied_on": "2026-10-01",
+    "product": "personal",
+    "amount_requested": 8000,
+    "term_months": 36,
+    "purpose": "furniture",
+    "story": "Furnishing my apartment after moving for my new job.",
+    "applicant": {
+      "name": "Max Rivera",
+      "age": 27,
+      "residency": "citizen",
+      "employment_type": "employee",
+      "employer": "Rivera Biotech",
+      "months_in_current_job_or_business": 6,
+      "stated_annual_income": 58000
+    },
+    "credit_file": {
+      "credit_score": 710,
+      "existing_monthly_debt_payments": 300,
+      "missed_payments_last_12_months": 0,
+      "bankruptcy_discharged_on": null
+    },
+    "documents": [
+      {
+        "type": "id",
+        "name": "Driver's license",
+        "content": "State driver's license for Max Rivera, valid until 2030."
+      },
+      {
+        "type": "payslip",
+        "name": "Last three payslips",
+        "content": "Rivera Biotech payslips for Max Rivera, July to September 2026. Annual salary $58,000, paid monthly at $4,833.33 gross."
+      },
+      {
+        "type": "bank_statement",
+        "name": "Bank statement, three months",
+        "content": "Checking account for Max Rivera, July to September 2026. Regular salary or business deposits, rent and household spending."
+      }
+    ]
+  }
+]
