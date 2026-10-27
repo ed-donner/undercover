@@ -1,19 +1,14 @@
-import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
+import { ClaimPage } from "./pages/ClaimPage";
+import { QueuePage } from "./pages/QueuePage";
 
 export function App() {
-  const [status, setStatus] = useState("checking");
-
-  useEffect(() => {
-    void fetch("/api/health")
-      .then((response) => (response.ok ? "up" : "down"))
-      .catch(() => "down")
-      .then(setStatus);
-  }, []);
-
   return (
-    <main>
-      <h1>UnderCover</h1>
-      <p>Backend: {status}</p>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<QueuePage />} />
+        <Route path="/claims/:claimId" element={<ClaimPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

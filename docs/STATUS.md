@@ -6,7 +6,7 @@ Building the pilot from `docs/PLAN.md`.
 `get_agent_instructions` serves the agent's instructions (`backend/instructions.py`), read by both the agent and (from Phase 5) the dashboard.
 
 - `agent/`: `run(claim_id, thread_id)` fetches its instructions from the backend, then uses three tools — `get_claim`, `get_policy_wording`, `decide_claim` — each of which also records a step, so the backend's step log reflects exactly what the agent did. Checked against the real model on the 5 `tiny` sample claims: see `docs/PLAN.md` phase 3.
-- `dashboard/`: one page that shows whether the backend is up.
-- `e2e/`: one test of that page.
+- `dashboard/`: React Router, with `/` the claims queue (a table with status badges) and `/claims/:claimId` a claim's full page (story, items, policy, customer history, and — once decided — the decision). Brand fonts and colors from `docs/BRAND.md` apply globally, checked in light and dark mode.
+- `e2e/`: a smoke test that the queue page lists the claims.
 
-Still to build: the dashboard's queue, claim, and instructions pages.
+Still to build: running the agent from the dashboard with a live step log, the instructions page, and the sign-off/payment UI.

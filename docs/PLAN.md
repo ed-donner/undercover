@@ -74,10 +74,10 @@ Replace the hello-world tool with the three tools the agent needs, and a system 
 
 **Success criteria**
 
-- [ ] `npx vitest run --root dashboard --coverage` passes at 80% or above.
-- [ ] Queue page renders 25 rows with status badges (component test with mocked `fetch`).
-- [ ] Claim page renders a decided claim's decision, payout, and reason (component test with mocked `fetch`).
-- [ ] Checked in the browser (Playwright MCP): the queue and a claim page load, use the brand fonts and colors, and work in both light and dark mode.
+- [x] `npx vitest run --root dashboard --coverage` passes at 80% or above.
+- [x] Queue page renders 25 rows with status badges (component test with mocked `fetch`).
+- [x] Claim page renders a decided claim's decision, payout, and reason (component test with mocked `fetch`).
+- [x] Checked in the browser (Playwright MCP): the queue and a claim page load, use the brand fonts and colors, and work in both light and dark mode.
 
 ## Phase 5: Dashboard — instructions, and running the agent
 
