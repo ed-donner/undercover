@@ -41,13 +41,13 @@ The status machine and the rule that a payout over $1,000 blocks payment until a
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes, including:
-  - [ ] approving CLM-1001 at $420 moves it straight to `decided`.
-  - [ ] approving a claim at $1,200 moves it to `waiting for sign-off`, and `pay_claim` on it returns 409.
-  - [ ] `sign_off_claim` on that claim moves it to `decided`, after which `pay_claim` succeeds.
-  - [ ] `sign_off_claim` on a claim that isn't `waiting for sign-off` returns 409.
-  - [ ] `record_step` on a `waiting` claim moves it to `in progress` and appears in `list_claim_steps` in order.
-- [ ] Coverage for `backend/` stays at 80% or above (`uv run pytest --cov`).
+- [x] `uv run pytest backend -q` passes, including:
+  - [x] approving CLM-1001 at $420 moves it straight to `decided`.
+  - [x] approving a claim at $1,200 moves it to `waiting for sign-off`, and `pay_claim` on it returns 409.
+  - [x] `sign_off_claim` on that claim moves it to `decided`, after which `pay_claim` succeeds.
+  - [x] `sign_off_claim` on a claim that isn't `waiting for sign-off` returns 409.
+  - [x] `record_step` on a `waiting` claim moves it to `in progress` and appears in `list_claim_steps` in order.
+- [x] Coverage for `backend/` stays at 80% or above (`uv run pytest --cov`).
 
 ## Phase 3: The UnderCover Agent decides claims
 

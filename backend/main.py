@@ -1,19 +1,45 @@
 """The UnderCover backend."""
 
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-from backend import db
+from backend import data, db
 from backend.data import (
     CLAIM_IDS_BY_SUBMITTED_ON,
     CLAIMS,
     CUSTOMERS,
+    PAYOUT_APPROVAL_LIMIT,
     POLICIES,
     POLICY_WORDING,
 )
 
 app = FastAPI(title="UnderCover")
+
+
+class Decision(BaseModel):
+    decision: Literal["approve", "decline", "refer"]
+    payout: float
+    reason: str
+    policy_reference: str
+
+
+class Step(BaseModel):
+    text: str
+
+
+class SignOff(BaseModel):
+    handler_id: str
+
+
+class Payment(BaseModel):
+    amount: float
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 @app.get("/api/health", operation_id="health")
@@ -75,3 +101,109 @@ def get_claim(claim_id: str) -> dict[str, Any]:
 def get_policy_wording() -> dict[str, str]:
     """Return the full text of UnderCover's policy wording."""
     return {"policy_wording": POLICY_WORDING}
+
+
+@app.post("/api/claims/{claim_id}/decision", operation_id="decide_claim")
+def decide_claim(claim_id: str, decision: Decision) -> dict[str, Any]:
+    """Record a decision on a claim, approve, decline or refer."""
+    if claim_id not in CLAIMS:
+        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
+    over_limit = (
+        decision.decision == "approve" and decision.payout > PAYOUT_APPROVAL_LIMIT
+    )
+    status = "waiting for sign-off" if over_limit else "decided"
+    conn = db.connect()
+    conn.execute(
+        """UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?,
+           policy_reference = ?, decided_on = ?, over_approval_limit = ?
+           WHERE claim_id = ?""",
+        (
+            status,
+            decision.decision,
+            decision.payout,
+            decision.reason,
+            decision.policy_reference,
+            _now(),
+            int(over_limit),
+            claim_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+    return _claim_row(claim_id)
+
+
+@app.post("/api/claims/{claim_id}/steps", operation_id="record_step")
+def record_step(claim_id: str, step: Step) -> dict[str, Any]:
+    """Record one step of the agent's work on a claim."""
+    if claim_id not in CLAIMS:
+        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
+    conn = db.connect()
+    conn.execute(
+        "INSERT INTO claim_steps (claim_id, recorded_on, text) VALUES (?, ?, ?)",
+        (claim_id, _now(), step.text),
+    )
+    conn.execute(
+        "UPDATE claims SET status = 'in progress' "
+        "WHERE claim_id = ? AND status = 'waiting'",
+        (claim_id,),
+    )
+    conn.commit()
+    conn.close()
+    return {"claim_id": claim_id, "text": step.text}
+
+
+@app.get("/api/claims/{claim_id}/steps", operation_id="list_claim_steps")
+def list_claim_steps(claim_id: str) -> list[dict[str, Any]]:
+    """List a claim's steps, in the order they happened."""
+    if claim_id not in CLAIMS:
+        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
+    conn = db.connect()
+    rows = conn.execute(
+        "SELECT recorded_on, text FROM claim_steps WHERE claim_id = ? ORDER BY id",
+        (claim_id,),
+    ).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+@app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
+def sign_off_claim(claim_id: str, sign_off: SignOff) -> dict[str, Any]:
+    """Have a handler sign off an over-limit approved claim's payout."""
+    row = _claim_row(claim_id)
+    if row["status"] != "waiting for sign-off":
+        raise HTTPException(status_code=409, detail="Claim is not waiting for sign-off")
+    handler = data.handler(sign_off.handler_id)
+    if handler is None or not handler["can_approve_over_limit"]:
+        raise HTTPException(
+            status_code=409, detail="This handler cannot sign off this claim"
+        )
+    conn = db.connect()
+    conn.execute(
+        """UPDATE claims SET status = 'decided', signed_off_by = ?, signed_off_on = ?
+           WHERE claim_id = ?""",
+        (sign_off.handler_id, _now(), claim_id),
+    )
+    conn.commit()
+    conn.close()
+    return _claim_row(claim_id)
+
+
+@app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
+def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
+    """Pay a claim's approved payout, blocked until any required sign-off is given."""
+    row = _claim_row(claim_id)
+    if row["decision"] != "approve":
+        raise HTTPException(status_code=409, detail="Claim is not approved")
+    if row["over_approval_limit"] and row["signed_off_by"] is None:
+        raise HTTPException(
+            status_code=409, detail="Claim needs a handler's sign-off before payment"
+        )
+    conn = db.connect()
+    conn.execute(
+        "UPDATE claims SET paid_amount = ?, paid_on = ? WHERE claim_id = ?",
+        (payment.amount, _now(), claim_id),
+    )
+    conn.commit()
+    conn.close()
+    return _claim_row(claim_id)
