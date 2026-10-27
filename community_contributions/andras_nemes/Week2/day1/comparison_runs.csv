@@ -1,0 +1,10 @@
+experiment,run,accuracy,decision_accuracy,other_mistake_cost,wrongful_declines,llm_cost,mean_agent_seconds,mean_input_tokens
+Baseline,1,0.48,0.76,2227.21,1,0.007262755,5.0814,5931.04
+Baseline,2,0.48,0.72,2714.14,2,0.00484945,4.92812,6080.08
+Baseline,3,0.52,0.76,3439.42,0,0.00482961,5.24016,6069.32
+Full wording + payout tool,1,0.84,0.96,801.95,0,0.01231674,11.37216,10029.8
+Full wording + payout tool,2,0.72,0.84,518.99,0,0.009281405,10.27868,9252.0
+Full wording + payout tool,3,0.92,0.96,82.49,1,0.008797505,9.8946,9653.24
+Concise wording + payout tool,1,0.92,1.0,282.5,0,0.011587635,7.0718000000000005,7994.08
+Concise wording + payout tool,2,0.84,0.92,481.85000000000014,0,0.01030849,7.4828,7879.56
+Concise wording + payout tool,3,0.84,0.96,610.5,1,0.010125755,7.9686,7749.8
