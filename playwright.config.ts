@@ -3,6 +3,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "e2e",
   outputDir: "e2e/test-results",
+  globalSetup: "./e2e/globalSetup.ts",
   reporter: "list",
   use: { baseURL: "http://localhost:5173" },
   webServer: [

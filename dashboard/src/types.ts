@@ -82,3 +82,11 @@ export interface Step {
   recorded_on: string;
   text: string;
 }
+
+export interface Handler {
+  handler_id: string;
+  name: string;
+  role: string;
+  email: string;
+  can_approve_over_limit: boolean;
+}

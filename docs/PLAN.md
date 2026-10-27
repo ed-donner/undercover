@@ -100,10 +100,12 @@ Replace the hello-world tool with the three tools the agent needs, and a system 
 
 **Success criteria**
 
-- [ ] `npm run e2e` passes, covering:
-  - [ ] the queue shows a claim's status badge after that claim is set to each of the four statuses in turn.
-  - [ ] a decided claim's page shows its decision, payout, and reason.
-  - [ ] the instructions page shows the system prompt.
-  - [ ] an over-limit approved claim blocks "Release payment" until "Sign off" is used, then allows it.
-- [ ] `npm run check` passes in full (ruff, pyright, pytest ≥80%, Prettier, ESLint, tsc, vitest ≥80%, Playwright) with no thresholds lowered and no rules disabled.
-- [ ] `docs/STATUS.md` matches what's built.
+- [x] `npm run e2e` passes, covering:
+  - [x] the queue shows a claim's status badge after that claim is set to each of the four statuses in turn.
+  - [x] a decided claim's page shows its decision, payout, and reason.
+  - [x] the instructions page shows the system prompt.
+  - [x] an over-limit approved claim blocks "Release payment" until "Sign off" is used, then allows it.
+- [x] `npm run check` passes in full (ruff, pyright, pytest ≥80%, Prettier, ESLint, tsc, vitest ≥80%, Playwright) with no thresholds lowered and no rules disabled.
+- [x] `docs/STATUS.md` matches what's built.
+
+Along the way: the e2e tests weren't repeatable on a second run (a claim moved to `decided` by one run started the next run's "moves through the four states" test from the wrong state, since nothing in the app resets a claim backwards). Fixed with `e2e/globalSetup.ts`, which deletes the SQLite file before each `npm run e2e`/`npm run check` so every run starts from the same seeded queue. Also found and fixed that redeciding a claim left its old sign-off and payment on the row; `decide_claim` now clears `signed_off_by`, `signed_off_on`, `paid_amount`, and `paid_on` whenever a new decision is recorded.

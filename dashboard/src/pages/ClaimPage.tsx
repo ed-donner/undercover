@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { fetchClaim, fetchSteps, runAgent } from "../api";
+import { PaymentPanel } from "../components/PaymentPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import type { Claim, Step } from "../types";
 
@@ -104,6 +105,13 @@ export function ClaimPage() {
           <p>{claim.policy_reference}</p>
         </>
       )}
+
+      <PaymentPanel
+        claim={claim}
+        onUpdated={() => {
+          void fetchClaim(claim.claim_id).then(setClaim);
+        }}
+      />
     </main>
   );
 }

@@ -12,6 +12,7 @@ from backend.data import (
     CLAIM_IDS_BY_SUBMITTED_ON,
     CLAIMS,
     CUSTOMERS,
+    HANDLERS,
     PAYOUT_APPROVAL_LIMIT,
     POLICIES,
     POLICY_WORDING,
@@ -111,6 +112,12 @@ def get_agent_instructions() -> dict[str, str]:
     return {"instructions": AGENT_INSTRUCTIONS}
 
 
+@app.get("/api/handlers", operation_id="list_handlers")
+def list_handlers() -> list[dict[str, Any]]:
+    """List the claims handlers who can sign off an over-limit payout."""
+    return [h for h in HANDLERS if h["can_approve_over_limit"]]
+
+
 @app.post("/api/claims/{claim_id}/decision", operation_id="decide_claim")
 def decide_claim(claim_id: str, decision: Decision) -> dict[str, Any]:
     """Record a decision on a claim, approve, decline or refer."""
@@ -123,7 +130,9 @@ def decide_claim(claim_id: str, decision: Decision) -> dict[str, Any]:
     conn = db.connect()
     conn.execute(
         """UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?,
-           policy_reference = ?, decided_on = ?, over_approval_limit = ?
+           policy_reference = ?, decided_on = ?, over_approval_limit = ?,
+           signed_off_by = NULL, signed_off_on = NULL,
+           paid_amount = NULL, paid_on = NULL
            WHERE claim_id = ?""",
         (
             status,

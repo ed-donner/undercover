@@ -79,6 +79,35 @@ def test_decline_is_decided_and_unpayable(client):
     assert payment.status_code == 409
 
 
+def test_redeciding_a_claim_clears_its_sign_off_and_payment(client):
+    client.post(
+        "/api/claims/CLM-1001/decision",
+        json={
+            "decision": "approve",
+            "payout": 1200.0,
+            "reason": "Large emergency medical claim.",
+            "policy_reference": "Section 7",
+        },
+    )
+    client.post("/api/claims/CLM-1001/sign-off", json={"handler_id": "HND-01"})
+    client.post("/api/claims/CLM-1001/payment", json={"amount": 1200.0})
+
+    response = client.post(
+        "/api/claims/CLM-1001/decision",
+        json={
+            "decision": "approve",
+            "payout": 1300.0,
+            "reason": "Reassessed after new documents.",
+            "policy_reference": "Section 7",
+        },
+    )
+
+    claim = response.json()
+    assert claim["status"] == "waiting for sign-off"
+    assert claim["signed_off_by"] is None
+    assert claim["paid_amount"] is None
+
+
 def test_record_step_moves_claim_in_progress_and_lists_in_order(client):
     client.post(
         "/api/claims/CLM-1001/steps", json={"text": "Read the claim and policy"}

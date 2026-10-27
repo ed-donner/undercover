@@ -30,6 +30,14 @@ def test_get_policy_wording(client):
     assert "Trip Delay" in response.json()["policy_wording"]
 
 
+def test_list_handlers(client):
+    response = client.get("/api/handlers")
+    assert response.status_code == 200
+    handlers = response.json()
+    assert len(handlers) == 3
+    assert all(h["can_approve_over_limit"] for h in handlers)
+
+
 def test_seeding_is_idempotent(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
     db.connect().close()
