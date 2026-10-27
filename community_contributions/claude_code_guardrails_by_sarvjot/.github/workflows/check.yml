@@ -1,0 +1,20 @@
+# The backstop. The hooks on a laptop can be bypassed by a person; this can't be.
+# Make "check" a required status check in the branch protection rules so nothing merges without it.
+name: check
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: uv sync
+      - run: npm ci
+      - run: npm run check
