@@ -77,3 +77,8 @@ export interface Claim {
   policy: Policy;
   customer_previous_claims: PreviousClaim[];
 }
+
+export interface Step {
+  recorded_on: string;
+  text: string;
+}

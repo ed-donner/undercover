@@ -3,9 +3,10 @@
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
 
+from agent.main import run as agent_run
 from backend import data, db
 from backend.data import (
     CLAIM_IDS_BY_SUBMITTED_ON,
@@ -213,4 +214,20 @@ def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
     )
     conn.commit()
     conn.close()
+    return _claim_row(claim_id)
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
+def run_agent(claim_id: str, background_tasks: BackgroundTasks) -> dict[str, Any]:
+    """Schedule the UnderCover Agent to decide a waiting claim."""
+    row = _claim_row(claim_id)
+    if row["status"] != "waiting":
+        raise HTTPException(status_code=409, detail="Claim is not waiting")
+    conn = db.connect()
+    conn.execute(
+        "UPDATE claims SET status = 'in progress' WHERE claim_id = ?", (claim_id,)
+    )
+    conn.commit()
+    conn.close()
+    background_tasks.add_task(agent_run, claim_id, f"run-{claim_id}")
     return _claim_row(claim_id)

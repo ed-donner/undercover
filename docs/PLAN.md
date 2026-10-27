@@ -87,10 +87,10 @@ Replace the hello-world tool with the three tools the agent needs, and a system 
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes: `run_agent` schedules the agent run (monkeypatched) with the right claim id and returns before it finishes.
-- [ ] `npx vitest run --root dashboard --coverage` passes at 80% or above, including a polling test with mocked timers and `fetch`.
-- [ ] Instructions page renders the system prompt text (component test).
-- [ ] Checked in the browser (Playwright MCP): clicking "Run agent" on a real claim shows steps appearing one by one, then the decision.
+- [x] `uv run pytest backend -q` passes: `run_agent` schedules the agent run (monkeypatched) with the right claim id and returns before it finishes.
+- [x] `npx vitest run --root dashboard --coverage` passes at 80% or above, including a polling test with mocked timers and `fetch`.
+- [x] Instructions page renders the system prompt text (component test).
+- [x] Checked in the browser (Playwright MCP): clicking "Run agent" on a real claim (CLM-1004) showed steps appearing live, then the decision (approved, $186.00). Caught and fixed a real bug along the way: `run_agent`'s response is a bare DB row, not the full merged claim, so the button handler now re-fetches via `get_claim` instead of using the `run_agent` response directly.
 
 ## Phase 6: Sign-off, end-to-end tests, and the final check
 

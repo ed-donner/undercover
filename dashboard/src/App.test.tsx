@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
-import type { Claim, ClaimSummary } from "./types";
+import { requestUrl } from "./testHelpers";
+import type { FetchInput } from "./testHelpers";
+import type { Claim, ClaimSummary, Step } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -61,17 +63,15 @@ const claim: Claim = {
   customer_previous_claims: [],
 };
 
-function requestUrl(input: string | URL | Request): string {
-  if (typeof input === "string") return input;
-  if (input instanceof URL) return input.toString();
-  return input.url;
+function bodyFor(url: string): unknown {
+  if (url === "/api/claims") return claims;
+  if (url.endsWith("/steps")) return [] as Step[];
+  return claim;
 }
 
 function mockFetch() {
-  const impl = (input: string | URL | Request): Promise<Response> => {
-    const body = requestUrl(input) === "/api/claims" ? claims : claim;
-    return Promise.resolve(new Response(JSON.stringify(body)));
-  };
+  const impl = (input: FetchInput): Promise<Response> =>
+    Promise.resolve(new Response(JSON.stringify(bodyFor(requestUrl(input)))));
   vi.stubGlobal("fetch", vi.fn(impl));
 }
 

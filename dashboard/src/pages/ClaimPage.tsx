@@ -1,17 +1,30 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { fetchClaim } from "../api";
+import { fetchClaim, fetchSteps, runAgent } from "../api";
 import { StatusBadge } from "../components/StatusBadge";
-import type { Claim } from "../types";
+import type { Claim, Step } from "../types";
 
 export function ClaimPage() {
   const { claimId } = useParams<{ claimId: string }>();
   const [claim, setClaim] = useState<Claim | null>(null);
+  const [steps, setSteps] = useState<Step[]>([]);
 
   useEffect(() => {
     if (!claimId) return;
     void fetchClaim(claimId).then(setClaim);
+    void fetchSteps(claimId).then(setSteps);
   }, [claimId]);
+
+  useEffect(() => {
+    if (!claimId || claim?.status !== "in progress") return;
+    const interval = setInterval(() => {
+      void fetchClaim(claimId).then(setClaim);
+      void fetchSteps(claimId).then(setSteps);
+    }, 2000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [claimId, claim?.status]);
 
   if (!claim) {
     return <main className="panel">Loading…</main>;
@@ -22,6 +35,30 @@ export function ClaimPage() {
       <h1>
         {claim.claim_id} <StatusBadge status={claim.status} />
       </h1>
+
+      {claim.status === "waiting" && (
+        <button
+          onClick={() => {
+            void runAgent(claim.claim_id).then(() =>
+              fetchClaim(claim.claim_id).then(setClaim),
+            );
+          }}
+          type="button"
+        >
+          Run agent
+        </button>
+      )}
+
+      {steps.length > 0 && (
+        <>
+          <h2>What the agent did</h2>
+          <ol>
+            {steps.map((step) => (
+              <li key={step.recorded_on}>{step.text}</li>
+            ))}
+          </ol>
+        </>
+      )}
 
       <h2>The story</h2>
       <p>{claim.story}</p>
