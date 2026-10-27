@@ -59,11 +59,11 @@ Replace the hello-world tool with the three tools the agent needs, and a system 
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, using the existing `StubModel` pattern (no real model calls in tests):
-  - [ ] a scripted `get_claim` → `get_policy_wording` → `decide_claim` run against the real backend (`TestClient`) leaves the claim `decided` with the scripted decision.
-  - [ ] the three steps appear in `list_claim_steps` in that order.
-- [ ] Coverage for `agent/` stays at 80% or above.
-- [ ] Manual check (not in the automated suite): run the real agent against 5 sample claims from `data/claims.json` (`uv run python -c "from agent.main import run; print(run('CLM-1001', 't1'))"` or similar, with `MODEL_NAME=openrouter/free` if avoiding spend) and compare each decision by eye against `data/evals/decisions.json` — read only to check the agent's work, never by the agent itself.
+- [x] `uv run pytest agent -q` passes, using the existing `StubModel` pattern (no real model calls in tests):
+  - [x] a scripted `get_claim` → `get_policy_wording` → `decide_claim` run against the real backend (`TestClient`) leaves the claim `decided` with the scripted decision.
+  - [x] the three steps appear in `list_claim_steps` in that order.
+- [x] Coverage for `agent/` stays at 80% or above.
+- [x] Manual check (not in the automated suite): ran the real agent (`MODEL_NAME=openrouter/free`) against the 5 `tiny` sample claims and compared each decision by eye against `data/evals/decisions.json` (read only by the check script, never by the agent). 3 of 5 matched the handler's decision and payout exactly; CLM-1020 (`manual` difficulty, needs the claims manual, out of scope for the pilot) came back `refer` instead of `approve`; CLM-1021 (`hard`) was approved correctly but with the wrong payout. Both misses are expected for a small model working from the policy wording alone.
 
 ## Phase 4: Dashboard — the queue and a claim's page
 

@@ -15,6 +15,7 @@ from backend.data import (
     POLICIES,
     POLICY_WORDING,
 )
+from backend.instructions import AGENT_INSTRUCTIONS
 
 app = FastAPI(title="UnderCover")
 
@@ -101,6 +102,12 @@ def get_claim(claim_id: str) -> dict[str, Any]:
 def get_policy_wording() -> dict[str, str]:
     """Return the full text of UnderCover's policy wording."""
     return {"policy_wording": POLICY_WORDING}
+
+
+@app.get("/api/agent-instructions", operation_id="get_agent_instructions")
+def get_agent_instructions() -> dict[str, str]:
+    """Return the UnderCover Agent's instructions, read only."""
+    return {"instructions": AGENT_INSTRUCTIONS}
 
 
 @app.post("/api/claims/{claim_id}/decision", operation_id="decide_claim")
