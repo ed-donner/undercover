@@ -143,13 +143,13 @@ Rules:
 
 **Success criteria**
 
-- [ ] vitest: the queue lists claims from a mocked API with their states and amounts formatted as $420.00
-- [ ] vitest: the state counts match the claims; a claim in progress turns on refreshing
-- [ ] vitest: the instructions page shows the text and has no editing controls
-- [ ] vitest: the routes show the right page for `#/`, `#/claims/<id>` and `#/instructions`
-- [ ] Playwright MCP: the queue shows 25 claims, all Waiting, in the brand fonts and colors, in light and dark mode, with no horizontal scroll at phone width
-- [ ] Playwright MCP: the instructions page shows the text from `backend/instructions.md`
-- [ ] `npm run check:ts` passes with coverage of 80% or more
+- [x] vitest: the queue lists claims from a mocked API with their states and amounts formatted as $420.00
+- [x] vitest: the state counts match the claims; a claim in progress turns on refreshing
+- [x] vitest: the instructions page shows the text and has no editing controls
+- [x] vitest: the routes show the right page for `#/`, `#/claims/<id>` and `#/instructions`
+- [x] Playwright MCP: the queue shows 25 claims, all Waiting, in the brand fonts and colors, in light and dark mode, with no horizontal scroll at phone width
+- [x] Playwright MCP: the instructions page shows the text from `backend/instructions.md`
+- [x] `npm run check:ts` passes with coverage of 80% or more
 
 ## Phase 5: The claim page
 
