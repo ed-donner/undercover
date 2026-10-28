@@ -89,14 +89,14 @@ Rules:
 
 **Success criteria**
 
-- [ ] pytest: approving $420.00 sets `decided`, and `pay_claim` with $420.00 records a payment
-- [ ] pytest: approving $1,250.00 sets `awaiting_sign_off`, and `pay_claim` with $1,250.00 returns 409 with no payment recorded
-- [ ] pytest: after `sign_off` by HND-01 that claim is `decided` and paid $1,250.00 once; a second `pay_claim` returns 409
-- [ ] pytest: paying a declined, referred or undecided claim returns 409, as does paying an amount other than the approved payout
-- [ ] pytest: a decline with a payout above 0, an unknown decision, an unknown handler and signing off a claim that isn't waiting all return 4xx
-- [ ] pytest: steps come back in the order they were added
-- [ ] `curl -X POST .../api/claims/CLM-1001/payment -d '{"amount": 5000}'` on an undecided claim returns 409
-- [ ] `npm run check:python` passes with coverage of 80% or more
+- [x] pytest: approving $420.00 sets `decided`, and `pay_claim` with $420.00 records a payment
+- [x] pytest: approving $1,250.00 sets `awaiting_sign_off`, and `pay_claim` with $1,250.00 returns 409 with no payment recorded
+- [x] pytest: after `sign_off` by HND-01 that claim is `decided` and paid $1,250.00 once; a second `pay_claim` returns 409
+- [x] pytest: paying a declined, referred or undecided claim returns 409, as does paying an amount other than the approved payout
+- [x] pytest: a decline with a payout above 0, an unknown decision, an unknown handler and signing off a claim that isn't waiting all return 4xx
+- [x] pytest: steps come back in the order they were added
+- [x] `curl -X POST .../api/claims/CLM-1001/payment -d '{"amount": 5000}'` on an undecided claim returns 409
+- [x] `npm run check:python` passes with coverage of 80% or more
 
 ## Phase 3: The UnderCover Agent
 
