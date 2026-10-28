@@ -1,13 +1,21 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { parseRoute } from "./hooks";
+import { parseRoute, THEME_KEY } from "./hooks";
 import { claim, mockApi, policy, summary } from "./testing";
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   window.location.hash = "";
+  localStorage.clear();
+  delete document.documentElement.dataset.theme;
 });
 
 describe("parseRoute", () => {
@@ -56,5 +64,29 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", { name: /CLM-1001/ }),
     ).toBeDefined();
+  });
+});
+
+describe("dark mode", () => {
+  it("starts in the theme set on the page", async () => {
+    mockApi({ "GET /api/claims": [summary()] });
+    document.documentElement.dataset.theme = "dark";
+    render(<App />);
+    const toggle = await screen.findByRole("button", { name: "Dark mode" });
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("switches between light and dark and remembers the choice", async () => {
+    mockApi({ "GET /api/claims": [summary()] });
+    render(<App />);
+    const toggle = await screen.findByRole("button", { name: "Dark mode" });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+    fireEvent.click(toggle);
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(localStorage.getItem(THEME_KEY)).toBe("light");
   });
 });

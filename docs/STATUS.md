@@ -11,11 +11,11 @@ The claims pilot from `docs/SPEC.md` is built, following `docs/PLAN.md` (all six
   - `run_agent` and `run_queue` run the agent in a background task. A run that ends without a decision puts the claim back to `waiting` with an error step.
 - `backend/instructions.md`: the agent's instructions, served by `get_instructions` and shown read only in the dashboard.
 - `agent/`: the UnderCover Agent, `run(claim_id, thread_id)`, built with `create_agent` on OpenRouter (`openai/gpt-6-luna` with low reasoning effort, or `MODEL_NAME`). Its tools call the backend: `get_claim`, `get_policy`, `get_claim_history`, `get_policy_wording`, `record_decision` and `pay_claim`. It fetches its instructions from the backend and posts each tool call, result and reply as a step.
-- `dashboard/`: React, Vite and TypeScript in the UnderCover brand, light and dark.
+- `dashboard/`: React, Vite and TypeScript in the UnderCover brand. It starts in the system's light or dark setting, and the Dark mode button in the header switches it and remembers the choice in the browser.
   - `#/`: the queue, with a count for each state and a Run the queue button
   - `#/claims/<id>`: the claim, its policy, the decision with its reason and section, the payment, a Run agent button, the agent's steps as it works, and sign-off by a handler for payouts over $1,000
   - `#/instructions`: the agent's instructions, read only
-- `e2e/`: Playwright tests of the queue, the steps and decision on a claim, sign-off of a payout over $1,000, and the instructions. They run their own backend (port 8001, `e2e/test.db`, rebuilt each run) and dashboard (port 5174), and stand in for the agent through the API, so they never call a model.
+- `e2e/`: Playwright tests of the queue, the steps and decision on a claim, sign-off of a payout over $1,000, the instructions, and dark mode. They run their own backend (port 8001, `e2e/test.db`, rebuilt each run) and dashboard (port 5174), and stand in for the agent through the API, so they never call a model.
 
 ## Running it
 

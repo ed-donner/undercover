@@ -1,5 +1,5 @@
 import { ClaimPage } from "./ClaimPage";
-import { type Route, useRoute } from "./hooks";
+import { type Route, useRoute, useTheme } from "./hooks";
 import { Instructions } from "./Instructions";
 import { Queue } from "./Queue";
 
@@ -16,6 +16,7 @@ function Page({ route }: Readonly<{ route: Route }>) {
 
 export function App() {
   const route = useRoute();
+  const { theme, toggle } = useTheme();
   return (
     <div className="app">
       <header className="top">
@@ -35,6 +36,14 @@ export function App() {
           >
             Agent instructions
           </a>
+          <button
+            type="button"
+            className="theme-toggle"
+            aria-pressed={theme === "dark"}
+            onClick={toggle}
+          >
+            Dark mode
+          </button>
         </nav>
       </header>
       <main>

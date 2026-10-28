@@ -1,6 +1,24 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 export const POLL_MS = 2000;
+export const THEME_KEY = "undercover-theme";
+
+export type Theme = "light" | "dark";
+
+export function useTheme() {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.dataset.theme === "dark" ? "dark" : "light",
+  );
+
+  const toggle = useCallback(() => {
+    const next = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem(THEME_KEY, next);
+    setTheme(next);
+  }, [theme]);
+
+  return { theme, toggle };
+}
 
 export type Route =
   | { page: "queue" }

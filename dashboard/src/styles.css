@@ -20,20 +20,20 @@
   --serif: "Instrument Serif", Georgia, serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
 
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page: #04232e;
-    --panel: #000000;
-    --ink: var(--sea-mist);
-    --muted: #93aab1;
-    --subtle: #0d3442;
-    --green-ink: #6ff0cb;
-    --marigold-ink: #ffd88a;
-    --link: #6fc8e6;
-  }
+:root[data-theme="dark"] {
+  --page: #04232e;
+  --panel: #000000;
+  --ink: var(--sea-mist);
+  --muted: #93aab1;
+  --subtle: #0d3442;
+  --green-ink: #6ff0cb;
+  --marigold-ink: #ffd88a;
+  --link: #6fc8e6;
+
+  color-scheme: dark;
 }
 
 * {
@@ -79,6 +79,11 @@ pre {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px 48px;
+}
+
+.theme-toggle {
+  background: var(--panel);
+  color: var(--ink);
 }
 
 .top {

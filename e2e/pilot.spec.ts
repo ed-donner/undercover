@@ -88,3 +88,19 @@ test("the agent's instructions are read only", async ({ page }) => {
   await expect(page.getByText("You are the UnderCover Agent.")).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
 });
+
+test("dark mode switches the colors and is remembered", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  const background = () =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(await background()).toBe("rgb(240, 244, 245)");
+  await page.getByRole("button", { name: "Dark mode" }).click();
+  expect(await background()).toBe("rgb(4, 35, 46)");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Dark mode" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(await background()).toBe("rgb(4, 35, 46)");
+});
