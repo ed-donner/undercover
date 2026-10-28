@@ -72,3 +72,6 @@ labs/*_desk/
 *.swp
 .DS_Store
 Thumbs.db
+
+# The UnderCover database
+*.db
