@@ -181,12 +181,12 @@ Rules:
   - Steps posted for a claim appear on its page, and a recorded decision shows with its reason and section
   - An approval over $1,000 shows Waiting for sign-off, a direct payment is refused, and signing off as a handler shows the claim as paid and decided
   - The instructions page shows the instructions read only
-- `docs/STATUS.md` describes what's built and how to run it; a short `README` section on running the pilot.
+- `docs/STATUS.md` describes what's built and how to run it. (The root `README.md` is the course's, so the run instructions live in `docs/STATUS.md` instead.)
 
 **Success criteria**
 
-- [ ] `npm run e2e` passes all specs
-- [ ] Live check with a real model: run the agent from the dashboard on three claims (a trip delay, a baggage claim and an emergency medical claim). Each moves through In progress to a decision, with steps showing as it works and a reason that cites a section of the wording. An approval over $1,000, if one comes up, waits for sign-off.
-- [ ] Playwright MCP: the same flow in the browser, including signing off a claim over $1,000
-- [ ] `docs/STATUS.md` is up to date
-- [ ] `npm run check` passes: ruff, pyright, pytest at 80% or more, Prettier, ESLint, tsc, vitest at 80% or more, and Playwright
+- [x] `npm run e2e` passes all specs
+- [x] Live check with a real model: run the agent from the dashboard on three claims (a trip delay, a baggage claim and an emergency medical claim). Each moves through In progress to a decision, with steps showing as it works and a reason that cites a section of the wording. An approval over $1,000, if one comes up, waits for sign-off.
+- [x] Playwright MCP: the same flow in the browser, including signing off a claim over $1,000
+- [x] `docs/STATUS.md` is up to date
+- [x] `npm run check` passes: ruff, pyright, pytest at 80% or more, Prettier, ESLint, tsc, vitest at 80% or more, and Playwright

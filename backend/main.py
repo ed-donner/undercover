@@ -306,7 +306,7 @@ def start(connection: sqlite3.Connection, claim_id: str) -> bool:
 
 
 def work(claim_id: str) -> None:
-    problem = "The agent finished without recording a decision."
+    problem = None
     try:
         agent.run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
     except Exception as error:
@@ -316,8 +316,10 @@ def work(claim_id: str) -> None:
             connection.execute(
                 "UPDATE claims SET status = 'waiting' WHERE claim_id = ?", (claim_id,)
             )
-            text = f"{problem} The claim is back in the queue."
-            add_step_row(connection, claim_id, Step(kind="error", text=text))
+            problem = problem or "The agent finished without recording a decision."
+            problem += " The claim is back in the queue."
+        if problem:
+            add_step_row(connection, claim_id, Step(kind="error", text=problem))
 
 
 def work_queue(claim_ids: list[str]) -> None:

@@ -197,3 +197,25 @@ it("shows an error when the claim cannot load", async () => {
     "There is no claim CLM-1001.",
   );
 });
+
+it("keeps following the agent after it decides, until it replies", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const decided = claim({ status: "decided", decision: approval });
+  mockApi(
+    routes({
+      "GET /api/claims/CLM-1001": decided,
+      "GET /api/claims/CLM-1001/steps": new Replies([
+        [step(1, { text: "record_decision({})" })],
+        [
+          step(1, { text: "record_decision({})" }),
+          step(2, { kind: "reply", text: "Approved and paid." }),
+        ],
+      ]),
+    }),
+  );
+  render(<ClaimPage claimId="CLM-1001" />);
+  expect(await screen.findByText("Working...")).toBeDefined();
+  await act(() => vi.advanceTimersByTimeAsync(POLL_MS));
+  expect(screen.getByText("Approved and paid.")).toBeDefined();
+  expect(screen.queryByText("Working...")).toBeNull();
+});

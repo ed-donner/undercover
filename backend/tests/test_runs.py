@@ -64,3 +64,18 @@ def test_a_run_without_a_decision_puts_the_claim_back(client, monkeypatch):
     step = client.get("/api/claims/CLM-1001/steps").json()[-1]
     assert step["kind"] == "error"
     assert step["text"].startswith("The agent finished without recording a decision.")
+
+
+def test_an_error_after_the_decision_is_recorded(client, monkeypatch):
+    def decide_then_fail(claim_id, thread_id):
+        decline(claim_id, thread_id)
+        raise RuntimeError("connection lost")
+
+    monkeypatch.setattr(main.agent, "run", decide_then_fail)
+    client.post("/api/claims/CLM-1001/run")
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
+    step = client.get("/api/claims/CLM-1001/steps").json()[-1]
+    assert step == step | {
+        "kind": "error",
+        "text": "The agent stopped with an error: connection lost",
+    }

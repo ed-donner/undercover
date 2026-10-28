@@ -262,6 +262,13 @@ function Steps({
   );
 }
 
+// The agent keeps working after it decides, to pay, until its reply or an error.
+function working(claim: ClaimDetail, steps: Step[]): boolean {
+  const last = steps.at(-1);
+  if (claim.status === "in_progress") return true;
+  return last !== undefined && last.kind !== "reply" && last.kind !== "error";
+}
+
 export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
   const load = useCallback(async () => {
     const claim = await api.claim(claimId);
@@ -271,9 +278,8 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
     ]);
     return { claim, policy, steps };
   }, [claimId]);
-  const { data, error, refresh } = useLoad(
-    load,
-    (loaded) => loaded?.claim.status === "in_progress",
+  const { data, error, refresh } = useLoad(load, (loaded) =>
+    Boolean(loaded && working(loaded.claim, loaded.steps)),
   );
   const { data: handlers } = useLoad(api.handlers);
   const run = useAction();
@@ -323,7 +329,7 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
             handlers={handlers ?? []}
             onChange={refresh}
           />
-          <Steps steps={steps} working={claim.status === "in_progress"} />
+          <Steps steps={steps} working={working(claim, steps)} />
           <PolicyFacts policy={policy} />
         </div>
       </div>
