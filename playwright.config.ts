@@ -19,7 +19,7 @@ export default defineConfig({
       command: "npx vite dashboard --port 5174 --strictPort",
       url: "http://localhost:5174",
       env: { BACKEND_URL: backend },
-      reuseExistingServer: false,
+      reuseExistingServer: true,
     },
   ],
 });
