@@ -1,9 +1,9 @@
 # Status
 
-The claims pilot, built from `docs/PLAN.md`. Phases 1 and 2 of 6 are done.
+The claims pilot, built from `docs/PLAN.md`. Phases 1 to 3 of 6 are done.
 
-- `backend/`: FastAPI and SQLite. The database (`backend/undercover.db`, or `UNDERCOVER_DB`) is seeded from `data/` on first start, leaving out `data/evals/`. Read operations: `list_claims`, `get_claim`, `get_policy`, `get_claim_history`, `get_policy_wording`, `get_instructions`, `list_handlers`. Write operations: `add_step`, `list_steps`, `record_decision`, `pay_claim`, `sign_off`. A payout over $1,000 waits for a handler's sign-off, and `pay_claim` refuses it until then
-- `agent/`: the skeleton's entry point `run(claim_id, thread_id)`, with one tool that calls the health route
+- `backend/`: FastAPI and SQLite. The database (`backend/undercover.db`, or `UNDERCOVER_DB`) is seeded from `data/` on first start, leaving out `data/evals/`. Read operations: `list_claims`, `get_claim`, `get_policy`, `get_claim_history`, `get_policy_wording`, `get_instructions`, `list_handlers`. Write operations: `add_step`, `list_steps`, `record_decision`, `pay_claim`, `sign_off`. A payout over $1,000 waits for a handler's sign-off, and `pay_claim` refuses it until then. `run_agent` and `run_queue` start the agent in the background; a run that ends without a decision puts the claim back to waiting
+- `agent/`: the UnderCover Agent, `run(claim_id, thread_id)`. Its tools call the backend (`get_claim`, `get_policy`, `get_claim_history`, `get_policy_wording`, `record_decision`, `pay_claim`), its instructions come from `backend/instructions.md` through `get_instructions`, and it records each step through `add_step`
 - `dashboard/`: one page that shows whether the backend is up
 - `e2e/`: one test of that page
 

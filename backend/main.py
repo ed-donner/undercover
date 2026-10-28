@@ -7,10 +7,12 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
+from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from agent import main as agent
 from backend import db
 
 INSTRUCTIONS = Path(__file__).resolve().parent / "instructions.md"
@@ -290,3 +292,60 @@ def sign_off(claim_id: str, sign_off: SignOff) -> dict[str, Any]:
         row = claim_row(connection, claim_id)
         pay(connection, row, row["payout"])
         return claim_view(claim_row(connection, claim_id))
+
+
+def start(connection: sqlite3.Connection, claim_id: str) -> bool:
+    started = connection.execute(
+        "UPDATE claims SET status = 'in_progress' "
+        "WHERE claim_id = ? AND status = 'waiting'",
+        (claim_id,),
+    ).rowcount
+    if started:
+        connection.execute("DELETE FROM steps WHERE claim_id = ?", (claim_id,))
+    return bool(started)
+
+
+def work(claim_id: str) -> None:
+    problem = "The agent finished without recording a decision."
+    try:
+        agent.run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
+    except Exception as error:
+        problem = f"The agent stopped with an error: {error}"
+    with db.connect() as connection:
+        if claim_row(connection, claim_id)["status"] == "in_progress":
+            connection.execute(
+                "UPDATE claims SET status = 'waiting' WHERE claim_id = ?", (claim_id,)
+            )
+            text = f"{problem} The claim is back in the queue."
+            add_step_row(connection, claim_id, Step(kind="error", text=text))
+
+
+def work_queue(claim_ids: list[str]) -> None:
+    for claim_id in claim_ids:
+        with db.connect() as connection:
+            started = start(connection, claim_id)
+        if started:
+            work(claim_id)
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
+def run_agent(claim_id: str, background: BackgroundTasks) -> dict[str, str]:
+    """Start the UnderCover Agent on a waiting claim."""
+    with db.connect() as connection:
+        claim_row(connection, claim_id)
+        if not start(connection, claim_id):
+            raise HTTPException(409, f"Claim {claim_id} is not waiting.")
+    background.add_task(work, claim_id)
+    return {"status": "in_progress"}
+
+
+@app.post("/api/queue/run", operation_id="run_queue")
+def run_queue(background: BackgroundTasks) -> dict[str, int]:
+    """Start the UnderCover Agent on every waiting claim, one after another."""
+    with db.connect() as connection:
+        rows = connection.execute(
+            "SELECT claim_id FROM claims WHERE status = 'waiting' ORDER BY claim_id"
+        ).fetchall()
+    claim_ids = [row["claim_id"] for row in rows]
+    background.add_task(work_queue, claim_ids)
+    return {"waiting": len(claim_ids)}

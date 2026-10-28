@@ -119,16 +119,16 @@ Rules:
 
 **Success criteria** (all pytest with a stub model, which never calls a real one)
 
-- [ ] Each tool calls its backend operation and returns its result
-- [ ] A stub run that reads the claim, approves $420.00 and pays leaves the claim `decided` and paid, with tool-call, result and final steps recorded in order
-- [ ] A stub run that approves $1,250.00 and then tries to pay leaves the claim `awaiting_sign_off` with no payment, and the agent's step shows the refusal
-- [ ] A stub run that declines leaves the claim `decided` with a payout of 0 and no payment
-- [ ] A model that raises an error leaves the claim `waiting` with an error step
-- [ ] The agent's instructions come from `get_instructions`: changing `instructions.md` changes the system prompt
-- [ ] `run_agent` on a claim that isn't waiting returns 409; `run_queue` runs only waiting claims
-- [ ] Nothing under `agent/` refers to `data/`
-- [ ] Live check (costs a few cents, or free with `MODEL_NAME=openrouter/free`): with `npm run dev:backend` running, `uv run python -c "from agent.main import run; print(run('CLM-1001', 't1'))"` prints a decision, and `GET /api/claims/CLM-1001` shows it with a reason and a policy section
-- [ ] `npm run check:python` passes with coverage of 80% or more
+- [x] Each tool calls its backend operation and returns its result
+- [x] A stub run that reads the claim, approves $420.00 and pays leaves the claim `decided` and paid, with tool-call, result and final steps recorded in order
+- [x] A stub run that approves $1,250.00 and then tries to pay leaves the claim `awaiting_sign_off` with no payment, and the agent's step shows the refusal
+- [x] A stub run that declines leaves the claim `decided` with a payout of 0 and no payment
+- [x] A model that raises an error leaves the claim `waiting` with an error step
+- [x] The agent's instructions come from `get_instructions`: changing `instructions.md` changes the system prompt
+- [x] `run_agent` on a claim that isn't waiting returns 409; `run_queue` runs only waiting claims
+- [x] Nothing under `agent/` refers to `data/`
+- [x] Live check (costs a few cents, or free with `MODEL_NAME=openrouter/free`): with `npm run dev:backend` running, `uv run python -c "from agent.main import run; print(run('CLM-1001', 't1'))"` prints a decision, and `GET /api/claims/CLM-1001` shows it with a reason and a policy section
+- [x] `npm run check:python` passes with coverage of 80% or more
 
 ## Phase 4: Dashboard shell, queue and instructions
 
