@@ -162,13 +162,13 @@ Rules:
 
 **Success criteria**
 
-- [ ] vitest: a waiting claim shows its story, items, documents and policy, and a Run agent button that calls `run_agent`
-- [ ] vitest: an in-progress claim shows its steps in order and adds new ones as they arrive
-- [ ] vitest: a decided claim shows the decision, payout, reason and section, and no Run agent button
-- [ ] vitest: a claim waiting for sign-off shows the handler list; signing off calls `sign_off` and shows the claim as paid
-- [ ] vitest: a backend error on sign-off shows its message
-- [ ] Playwright MCP: CLM-1001 shows the full claim, and its page works at phone width in both modes
-- [ ] `npm run check:ts` passes with coverage of 80% or more
+- [x] vitest: a waiting claim shows its story, items, documents and policy, and a Run agent button that calls `run_agent`
+- [x] vitest: an in-progress claim shows its steps in order and adds new ones as they arrive
+- [x] vitest: a decided claim shows the decision, payout, reason and section, and no Run agent button
+- [x] vitest: a claim waiting for sign-off shows the handler list; signing off calls `sign_off` and shows the claim as paid
+- [x] vitest: a backend error on sign-off shows its message
+- [x] Playwright MCP: CLM-1001 shows the full claim, and its page works at phone width in both modes
+- [x] `npm run check:ts` passes with coverage of 80% or more
 
 ## Phase 6: End to end, a live run and the handover
 
