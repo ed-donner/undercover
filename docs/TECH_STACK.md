@@ -7,3 +7,4 @@
 - `data/`: the business data the backend starts from. The agent never sees `data/evals/`, which holds the answer key.
 
 Python 3.12 with uv, all in the root `pyproject.toml`. Node 26. The OpenRouter key is `OPENROUTER_API_KEY` in `.env`.
+IF any of the software is missing what describe above or anywhere in the other files, if the versions are not the one mentioned here then downlaod and update the mentioned version or latest versions.
