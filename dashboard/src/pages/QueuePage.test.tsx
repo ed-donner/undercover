@@ -1,35 +1,50 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, it, vi } from "vitest";
-import type { ClaimSummary } from "../types";
+import { requestUrl } from "../testHelpers";
+import type { FetchInput } from "../testHelpers";
+import type { ClaimSummary, Run } from "../types";
 import { QueuePage } from "./QueuePage";
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
+const claims: ClaimSummary[] = [
+  {
+    claim_id: "CLM-1001",
+    claim_type: "trip_delay",
+    summary: "Flight home canceled",
+    amount_claimed: 420,
+    status: "waiting",
+  },
+  {
+    claim_id: "CLM-1002",
+    claim_type: "baggage",
+    summary: "Lost bag",
+    amount_claimed: 300,
+    status: "decided",
+  },
+];
+
+function stubFetch(run: Run | null) {
+  const impl = (input: FetchInput): Promise<Response> => {
+    if (requestUrl(input).endsWith("/runs/current")) {
+      return Promise.resolve(
+        run
+          ? new Response(JSON.stringify(run))
+          : new Response(null, { status: 404 }),
+      );
+    }
+    return Promise.resolve(new Response(JSON.stringify(claims)));
+  };
+  vi.stubGlobal("fetch", vi.fn(impl));
+}
+
 it("lists claims with their status", async () => {
-  const claims: ClaimSummary[] = [
-    {
-      claim_id: "CLM-1001",
-      claim_type: "trip_delay",
-      summary: "Flight home canceled",
-      amount_claimed: 420,
-      status: "waiting",
-    },
-    {
-      claim_id: "CLM-1002",
-      claim_type: "baggage",
-      summary: "Lost bag",
-      amount_claimed: 300,
-      status: "decided",
-    },
-  ];
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue(new Response(JSON.stringify(claims))),
-  );
+  stubFetch(null);
 
   render(
     <MemoryRouter>
@@ -41,4 +56,34 @@ it("lists claims with their status", async () => {
   expect(screen.getByText("CLM-1002")).toBeDefined();
   expect(screen.getByText("waiting")).toBeDefined();
   expect(screen.getByText("decided")).toBeDefined();
+  expect(screen.queryByText("The current run")).toBeNull();
+});
+
+it("shows the current run's to-do list", async () => {
+  stubFetch({
+    run_id: 1,
+    started_on: "2026-01-01T00:00:00Z",
+    finished_on: null,
+    summary: null,
+    items: [
+      { claim_id: "CLM-1001", status: "in progress", attempts: 1, note: "" },
+      {
+        claim_id: "CLM-1002",
+        status: "left for a handler",
+        attempts: 2,
+        note: "boom",
+      },
+    ],
+  });
+
+  render(
+    <MemoryRouter>
+      <QueuePage />
+    </MemoryRouter>,
+  );
+
+  expect(await screen.findByText("The current run")).toBeDefined();
+  expect(screen.getByText("in progress")).toBeDefined();
+  expect(screen.getByText("left for a handler")).toBeDefined();
+  expect(screen.getByText(/boom/)).toBeDefined();
 });

@@ -70,8 +70,13 @@ function bodyFor(url: string): unknown {
 }
 
 function mockFetch() {
-  const impl = (input: FetchInput): Promise<Response> =>
-    Promise.resolve(new Response(JSON.stringify(bodyFor(requestUrl(input)))));
+  const impl = (input: FetchInput): Promise<Response> => {
+    const url = requestUrl(input);
+    if (url.endsWith("/runs/current")) {
+      return Promise.resolve(new Response(null, { status: 404 }));
+    }
+    return Promise.resolve(new Response(JSON.stringify(bodyFor(url))));
+  };
   vi.stubGlobal("fetch", vi.fn(impl));
 }
 

@@ -1,4 +1,4 @@
-import type { Claim, ClaimSummary, Handler, Step } from "./types";
+import type { Claim, ClaimSummary, Handler, Run, Step } from "./types";
 
 export async function fetchClaims(): Promise<ClaimSummary[]> {
   const response = await fetch("/api/claims");
@@ -15,10 +15,22 @@ export async function fetchSteps(claimId: string): Promise<Step[]> {
   return (await response.json()) as Step[];
 }
 
-export async function fetchInstructions(): Promise<string> {
-  const response = await fetch("/api/agent-instructions");
+export async function fetchClaimInstructions(): Promise<string> {
+  const response = await fetch("/api/claim-instructions");
   const body = (await response.json()) as { instructions: string };
   return body.instructions;
+}
+
+export async function fetchQueueInstructions(): Promise<string> {
+  const response = await fetch("/api/queue-instructions");
+  const body = (await response.json()) as { instructions: string };
+  return body.instructions;
+}
+
+export async function fetchCurrentRun(): Promise<Run | null> {
+  const response = await fetch("/api/runs/current");
+  if (!response.ok) return null;
+  return (await response.json()) as Run;
 }
 
 export async function runAgent(claimId: string): Promise<void> {

@@ -90,3 +90,21 @@ export interface Handler {
   email: string;
   can_approve_over_limit: boolean;
 }
+
+export type RunItemStatus =
+  "to do" | "in progress" | "done" | "left for a handler";
+
+export interface RunItem {
+  claim_id: string;
+  status: RunItemStatus;
+  attempts: number;
+  note: string | null;
+}
+
+export interface Run {
+  run_id: number;
+  started_on: string;
+  finished_on: string | null;
+  summary: string | null;
+  items: RunItem[];
+}

@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
-import { fetchInstructions } from "../api";
+import { fetchClaimInstructions, fetchQueueInstructions } from "../api";
 
 export function InstructionsPage() {
-  const [instructions, setInstructions] = useState("");
+  const [queueInstructions, setQueueInstructions] = useState("");
+  const [claimInstructions, setClaimInstructions] = useState("");
 
   useEffect(() => {
-    void fetchInstructions().then(setInstructions);
+    void fetchQueueInstructions().then(setQueueInstructions);
+    void fetchClaimInstructions().then(setClaimInstructions);
   }, []);
 
   return (
     <main className="panel">
       <h1>The agent's instructions</h1>
-      <pre>{instructions}</pre>
+
+      <h2>Working the queue</h2>
+      <pre>{queueInstructions}</pre>
+
+      <h2>Deciding a claim</h2>
+      <pre>{claimInstructions}</pre>
     </main>
   );
 }

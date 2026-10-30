@@ -1,19 +1,49 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { fetchClaims } from "../api";
+import { fetchClaims, fetchCurrentRun } from "../api";
+import { RunItemBadge } from "../components/RunItemBadge";
 import { StatusBadge } from "../components/StatusBadge";
-import type { ClaimSummary } from "../types";
+import type { ClaimSummary, Run } from "../types";
 
 export function QueuePage() {
   const [claims, setClaims] = useState<ClaimSummary[]>([]);
+  const [run, setRun] = useState<Run | null>(null);
 
   useEffect(() => {
     void fetchClaims().then(setClaims);
+    void fetchCurrentRun().then(setRun);
   }, []);
+
+  useEffect(() => {
+    if (run?.finished_on) return;
+    const interval = setInterval(() => {
+      void fetchClaims().then(setClaims);
+      void fetchCurrentRun().then(setRun);
+    }, 2000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [run?.finished_on]);
 
   return (
     <main className="panel">
       <h1>The claims queue</h1>
+
+      {run && (
+        <>
+          <h2>The current run</h2>
+          <ul>
+            {run.items.map((item) => (
+              <li key={item.claim_id}>
+                {item.claim_id} <RunItemBadge status={item.status} />
+                {item.note ? ` — ${item.note}` : ""}
+              </li>
+            ))}
+          </ul>
+          {run.summary && <p>{run.summary}</p>}
+        </>
+      )}
+
       <table>
         <thead>
           <tr>

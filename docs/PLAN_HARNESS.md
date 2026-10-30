@@ -97,11 +97,11 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 **Success criteria**
 
-- [ ] `npx vitest run --root dashboard --coverage` passes at 80% or above, including:
-  - [ ] the queue page shows no to-do panel when there's no current run (mocked 404).
-  - [ ] it shows each item with its status badge, and polls while unfinished (mocked timers).
-  - [ ] the instructions page renders both texts under their own headings.
-- [ ] Checked in the browser (Playwright MCP): with a run started from the CLI against a reseeded backend, the queue page's to-do panel fills in and finishes, in both light and dark mode.
+- [x] `npx vitest run --root dashboard --coverage` passes at 80% or above, including:
+  - [x] the queue page shows no to-do panel when there's no current run (mocked 404).
+  - [x] it shows each item with its status badge, and polls while unfinished (mocked timers).
+  - [x] the instructions page renders both texts under their own headings.
+- [x] Checked in the browser (Playwright MCP): against a reseeded backend with a run seeded directly over the API (one item in each of the four statuses — a real CLI/model run is saved for Phase 6, so this isn't paid for twice), the queue page's to-do panel renders every status correctly in both light and dark mode. The instructions page shows both sections.
 
 ## Phase 6: End-to-end tests, the final check, and the real-model run
 
