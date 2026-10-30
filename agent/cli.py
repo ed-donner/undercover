@@ -7,8 +7,7 @@ uv run python -m agent.cli --claim CLM-1001   # work one named claim
 
 import argparse
 
-from agent.main import run
-from agent.queue import run_queue
+from agent.agents import decide_claim, run_queue
 
 
 def main() -> None:
@@ -19,7 +18,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.claim:
-        print(run(args.claim, f"cli-{args.claim}"))
+        print(decide_claim(args.claim))
     else:
         print(run_queue(cap=args.cap))
 

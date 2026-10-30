@@ -6,7 +6,7 @@ from typing import Any, Literal
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
 
-from agent.main import run as agent_run
+from agent import agents
 from backend import data, db, runs
 from backend.data import (
     CLAIM_IDS_BY_SUBMITTED_ON,
@@ -271,7 +271,7 @@ def run_agent(claim_id: str, background_tasks: BackgroundTasks) -> dict[str, Any
     )
     conn.commit()
     conn.close()
-    background_tasks.add_task(agent_run, claim_id, f"run-{claim_id}")
+    background_tasks.add_task(agents.decide_claim, claim_id)
     return _claim_row(claim_id)
 
 
