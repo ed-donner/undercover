@@ -29,6 +29,30 @@ CLAIMS: dict[str, Any] = {
 }
 
 POLICY_WORDING: str = (DATA_DIR / "policy_wording.md").read_text()
+CLAIMS_MANUAL: str = (DATA_DIR / "claims_manual.md").read_text()
+
+
+def _sections(text: str) -> dict[str, str]:
+    """Split a Markdown document into its ``##``-headed sections, in order."""
+    sections: dict[str, str] = {}
+    heading: str | None = None
+    lines: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("## "):
+            if heading is not None:
+                sections[heading] = "\n".join(lines).strip()
+            heading, lines = line.removeprefix("## ").strip(), []
+        elif heading is not None:
+            lines.append(line)
+    if heading is not None:
+        sections[heading] = "\n".join(lines).strip()
+    return sections
+
+
+DOCUMENTS: dict[str, dict[str, str]] = {
+    "policy_wording": _sections(POLICY_WORDING),
+    "claims_manual": _sections(CLAIMS_MANUAL),
+}
 
 CLAIM_IDS_BY_SUBMITTED_ON: list[str] = [
     claim["claim_id"]

@@ -18,21 +18,20 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 ## Phase 1: Backend — read the policy wording and the claims manual by section
 
 - `backend/data.py`: parse `policy_wording.md` and `claims_manual.md` into ordered `{heading: text}` dicts at load time, splitting on `##` headings.
-- Operations: `list_sections(document)` → `GET /api/documents/{document}/sections`, the ordered heading titles; `get_section(document, heading)` → `GET /api/documents/{document}/sections/{heading}`, that section's text. `document` is `policy_wording` or `claims_manual`; an unknown document or heading is a 404.
-- Remove `get_policy_wording` / `GET /api/policy-wording` — nothing outside its own tests uses it, and it's superseded by the two operations above.
+- Operations: `list_sections(document)` → `GET /api/documents/{document}/sections`, the ordered heading titles; `get_section(document, heading)` → `GET /api/documents/{document}/section?heading=...`, that section's text. `document` is `policy_wording` or `claims_manual`; an unknown document or heading is a 404. (A query parameter for the heading, not a path segment, since headings contain spaces and periods.)
+- `get_policy_wording` stays for now — `agent/main.py` still calls it until Phase 3 moves it over to the new operations. Removing it here would leave the agent broken between phases.
 - `docs/SPEC.md`: drop "The claims manual. For the pilot, the agent works from the policy wording alone." from "Not for now", and add the claims manual alongside the policy wording in "For each claim it should: ... and the policy wording."
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes, including:
-  - [ ] `list_sections("policy_wording")` returns 12 headings in order, starting with `"1. Your plan"`.
-  - [ ] `list_sections("claims_manual")` returns 14 headings in order, including `"10. Meals without receipts"`.
-  - [ ] `get_section("policy_wording", "3. Trip Delay")` returns text containing `"delay"`.
-  - [ ] `get_section("claims_manual", "9. Repeat claims")` returns text containing `"12 months"`.
-  - [ ] `get_section("claims_manual", "99. No such section")` returns 404.
-  - [ ] `list_sections("not_a_document")` returns 404.
-- [ ] `grep -rn "policy-wording\|get_policy_wording" backend agent` returns nothing.
-- [ ] Coverage for `backend/` stays at 80% or above.
+- [x] `uv run pytest backend -q` passes, including:
+  - [x] `list_sections("policy_wording")` returns 12 headings in order, starting with `"1. Your plan"`.
+  - [x] `list_sections("claims_manual")` returns 14 headings in order, including `"10. Meals without receipts"`.
+  - [x] `get_section("policy_wording", "3. Trip Delay")` returns text containing `"delay"`.
+  - [x] `get_section("claims_manual", "9. Repeat claims")` returns text containing `"12 months"`.
+  - [x] `get_section("claims_manual", "99. No such section")` returns 404.
+  - [x] `list_sections("not_a_document")` returns 404.
+- [x] Coverage for `backend/` stays at 80% or above.
 
 ## Phase 2: Backend — a run and its to-do list
 
@@ -56,13 +55,14 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 - `agent/main.py`: replace the `get_policy_wording` tool with `list_sections(document)` and `read_section(document, heading)`, each recording a step naming the document and heading. `DEFAULT_MODEL` becomes `deepseek/deepseek-v4.1-flash`.
 - `backend/instructions.py`: rewrite `CLAIM_INSTRUCTIONS` (renamed from `AGENT_INSTRUCTIONS`) from the policy wording and the claims manual (never `data/evals/`): look up the sections it needs from both documents rather than assuming either is short enough to read whole; decide using section 2 of the manual's three decisions and its referral reasons (missing document, story and documents disagree, a third claim in 12 months, or the wording and manual still unclear); still call `decide_claim` exactly once.
-- `backend/main.py`: rename `get_agent_instructions` to `get_claim_instructions` (`GET /api/claim-instructions`).
+- `backend/main.py`: rename `get_agent_instructions` to `get_claim_instructions` (`GET /api/claim-instructions`); remove `get_policy_wording` / `GET /api/policy-wording`, now unused.
 
 **Success criteria**
 
 - [ ] `uv run pytest agent -q` passes, including:
   - [ ] a scripted `list_sections` → `read_section` (policy wording) → `list_sections` → `read_section` (claims manual) → `decide_claim` run against the real backend leaves the claim `decided`.
   - [ ] the recorded steps name the document and heading read, in order.
+- [ ] `grep -rn "policy-wording\|get_policy_wording" backend agent` returns nothing.
 - [ ] Coverage for `agent/` stays at 80% or above.
 
 ## Phase 4: The queue orchestrator — one run, a to-do list, retries, and giving up

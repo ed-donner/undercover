@@ -106,6 +106,27 @@ def get_policy_wording() -> dict[str, str]:
     return {"policy_wording": POLICY_WORDING}
 
 
+@app.get("/api/documents/{document}/sections", operation_id="list_sections")
+def list_sections(document: str) -> list[str]:
+    """List a document's section headings, in order."""
+    sections = data.DOCUMENTS.get(document)
+    if sections is None:
+        raise HTTPException(status_code=404, detail=f"No document {document}")
+    return list(sections)
+
+
+@app.get("/api/documents/{document}/section", operation_id="get_section")
+def get_section(document: str, heading: str) -> dict[str, str]:
+    """Return the text of one section of a document."""
+    sections = data.DOCUMENTS.get(document)
+    if sections is None:
+        raise HTTPException(status_code=404, detail=f"No document {document}")
+    text = sections.get(heading)
+    if text is None:
+        raise HTTPException(status_code=404, detail=f"No section {heading}")
+    return {"text": text}
+
+
 @app.get("/api/agent-instructions", operation_id="get_agent_instructions")
 def get_agent_instructions() -> dict[str, str]:
     """Return the UnderCover Agent's instructions, read only."""
