@@ -53,6 +53,16 @@ export default defineConfig(
     languageOptions: { globals: globals.browser },
   },
   {
+    files: ["dashboard/src/**/*.{ts,tsx}"],
+    ignores: ["dashboard/src/api.ts", "dashboard/src/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { name: "fetch", message: "Call the backend through src/api.ts." },
+      ],
+    },
+  },
+  {
     files: ["dashboard/src/**/*.test.tsx"],
     extends: [vitest.configs.recommended],
   },
