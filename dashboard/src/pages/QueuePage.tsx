@@ -1,29 +1,23 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { fetchClaims, fetchCurrentRun } from "../api";
 import { RunItemBadge } from "../components/RunItemBadge";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatMoney } from "../money";
 import type { ClaimSummary, Run } from "../types";
+import { usePolling } from "../usePolling";
 
 export function QueuePage() {
   const [claims, setClaims] = useState<ClaimSummary[]>([]);
   const [run, setRun] = useState<Run | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     void fetchClaims().then(setClaims);
     void fetchCurrentRun().then(setRun);
   }, []);
 
-  useEffect(() => {
-    if (run?.finished_on) return;
-    const interval = setInterval(() => {
-      void fetchClaims().then(setClaims);
-      void fetchCurrentRun().then(setRun);
-    }, 2000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [run?.finished_on]);
+  useEffect(load, [load]);
+  usePolling(load, !run?.finished_on);
 
   return (
     <main className="panel">
@@ -62,7 +56,7 @@ export function QueuePage() {
               </td>
               <td>{claim.claim_type}</td>
               <td>{claim.summary}</td>
-              <td>${claim.amount_claimed.toFixed(2)}</td>
+              <td>{formatMoney(claim.amount_claimed)}</td>
               <td>
                 <StatusBadge status={claim.status} />
               </td>

@@ -31,7 +31,7 @@ test("the instructions page shows the agent's instructions", async ({
   await expect(
     page.getByRole("heading", { name: "The agent's instructions" }),
   ).toBeVisible();
-  await expect(page.getByText("Call decide_claim exactly once")).toBeVisible();
+  await expect(page.getByText("calling decide_claim once")).toBeVisible();
 });
 
 test("an over-limit approval blocks payment until a handler signs off", async ({
@@ -64,5 +64,5 @@ test("an over-limit approval blocks payment until a handler signs off", async ({
   await expect(release).toBeVisible();
   await release.click();
 
-  await expect(page.getByText("Paid $1200.00.")).toBeVisible();
+  await expect(page.getByText("Paid $1,200.00.")).toBeVisible();
 });

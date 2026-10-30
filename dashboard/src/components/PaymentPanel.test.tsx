@@ -116,5 +116,5 @@ it("shows the paid amount once a claim has been paid", () => {
 
   render(<PaymentPanel claim={claim} onUpdated={() => undefined} />);
 
-  expect(screen.getByText("Paid $1200.00.")).toBeDefined();
+  expect(screen.getByText("Paid $1,200.00.")).toBeDefined();
 });

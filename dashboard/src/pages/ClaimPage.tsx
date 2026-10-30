@@ -1,31 +1,25 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { fetchClaim, fetchSteps, runAgent } from "../api";
 import { PaymentPanel } from "../components/PaymentPanel";
 import { StatusBadge } from "../components/StatusBadge";
+import { formatMoney } from "../money";
 import type { Claim, Step } from "../types";
+import { usePolling } from "../usePolling";
 
 export function ClaimPage() {
   const { claimId } = useParams<{ claimId: string }>();
   const [claim, setClaim] = useState<Claim | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!claimId) return;
     void fetchClaim(claimId).then(setClaim);
     void fetchSteps(claimId).then(setSteps);
   }, [claimId]);
 
-  useEffect(() => {
-    if (!claimId || claim?.status !== "in progress") return;
-    const interval = setInterval(() => {
-      void fetchClaim(claimId).then(setClaim);
-      void fetchSteps(claimId).then(setSteps);
-    }, 2000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [claimId, claim?.status]);
+  useEffect(load, [load]);
+  usePolling(load, claim?.status === "in progress");
 
   if (!claim) {
     return <main className="panel">Loading…</main>;
@@ -55,7 +49,7 @@ export function ClaimPage() {
           <h2>What the agent did</h2>
           <ol>
             {steps.map((step) => (
-              <li key={step.recorded_on}>{step.text}</li>
+              <li key={`${step.recorded_on} ${step.text}`}>{step.text}</li>
             ))}
           </ol>
         </>
@@ -68,7 +62,7 @@ export function ClaimPage() {
       <ul>
         {claim.items.map((item) => (
           <li key={item.description}>
-            {item.description}: ${item.amount.toFixed(2)}
+            {item.description}: {formatMoney(item.amount)}
           </li>
         ))}
       </ul>
@@ -98,7 +92,7 @@ export function ClaimPage() {
           <p>
             {claim.decision}
             {claim.payout !== null && claim.payout > 0
-              ? `, $${claim.payout.toFixed(2)}`
+              ? `, ${formatMoney(claim.payout)}`
               : ""}
           </p>
           <p>{claim.reason}</p>

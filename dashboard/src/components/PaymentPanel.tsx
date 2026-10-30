@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchHandlers, payClaim, signOffClaim } from "../api";
+import { formatMoney } from "../money";
 import type { Claim, Handler } from "../types";
 
 export function PaymentPanel({
@@ -36,7 +37,7 @@ export function PaymentPanel({
   }
 
   if (claim.paid_amount !== null) {
-    return <p>Paid ${claim.paid_amount.toFixed(2)}.</p>;
+    return <p>Paid {formatMoney(claim.paid_amount)}.</p>;
   }
 
   if (claim.status === "decided" && claim.decision === "approve") {

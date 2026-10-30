@@ -1,62 +1,53 @@
 import type { Claim, ClaimSummary, Handler, Run, Step } from "./types";
 
-export async function fetchClaims(): Promise<ClaimSummary[]> {
-  const response = await fetch("/api/claims");
-  return (await response.json()) as ClaimSummary[];
+async function getJson<T>(path: string): Promise<T> {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`${path}: ${String(response.status)}`);
+  return (await response.json()) as T;
 }
 
-export async function fetchClaim(claimId: string): Promise<Claim> {
-  const response = await fetch(`/api/claims/${claimId}`);
-  return (await response.json()) as Claim;
+async function post(path: string, body?: object): Promise<void> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body && JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`${path}: ${String(response.status)}`);
 }
 
-export async function fetchSteps(claimId: string): Promise<Step[]> {
-  const response = await fetch(`/api/claims/${claimId}/steps`);
-  return (await response.json()) as Step[];
+async function getInstructions(path: string): Promise<string> {
+  return (await getJson<{ instructions: string }>(path)).instructions;
 }
 
-export async function fetchClaimInstructions(): Promise<string> {
-  const response = await fetch("/api/claim-instructions");
-  const body = (await response.json()) as { instructions: string };
-  return body.instructions;
-}
+export const fetchClaims = () => getJson<ClaimSummary[]>("/api/claims");
 
-export async function fetchQueueInstructions(): Promise<string> {
-  const response = await fetch("/api/queue-instructions");
-  const body = (await response.json()) as { instructions: string };
-  return body.instructions;
-}
+export const fetchClaim = (claimId: string) =>
+  getJson<Claim>(`/api/claims/${claimId}`);
 
+export const fetchSteps = (claimId: string) =>
+  getJson<Step[]>(`/api/claims/${claimId}/steps`);
+
+export const fetchHandlers = () => getJson<Handler[]>("/api/handlers");
+
+export const fetchClaimInstructions = () =>
+  getInstructions("/api/claim-instructions");
+
+export const fetchQueueInstructions = () =>
+  getInstructions("/api/queue-instructions");
+
+/** The most recent run, or null before the first one. */
 export async function fetchCurrentRun(): Promise<Run | null> {
   const response = await fetch("/api/runs/current");
-  if (!response.ok) return null;
+  if (response.status === 404) return null;
+  if (!response.ok)
+    throw new Error(`/api/runs/current: ${String(response.status)}`);
   return (await response.json()) as Run;
 }
 
-export async function runAgent(claimId: string): Promise<void> {
-  await fetch(`/api/claims/${claimId}/run`, { method: "POST" });
-}
+export const runAgent = (claimId: string) => post(`/api/claims/${claimId}/run`);
 
-export async function fetchHandlers(): Promise<Handler[]> {
-  const response = await fetch("/api/handlers");
-  return (await response.json()) as Handler[];
-}
+export const signOffClaim = (claimId: string, handlerId: string) =>
+  post(`/api/claims/${claimId}/sign-off`, { handler_id: handlerId });
 
-export async function signOffClaim(
-  claimId: string,
-  handlerId: string,
-): Promise<void> {
-  await fetch(`/api/claims/${claimId}/sign-off`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ handler_id: handlerId }),
-  });
-}
-
-export async function payClaim(claimId: string, amount: number): Promise<void> {
-  await fetch(`/api/claims/${claimId}/payment`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ amount }),
-  });
-}
+export const payClaim = (claimId: string, amount: number) =>
+  post(`/api/claims/${claimId}/payment`, { amount });
