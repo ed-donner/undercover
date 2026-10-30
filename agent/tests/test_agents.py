@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from agent import agents, api
 
 
@@ -12,7 +14,7 @@ def test_decide_claim_reads_then_decides(backend, script):
             "decide_claim",
             {
                 "decision": "approve",
-                "payout": 420.0,
+                "payout": "420.00",
                 "reason": "Routine trip delay with receipts.",
                 "policy_reference": "Section 3",
             },
@@ -36,7 +38,9 @@ def test_decide_claim_reads_then_decides(backend, script):
 
 def test_run_queue_works_only_the_capped_claims(monkeypatch, backend, script):
     def fake_decide(claim_id):
-        api.decide_claim(claim_id, "approve", 100.0, "Stubbed.", "Section 1")
+        api.decide_claim(
+            claim_id, "approve", Decimal("100.00"), "Stubbed.", "Section 1"
+        )
         return f"Approved {claim_id}."
 
     monkeypatch.setattr(agents, "decide_claim", fake_decide)

@@ -76,3 +76,15 @@ def test_seeding_is_idempotent(monkeypatch, tmp_path):
     count = conn.execute("SELECT COUNT(*) FROM claims").fetchone()[0]
     conn.close()
     assert count == 25
+
+
+def test_money_is_a_two_decimal_string_everywhere(client):
+    summary = client.get("/api/claims").json()[0]
+    claim = client.get(f"/api/claims/{summary['claim_id']}").json()
+
+    assert summary["amount_claimed"] == claim["amount_claimed"]
+    assert claim["amount_claimed"].count(".") == 1
+    assert len(claim["amount_claimed"].split(".")[1]) == 2
+    assert all(len(item["amount"].split(".")[1]) == 2 for item in claim["items"])
+    assert len(claim["policy"]["trip"]["trip_cost"].split(".")[1]) == 2
+    assert claim["payout"] is None

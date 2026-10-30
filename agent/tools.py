@@ -10,7 +10,7 @@ from typing import Any
 from langchain.tools import ToolRuntime, tool
 
 from agent import api, work
-from agent.api import Decision, Document
+from agent.api import Amount, Decision, Document
 
 
 @dataclass
@@ -59,7 +59,7 @@ def read_section(
 @tool
 def decide_claim(
     decision: Decision,
-    payout: float,
+    payout: Amount,
     reason: str,
     policy_reference: str,
     runtime: ToolRuntime[ClaimContext],

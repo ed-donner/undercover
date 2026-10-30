@@ -1,10 +1,12 @@
+from decimal import Decimal
+
 import pytest
 
 from agent import api, work
 
 DECISION = {
     "decision": "approve",
-    "payout": 100.0,
+    "payout": Decimal("100.00"),
     "reason": "Stubbed.",
     "policy_reference": "Section 1",
 }

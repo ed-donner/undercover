@@ -3,15 +3,18 @@
 One client, and one function for each operation the agents use.
 """
 
+from decimal import Decimal
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import httpx
+from pydantic import Field
 
 BACKEND_URL = "http://localhost:8000"
 
 Document = Literal["policy_wording", "claims_manual"]
 Decision = Literal["approve", "decline", "refer"]
+Amount = Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)]
 RunItemStatus = Literal["to do", "in progress", "done", "left for a handler"]
 
 client = httpx.Client(base_url=BACKEND_URL, timeout=10)
@@ -62,14 +65,14 @@ def record_step(claim_id: str, text: str) -> None:
 def decide_claim(
     claim_id: str,
     decision: Decision,
-    payout: float,
+    payout: Amount,
     reason: str,
     policy_reference: str,
 ) -> None:
     """Record the decision on a claim."""
     body = {
         "decision": decision,
-        "payout": payout,
+        "payout": str(payout),
         "reason": reason,
         "policy_reference": policy_reference,
     }

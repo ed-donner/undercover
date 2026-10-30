@@ -1,20 +1,23 @@
 """UnderCover's reference data: read-only, loaded once from data/."""
 
 import json
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+from backend import money
 from backend.errors import NotFound
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
 def _load_json(name: str) -> Any:
-    return json.loads((DATA_DIR / name).read_text())
+    text = (DATA_DIR / name).read_text()
+    return money.convert(json.loads(text, parse_float=Decimal))
 
 
 COMPANY: dict[str, Any] = _load_json("company.json")
-PAYOUT_APPROVAL_LIMIT: float = COMPANY["payout_approval_limit"]
+PAYOUT_APPROVAL_LIMIT: Decimal = COMPANY["payout_approval_limit"]
 
 PLANS: dict[str, Any] = {
     plan["plan"]: plan for plan in _load_json("plans.json")["plans"]

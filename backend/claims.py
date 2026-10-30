@@ -1,8 +1,9 @@
 """A claim's state: its row, its steps, its sign-off and its payment."""
 
+from decimal import Decimal
 from typing import Any
 
-from backend import data, db
+from backend import data, db, money
 from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
 from backend.errors import Conflict, NotFound
 
@@ -15,7 +16,15 @@ def get_row(claim_id: str) -> dict[str, Any]:
         ).fetchone()
     if row is None:
         raise NotFound(f"No claim {claim_id}")
-    return dict(row)
+    return _with_dollars(dict(row))
+
+
+def _with_dollars(row: dict[str, Any]) -> dict[str, Any]:
+    """Swap the `*_cents` columns for `Decimal` dollars, under the wire names."""
+    for column, name in (("payout_cents", "payout"), ("paid_cents", "paid_amount")):
+        cents = row.pop(column)
+        row[name] = None if cents is None else money.from_cents(cents)
+    return row
 
 
 def list_summaries() -> list[dict[str, Any]]:
@@ -50,22 +59,25 @@ def get_full(claim_id: str) -> dict[str, Any]:
 
 
 def decide(
-    claim_id: str, decision: str, payout: float, reason: str, policy_reference: str
+    claim_id: str,
+    decision: str,
+    payout: Decimal,
+    reason: str,
+    policy_reference: str,
 ) -> dict[str, Any]:
-    """Record a decision; an approval over the limit waits for a handler's sign-off."""
+    """Record a claim's one decision; an approval over the limit needs a sign-off."""
     get_row(claim_id)
     over_limit = decision == "approve" and payout > data.PAYOUT_APPROVAL_LIMIT
     with db.connection() as conn:
-        conn.execute(
-            """UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?,
-               policy_reference = ?, decided_on = ?, over_approval_limit = ?,
-               signed_off_by = NULL, signed_off_on = NULL,
-               paid_amount = NULL, paid_on = NULL
-               WHERE claim_id = ?""",
+        decided = conn.execute(
+            """UPDATE claims SET status = ?, decision = ?, payout_cents = ?,
+               reason = ?, policy_reference = ?, decided_on = ?,
+               over_approval_limit = ?
+               WHERE claim_id = ? AND status IN ('waiting', 'in progress')""",
             (
                 "waiting for sign-off" if over_limit else "decided",
                 decision,
-                payout,
+                money.to_cents(payout),
                 reason,
                 policy_reference,
                 db.now(),
@@ -73,6 +85,8 @@ def decide(
                 claim_id,
             ),
         )
+    if decided.rowcount == 0:
+        raise Conflict("Claim has already been decided")
     return get_row(claim_id)
 
 
@@ -118,18 +132,29 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
     return get_row(claim_id)
 
 
-def pay(claim_id: str, amount: float) -> dict[str, Any]:
-    """Pay an approved claim, once any required sign-off is given."""
-    row = get_row(claim_id)
+def _why_not_payable(row: dict[str, Any], amount: Decimal) -> str:
+    if row["paid_amount"] is not None:
+        return "Claim has already been paid"
     if row["decision"] != "approve":
-        raise Conflict("Claim is not approved")
+        return "Claim is not approved"
     if row["over_approval_limit"] and row["signed_off_by"] is None:
-        raise Conflict("Claim needs a handler's sign-off before payment")
+        return "Claim needs a handler's sign-off before payment"
+    return f"Payment must be the approved payout of {row['payout']}, not {amount}"
+
+
+def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
+    """Pay an approved claim its payout, once, after any required sign-off."""
+    row = get_row(claim_id)
     with db.connection() as conn:
-        conn.execute(
-            "UPDATE claims SET paid_amount = ?, paid_on = ? WHERE claim_id = ?",
-            (amount, db.now(), claim_id),
+        paid = conn.execute(
+            """UPDATE claims SET paid_cents = ?, paid_on = ?
+               WHERE claim_id = ? AND decision = 'approve'
+               AND paid_cents IS NULL AND payout_cents = ?
+               AND (over_approval_limit = 0 OR signed_off_by IS NOT NULL)""",
+            (money.to_cents(amount), db.now(), claim_id, money.to_cents(amount)),
         )
+    if paid.rowcount == 0:
+        raise Conflict(_why_not_payable(row, amount))
     return get_row(claim_id)
 
 

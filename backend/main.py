@@ -10,6 +10,7 @@ from agent import agents
 from backend import claims, data, runs
 from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
+from backend.money import Amount
 
 app = FastAPI(title="UnderCover")
 
@@ -26,7 +27,7 @@ def conflict(_: Request, error: Conflict) -> JSONResponse:
 
 class Decision(BaseModel):
     decision: Literal["approve", "decline", "refer"]
-    payout: float
+    payout: Amount
     reason: str
     policy_reference: str
 
@@ -40,7 +41,7 @@ class SignOff(BaseModel):
 
 
 class Payment(BaseModel):
-    amount: float
+    amount: Amount
 
 
 class StartRun(BaseModel):

@@ -16,14 +16,14 @@ CREATE TABLE IF NOT EXISTS claims (
     claim_id TEXT PRIMARY KEY,
     status TEXT NOT NULL,
     decision TEXT,
-    payout REAL,
+    payout_cents INTEGER,
     reason TEXT,
     policy_reference TEXT,
     decided_on TEXT,
     over_approval_limit INTEGER,
     signed_off_by TEXT,
     signed_off_on TEXT,
-    paid_amount REAL,
+    paid_cents INTEGER,
     paid_on TEXT
 );
 
