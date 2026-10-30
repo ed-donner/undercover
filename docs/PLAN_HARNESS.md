@@ -110,7 +110,7 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 **Success criteria**
 
-- [ ] `npm run e2e` passes, covering the to-do panel in all four item statuses.
-- [ ] `npm run check` passes in full (ruff, pyright, pytest ≥80%, Prettier, ESLint, tsc, vitest ≥80%, Playwright) with no thresholds lowered and no rules disabled.
-- [ ] Manual check (not in the automated suite): reseed the database, then `MODEL_NAME=openrouter/free uv run python -m agent.cli --cap 5`. Report each of the 5 claims' decision and payout, the run's final summary, and the to-do panel's final state in the dashboard. Confirm no claim outside the 5 moved off `waiting`.
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md`, and `docs/STATUS.md` all match what's built.
+- [x] `npm run e2e` passes, covering the to-do panel in all four item statuses.
+- [x] `npm run check` passes in full (ruff, pyright, pytest ≥80%, Prettier, ESLint, tsc, vitest ≥80%, Playwright) with no thresholds lowered and no rules disabled.
+- [x] Manual check (not in the automated suite): reseeded the database, then `MODEL_NAME=openrouter/free uv run python -m agent.cli --cap 5`. All 5 claims were approved: CLM-1001 $420 (Section 3), CLM-1008 $2,600 (Sections 2 and 10, waiting for sign-off), CLM-1010 $1,300 (Section 7, waiting for sign-off), CLM-1011 $1,150 (Section 5, waiting for sign-off), CLM-1018 $330 (Section 5). Summary: "5 claims decided, 0 left for handler." The dashboard's to-do panel showed all 5 as `done` with the model's reasoning as each note. The other 20 claims stayed `waiting`.
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md`, and `docs/STATUS.md` all match what's built.

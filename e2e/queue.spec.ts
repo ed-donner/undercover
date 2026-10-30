@@ -43,3 +43,38 @@ test("the queue shows a claim's status as it moves through the four states", asy
   await page.goto("/");
   await expect(row()).toContainText("decided");
 });
+
+test("the queue page shows the current run's to-do list in every status", async ({
+  page,
+  request,
+}) => {
+  const claimIds = ["CLM-1010", "CLM-1012", "CLM-1013", "CLM-1014"];
+  const run = (await (
+    await request.post("/api/runs", { data: { claim_ids: claimIds } })
+  ).json()) as { run_id: number };
+  const runPath = `/api/runs/${String(run.run_id)}/items`;
+
+  await request.post(`${runPath}/${claimIds[0]}`, {
+    data: { status: "done", note: "Approved for $420.00." },
+  });
+  await request.post(`${runPath}/${claimIds[1]}`, {
+    data: { status: "in progress", note: "" },
+  });
+  await request.post(`${runPath}/${claimIds[2]}`, {
+    data: { status: "left for a handler", note: "Failed twice." },
+  });
+  // claimIds[3] stays "to do".
+
+  await page.goto("/");
+
+  await expect(page.getByText("The current run")).toBeVisible();
+  const items = page.locator("li");
+  await expect(items.filter({ hasText: claimIds[0] })).toContainText("done");
+  await expect(items.filter({ hasText: claimIds[1] })).toContainText(
+    "in progress",
+  );
+  await expect(items.filter({ hasText: claimIds[2] })).toContainText(
+    "left for a handler",
+  );
+  await expect(items.filter({ hasText: claimIds[3] })).toContainText("to do");
+});
