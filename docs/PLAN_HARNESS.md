@@ -79,14 +79,14 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, using a stub model for the orchestrator and a monkeypatched per-claim `run()` (never a real model), including:
-  - [ ] `run_queue(cap=2)` against two waiting claims starts a run of 2 items and ends with both `done`.
-  - [ ] a claim whose monkeypatched `run()` fails once then succeeds ends `done`, with its claim status `decided` and the run item's `attempts` at 2.
-  - [ ] a claim whose monkeypatched `run()` always fails ends `left for a handler`, with its claim status back to `waiting` (not stuck `in progress`), after exactly 2 attempts.
-  - [ ] a claim whose monkeypatched `run()` raises after already calling the real `decide_claim` is not retried, and its item ends `done`.
-  - [ ] `finish_run` called while an item is still outstanding doesn't end the run; the agent is told which claim is left.
-  - [ ] a waiting claim outside the cap is left `waiting` and has no run item.
-- [ ] Coverage for `agent/` stays at 80% or above.
+- [x] `uv run pytest agent -q` passes, using a stub model for the orchestrator and a monkeypatched per-claim `run()` (never a real model), including:
+  - [x] `run_queue(cap=2)` against two waiting claims starts a run of 2 items and ends with both `done`.
+  - [x] a claim whose monkeypatched `run()` fails once then succeeds ends `done`, with its claim status `decided` and the run item's `attempts` at 2.
+  - [x] a claim whose monkeypatched `run()` always fails ends `left for a handler`, with its claim status back to `waiting` (not stuck `in progress`), after exactly 2 attempts.
+  - [x] a claim whose monkeypatched `run()` raises after already calling the real `decide_claim` is not retried, and its item ends `done`.
+  - [x] `finish_run` called while an item is still outstanding doesn't end the run; the agent is told which claim is left.
+  - [x] a waiting claim outside the cap is left `waiting` and has no run item.
+- [x] Coverage for `agent/` stays at 80% or above.
 
 ## Phase 5: Dashboard — the to-do list, and two sets of instructions
 

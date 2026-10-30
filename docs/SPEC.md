@@ -17,7 +17,7 @@ We want an AI agent, the UnderCover Agent, to work the queue the way a handler d
 
 Our goal is to handle claims straight through, as accurately as our handlers do.
 
-For the pilot, someone starts the agent from the command line. It works through every waiting claim in the queue, one at a time. A claim shows as in progress while the agent works on it.
+Someone starts the agent from the command line, for one run that works every waiting claim, in whatever order it chooses, or a trial run capped at a number of claims, or one named claim. The agent plans the run as a to-do list, which the team can watch. A claim shows as in progress while the agent works on it, and the run ends with a short summary for the handlers.
 
 ## What the team needs to see
 
