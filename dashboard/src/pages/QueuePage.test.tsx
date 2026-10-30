@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, it, vi } from "vitest";
-import { requestUrl } from "../testHelpers";
+import { requestUrl, summaryToWire } from "../testHelpers";
 import type { FetchInput } from "../testHelpers";
 import type { ClaimSummary, Run } from "../types";
 import { QueuePage } from "./QueuePage";
@@ -17,14 +17,14 @@ const claims: ClaimSummary[] = [
     claim_id: "CLM-1001",
     claim_type: "trip_delay",
     summary: "Flight home canceled",
-    amount_claimed: 420,
+    amount_claimed: 42000,
     status: "waiting",
   },
   {
     claim_id: "CLM-1002",
     claim_type: "baggage",
     summary: "Lost bag",
-    amount_claimed: 300,
+    amount_claimed: 30000,
     status: "decided",
   },
 ];
@@ -38,7 +38,9 @@ function stubFetch(run: Run | null) {
           : new Response(null, { status: 404 }),
       );
     }
-    return Promise.resolve(new Response(JSON.stringify(claims)));
+    return Promise.resolve(
+      new Response(JSON.stringify(claims.map(summaryToWire))),
+    );
   };
   vi.stubGlobal("fetch", vi.fn(impl));
 }

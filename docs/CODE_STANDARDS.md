@@ -7,7 +7,7 @@
 5. Use uv: ALWAYS `uv run`, NEVER `python3`.
 6. TypeScript: strict mode, never `any`.
 
-7. Money: never use floats for amounts. Use `Decimal` in Python and whole cents in TypeScript, and round to the cent only when a payout is worked out.
+7. Money: never use floats for amounts. Use `Decimal` in Python and whole cents in TypeScript, and round to the cent only when a payout is worked out. On the wire an amount is a string of dollars to the cent, such as `"420.00"`; SQLite keeps whole cents. The dashboard converts at `api.ts` and nowhere else.
 
 ## Structure
 

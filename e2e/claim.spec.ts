@@ -8,7 +8,7 @@ test("a decided claim's page shows its decision, payout and reason", async ({
   await request.post(`/api/claims/${claimId}/decision`, {
     data: {
       decision: "approve",
-      payout: 425.0,
+      payout: "425.00",
       reason: "A covered trip delay with receipts.",
       policy_reference: "Section 3",
     },
@@ -42,7 +42,7 @@ test("an over-limit approval blocks payment until a handler signs off", async ({
   await request.post(`/api/claims/${claimId}/decision`, {
     data: {
       decision: "approve",
-      payout: 1200.0,
+      payout: "1200.00",
       reason: "A hospital admission over the approval limit.",
       policy_reference: "Section 7",
     },

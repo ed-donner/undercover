@@ -22,11 +22,11 @@ function makeClaim(overrides: Partial<Claim>): Claim {
     summary: "Hospital visit abroad",
     story: "Fractured my wrist.",
     items: [],
-    amount_claimed: 1200,
+    amount_claimed: 120000,
     documents: [],
     status: "waiting for sign-off",
     decision: "approve",
-    payout: 1200,
+    payout: 120000,
     reason: "A covered emergency medical claim.",
     policy_reference: "Section 7",
     decided_on: "2026-06-02T00:00:00+00:00",
@@ -46,7 +46,6 @@ function makeClaim(overrides: Partial<Claim>): Claim {
         destination: "Lisbon, Portugal",
         departs_on: "2026-05-28",
         returns_on: "2026-06-05",
-        trip_cost: 4000,
       },
       travelers: ["Alex Rivera"],
       status: "active",
@@ -110,7 +109,7 @@ it("releases payment on a decided, unpaid approval", () => {
 it("shows the paid amount once a claim has been paid", () => {
   const claim = makeClaim({
     status: "decided",
-    paid_amount: 1200,
+    paid_amount: 120000,
     paid_on: "2026-06-03T00:00:00+00:00",
   });
 

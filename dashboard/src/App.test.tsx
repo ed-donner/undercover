@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { requestUrl } from "./testHelpers";
+import { claimToWire, requestUrl, summaryToWire } from "./testHelpers";
 import type { FetchInput } from "./testHelpers";
 import type { Claim, ClaimSummary, Step } from "./types";
 
@@ -15,7 +15,7 @@ const claims: ClaimSummary[] = [
     claim_id: "CLM-1001",
     claim_type: "trip_delay",
     summary: "Flight home canceled",
-    amount_claimed: 420,
+    amount_claimed: 42000,
     status: "waiting",
   },
 ];
@@ -31,7 +31,7 @@ const claim: Claim = {
   summary: "Flight home canceled",
   story: "My flight home was canceled.",
   items: [],
-  amount_claimed: 420,
+  amount_claimed: 42000,
   documents: [],
   status: "waiting",
   decision: null,
@@ -55,7 +55,6 @@ const claim: Claim = {
       destination: "Rome, Italy",
       departs_on: "2026-06-10",
       returns_on: "2026-06-18",
-      trip_cost: 3100,
     },
     travelers: ["Maya Patel"],
     status: "active",
@@ -64,9 +63,9 @@ const claim: Claim = {
 };
 
 function bodyFor(url: string): unknown {
-  if (url === "/api/claims") return claims;
+  if (url === "/api/claims") return claims.map(summaryToWire);
   if (url.endsWith("/steps")) return [] as Step[];
-  return claim;
+  return claimToWire(claim);
 }
 
 function mockFetch() {

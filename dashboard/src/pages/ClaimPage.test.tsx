@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, expect, it, vi } from "vitest";
-import { requestUrl } from "../testHelpers";
+import { claimToWire, requestUrl } from "../testHelpers";
 import type { FetchInput } from "../testHelpers";
 import type { Claim, Step } from "../types";
 import { ClaimPage } from "./ClaimPage";
@@ -24,9 +24,13 @@ function makeClaim(overrides: Partial<Claim>): Claim {
     summary: "Flight home canceled",
     story: "My flight home was canceled by the airline.",
     items: [
-      { description: "Airport hotel", category: "accommodation", amount: 245 },
+      {
+        description: "Airport hotel",
+        category: "accommodation",
+        amount: 24500,
+      },
     ],
-    amount_claimed: 245,
+    amount_claimed: 24500,
     documents: [],
     status: "waiting",
     decision: null,
@@ -50,7 +54,6 @@ function makeClaim(overrides: Partial<Claim>): Claim {
         destination: "Rome, Italy",
         departs_on: "2026-06-10",
         returns_on: "2026-06-18",
-        trip_cost: 3100,
       },
       travelers: ["Maya Patel"],
       status: "active",
@@ -74,7 +77,7 @@ it("shows a decided claim's story, items and decision", async () => {
   const claim = makeClaim({
     status: "decided",
     decision: "approve",
-    payout: 245,
+    payout: 24500,
     reason: "A covered trip delay with receipts.",
     policy_reference: "Section 3",
     customer_previous_claims: [
@@ -85,12 +88,11 @@ it("shows a decided claim's story, items and decision", async () => {
         claim_type: "baggage_delay",
         summary: "Checked bag arrived 30 hours late",
         outcome: "approved",
-        amount_paid: 140,
       },
     ],
   });
   const impl = (input: FetchInput): Promise<Response> => {
-    const body = requestUrl(input).endsWith("/steps") ? [] : claim;
+    const body = requestUrl(input).endsWith("/steps") ? [] : claimToWire(claim);
     return Promise.resolve(new Response(JSON.stringify(body)));
   };
   vi.stubGlobal("fetch", vi.fn(impl));
@@ -128,7 +130,9 @@ it("runs the agent and polls the step log as it works", async () => {
   const impl = (input: FetchInput): Promise<Response> => {
     const url = requestUrl(input);
     if (url.endsWith("/run")) {
-      return Promise.resolve(new Response(JSON.stringify(inProgress)));
+      return Promise.resolve(
+        new Response(JSON.stringify(claimToWire(inProgress))),
+      );
     }
     if (url.endsWith("/steps")) {
       const body = stepLists[Math.min(stepsCalls, stepLists.length - 1)];
@@ -138,7 +142,7 @@ it("runs the agent and polls the step log as it works", async () => {
     const body =
       claimCalls === 0 ? makeClaim({ status: "waiting" }) : inProgress;
     claimCalls += 1;
-    return Promise.resolve(new Response(JSON.stringify(body)));
+    return Promise.resolve(new Response(JSON.stringify(claimToWire(body))));
   };
   vi.stubGlobal("fetch", vi.fn(impl));
 

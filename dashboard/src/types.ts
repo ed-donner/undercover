@@ -3,6 +3,7 @@ export type ClaimStatus =
 
 export type Decision = "approve" | "decline" | "refer";
 
+/** Amounts are whole cents. */
 export interface ClaimSummary {
   claim_id: string;
   claim_type: string;
@@ -34,7 +35,6 @@ export interface Policy {
     destination: string;
     departs_on: string;
     returns_on: string;
-    trip_cost: number;
   };
   travelers: string[];
   status: string;
@@ -47,7 +47,6 @@ export interface PreviousClaim {
   claim_type: string;
   summary: string;
   outcome: string;
-  amount_paid: number;
 }
 
 export interface Claim {

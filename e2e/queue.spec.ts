@@ -29,7 +29,7 @@ test("the queue shows a claim's status as it moves through the four states", asy
   await request.post(`/api/claims/${claimId}/decision`, {
     data: {
       decision: "approve",
-      payout: 1250,
+      payout: "1250.00",
       reason: "A passport lost while swimming, replaced abroad.",
       policy_reference: "Section 6",
     },

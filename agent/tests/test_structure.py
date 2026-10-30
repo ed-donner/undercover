@@ -31,3 +31,9 @@ def test_backend_routes_hold_no_sql():
     source = (ROOT / "backend" / "main.py").read_text()
     assert "sqlite3" not in source
     assert "execute(" not in source
+
+
+def test_no_float_annotations_for_money():
+    for path in [*AGENT_MODULES, *(ROOT / "backend").glob("*.py")]:
+        for node in ast.walk(ast.parse(path.read_text())):
+            assert not (isinstance(node, ast.Name) and node.id == "float"), path.name

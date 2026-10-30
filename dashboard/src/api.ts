@@ -1,4 +1,22 @@
-import type { Claim, ClaimSummary, Handler, Run, Step } from "./types";
+import { parseCents, toWireAmount } from "./money";
+import type { Claim, ClaimSummary, Handler, Item, Run, Step } from "./types";
+
+type WireSummary = Omit<ClaimSummary, "amount_claimed"> & {
+  amount_claimed: string;
+};
+
+type WireClaim = Omit<
+  Claim,
+  "amount_claimed" | "items" | "payout" | "paid_amount"
+> & {
+  amount_claimed: string;
+  items: (Omit<Item, "amount"> & { amount: string })[];
+  payout: string | null;
+  paid_amount: string | null;
+};
+
+const optionalCents = (amount: string | null) =>
+  amount === null ? null : parseCents(amount);
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -19,10 +37,27 @@ async function getInstructions(path: string): Promise<string> {
   return (await getJson<{ instructions: string }>(path)).instructions;
 }
 
-export const fetchClaims = () => getJson<ClaimSummary[]>("/api/claims");
+export async function fetchClaims(): Promise<ClaimSummary[]> {
+  const claims = await getJson<WireSummary[]>("/api/claims");
+  return claims.map((claim) => ({
+    ...claim,
+    amount_claimed: parseCents(claim.amount_claimed),
+  }));
+}
 
-export const fetchClaim = (claimId: string) =>
-  getJson<Claim>(`/api/claims/${claimId}`);
+export async function fetchClaim(claimId: string): Promise<Claim> {
+  const claim = await getJson<WireClaim>(`/api/claims/${claimId}`);
+  return {
+    ...claim,
+    amount_claimed: parseCents(claim.amount_claimed),
+    items: claim.items.map((item) => ({
+      ...item,
+      amount: parseCents(item.amount),
+    })),
+    payout: optionalCents(claim.payout),
+    paid_amount: optionalCents(claim.paid_amount),
+  };
+}
 
 export const fetchSteps = (claimId: string) =>
   getJson<Step[]>(`/api/claims/${claimId}/steps`);
@@ -49,5 +84,5 @@ export const runAgent = (claimId: string) => post(`/api/claims/${claimId}/run`);
 export const signOffClaim = (claimId: string, handlerId: string) =>
   post(`/api/claims/${claimId}/sign-off`, { handler_id: handlerId });
 
-export const payClaim = (claimId: string, amount: number) =>
-  post(`/api/claims/${claimId}/payment`, { amount });
+export const payClaim = (claimId: string, cents: number) =>
+  post(`/api/claims/${claimId}/payment`, { amount: toWireAmount(cents) });
