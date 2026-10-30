@@ -15,7 +15,9 @@ load_dotenv(override=True)
 
 BACKEND_URL = "http://localhost:8000"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "openai/gpt-6-luna"
+DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"
+
+Document = Literal["policy_wording", "claims_manual"]
 
 
 def backend() -> httpx.Client:
@@ -23,10 +25,10 @@ def backend() -> httpx.Client:
     return httpx.Client(base_url=BACKEND_URL, timeout=10)
 
 
-def instructions() -> str:
-    """Fetch the agent's instructions from the backend."""
+def claim_instructions() -> str:
+    """Fetch the instructions for deciding one claim from the backend."""
     with backend() as client:
-        response = client.get("/api/agent-instructions")
+        response = client.get("/api/claim-instructions")
     response.raise_for_status()
     return response.json()["instructions"]
 
@@ -51,13 +53,24 @@ def claim_tools(claim_id: str) -> list[BaseTool]:
         return response.json()
 
     @tool
-    def get_policy_wording() -> str:
-        """Read UnderCover's policy wording."""
+    def list_sections(document: Document) -> list[str]:
+        """List the section headings of the policy wording or the claims manual."""
         with backend() as client:
-            response = client.get("/api/policy-wording")
+            response = client.get(f"/api/documents/{document}/sections")
         response.raise_for_status()
-        _record_step(claim_id, "Read the policy wording")
-        return response.json()["policy_wording"]
+        return response.json()
+
+    @tool
+    def read_section(document: Document, heading: str) -> str:
+        """Read one section of the policy wording or the claims manual."""
+        with backend() as client:
+            response = client.get(
+                f"/api/documents/{document}/section", params={"heading": heading}
+            )
+        response.raise_for_status()
+        title = "policy wording" if document == "policy_wording" else "claims manual"
+        _record_step(claim_id, f"Read {title} section: {heading}")
+        return response.json()["text"]
 
     @tool
     def decide_claim(
@@ -82,11 +95,11 @@ def claim_tools(claim_id: str) -> list[BaseTool]:
         _record_step(claim_id, f"Decided: {decision}{detail}")
         return "Recorded"
 
-    return [get_claim, get_policy_wording, decide_claim]
+    return [get_claim, list_sections, read_section, decide_claim]
 
 
 def model() -> ChatOpenAI:
-    """Return the model named in MODEL_NAME, or GPT-6 Luna by default."""
+    """Return the model named in MODEL_NAME, or DeepSeek V4.1 Flash by default."""
     name = os.getenv("MODEL_NAME")
     return ChatOpenAI(
         model=name or DEFAULT_MODEL,
@@ -99,7 +112,9 @@ def model() -> ChatOpenAI:
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     """Run the agent on one claim and return its final reply."""
     agent = create_agent(
-        llm or model(), tools=claim_tools(claim_id), system_prompt=instructions()
+        llm or model(),
+        tools=claim_tools(claim_id),
+        system_prompt=claim_instructions(),
     )
     result = agent.invoke(
         {"messages": [{"role": "user", "content": f"Decide claim {claim_id}."}]},

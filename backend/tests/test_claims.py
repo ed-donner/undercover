@@ -24,12 +24,6 @@ def test_get_unknown_claim(client):
     assert response.status_code == 404
 
 
-def test_get_policy_wording(client):
-    response = client.get("/api/policy-wording")
-    assert response.status_code == 200
-    assert "Trip Delay" in response.json()["policy_wording"]
-
-
 def test_list_sections(client):
     wording = client.get("/api/documents/policy_wording/sections").json()
     assert len(wording) == 12

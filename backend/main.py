@@ -15,9 +15,8 @@ from backend.data import (
     HANDLERS,
     PAYOUT_APPROVAL_LIMIT,
     POLICIES,
-    POLICY_WORDING,
 )
-from backend.instructions import AGENT_INSTRUCTIONS
+from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 
 app = FastAPI(title="UnderCover")
 
@@ -113,12 +112,6 @@ def get_claim(claim_id: str) -> dict[str, Any]:
     }
 
 
-@app.get("/api/policy-wording", operation_id="get_policy_wording")
-def get_policy_wording() -> dict[str, str]:
-    """Return the full text of UnderCover's policy wording."""
-    return {"policy_wording": POLICY_WORDING}
-
-
 @app.get("/api/documents/{document}/sections", operation_id="list_sections")
 def list_sections(document: str) -> list[str]:
     """List a document's section headings, in order."""
@@ -140,10 +133,16 @@ def get_section(document: str, heading: str) -> dict[str, str]:
     return {"text": text}
 
 
-@app.get("/api/agent-instructions", operation_id="get_agent_instructions")
-def get_agent_instructions() -> dict[str, str]:
-    """Return the UnderCover Agent's instructions, read only."""
-    return {"instructions": AGENT_INSTRUCTIONS}
+@app.get("/api/claim-instructions", operation_id="get_claim_instructions")
+def get_claim_instructions() -> dict[str, str]:
+    """Return the instructions for deciding one claim, read only."""
+    return {"instructions": CLAIM_INSTRUCTIONS}
+
+
+@app.get("/api/queue-instructions", operation_id="get_queue_instructions")
+def get_queue_instructions() -> dict[str, str]:
+    """Return the instructions for running the claims queue, read only."""
+    return {"instructions": QUEUE_INSTRUCTIONS}
 
 
 @app.get("/api/handlers", operation_id="list_handlers")

@@ -59,11 +59,11 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, including:
-  - [ ] a scripted `list_sections` → `read_section` (policy wording) → `list_sections` → `read_section` (claims manual) → `decide_claim` run against the real backend leaves the claim `decided`.
-  - [ ] the recorded steps name the document and heading read, in order.
-- [ ] `grep -rn "policy-wording\|get_policy_wording" backend agent` returns nothing.
-- [ ] Coverage for `agent/` stays at 80% or above.
+- [x] `uv run pytest agent -q` passes, including:
+  - [x] a scripted `list_sections` → `read_section` (policy wording) → `list_sections` → `read_section` (claims manual) → `decide_claim` run against the real backend leaves the claim `decided`.
+  - [x] the recorded steps name the document and heading read, in order.
+- [x] `grep -rn "policy-wording\|get_policy_wording" backend agent` returns nothing.
+- [x] Coverage for `agent/` stays at 80% or above.
 
 ## Phase 4: The queue orchestrator — one run, a to-do list, retries, and giving up
 
