@@ -37,3 +37,12 @@ def test_no_float_annotations_for_money():
     for path in [*AGENT_MODULES, *(ROOT / "backend").glob("*.py")]:
         for node in ast.walk(ast.parse(path.read_text())):
             assert not (isinstance(node, ast.Name) and node.id == "float"), path.name
+
+
+def test_backend_never_imports_the_agent():
+    for path in (ROOT / "backend").glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            names = [a.name for a in node.names] if isinstance(node, ast.Import) else []
+            if isinstance(node, ast.ImportFrom) and node.module:
+                names.append(node.module)
+            assert not any(n.split(".")[0] == "agent" for n in names), path.name

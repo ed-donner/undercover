@@ -2,12 +2,11 @@
 
 from typing import Any, Literal
 
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from agent import agents
-from backend import claims, data, runs
+from backend import agent_process, claims, data, runs
 from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.money import Amount
@@ -137,10 +136,10 @@ def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
 
 
 @app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
-def run_agent(claim_id: str, background_tasks: BackgroundTasks) -> dict[str, Any]:
-    """Schedule the UnderCover Agent to decide a waiting claim."""
+def run_agent(claim_id: str) -> dict[str, Any]:
+    """Start the UnderCover Agent on a waiting claim."""
     claim = claims.start_work(claim_id)
-    background_tasks.add_task(agents.decide_claim, claim_id)
+    agent_process.start(claim_id)
     return claim
 
 
