@@ -42,14 +42,14 @@ Builds the agent's harness from `docs/HARNESS.md`: one run that works the whole 
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes, including:
-  - [ ] `start_run(["CLM-1001", "CLM-1002"])` creates a run with both items `to do`.
-  - [ ] `update_run_item` moves an item through `in progress` → `done`, with a note.
-  - [ ] `finish_run` on a run with one `to do` item still outstanding returns 409.
-  - [ ] `finish_run` on a run whose items are all `done`/`left for a handler` succeeds and `get_current_run` shows the summary and `finished_on` set.
-  - [ ] `requeue_claim` on an `in progress` claim sets it back to `waiting`.
-  - [ ] `requeue_claim` on a `decided` claim returns 409.
-- [ ] Coverage for `backend/` stays at 80% or above.
+- [x] `uv run pytest backend -q` passes, including:
+  - [x] `start_run(["CLM-1001", "CLM-1002"])` creates a run with both items `to do`.
+  - [x] `update_run_item` moves an item through `in progress` → `done`, with a note.
+  - [x] `finish_run` on a run with one `to do` item still outstanding returns 409.
+  - [x] `finish_run` on a run whose items are all `done`/`left for a handler` succeeds and `get_current_run` shows the summary and `finished_on` set.
+  - [x] `requeue_claim` on an `in progress` claim sets it back to `waiting`.
+  - [x] `requeue_claim` on a `decided` claim returns 409.
+- [x] Coverage for `backend/` stays at 80% or above.
 
 ## Phase 3: The per-claim agent reads the manual, and the model changes
 

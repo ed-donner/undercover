@@ -30,6 +30,22 @@ CREATE TABLE IF NOT EXISTS claim_steps (
     recorded_on TEXT NOT NULL,
     text TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS runs (
+    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_on TEXT NOT NULL,
+    finished_on TEXT,
+    summary TEXT
+);
+
+CREATE TABLE IF NOT EXISTS run_items (
+    run_id INTEGER NOT NULL,
+    claim_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    note TEXT,
+    PRIMARY KEY (run_id, claim_id)
+);
 """
 
 

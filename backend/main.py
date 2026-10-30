@@ -7,7 +7,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
 
 from agent.main import run as agent_run
-from backend import data, db
+from backend import data, db, runs
 from backend.data import (
     CLAIM_IDS_BY_SUBMITTED_ON,
     CLAIMS,
@@ -39,6 +39,19 @@ class SignOff(BaseModel):
 
 class Payment(BaseModel):
     amount: float
+
+
+class StartRun(BaseModel):
+    claim_ids: list[str]
+
+
+class RunItemUpdate(BaseModel):
+    status: str
+    note: str
+
+
+class FinishRun(BaseModel):
+    summary: str
 
 
 def _now() -> str:
@@ -261,3 +274,53 @@ def run_agent(claim_id: str, background_tasks: BackgroundTasks) -> dict[str, Any
     conn.close()
     background_tasks.add_task(agent_run, claim_id, f"run-{claim_id}")
     return _claim_row(claim_id)
+
+
+@app.post("/api/claims/{claim_id}/requeue", operation_id="requeue_claim")
+def requeue_claim(claim_id: str) -> dict[str, Any]:
+    """Put a stuck claim back in the queue as waiting."""
+    row = _claim_row(claim_id)
+    if row["status"] not in ("waiting", "in progress"):
+        raise HTTPException(status_code=409, detail="Claim is already decided")
+    conn = db.connect()
+    conn.execute("UPDATE claims SET status = 'waiting' WHERE claim_id = ?", (claim_id,))
+    conn.commit()
+    conn.close()
+    return _claim_row(claim_id)
+
+
+@app.post("/api/runs", operation_id="start_run")
+def start_run(start: StartRun) -> dict[str, Any]:
+    """Start a run with one to-do item per claim."""
+    return runs.start_run(start.claim_ids)
+
+
+@app.get("/api/runs/current", operation_id="get_current_run")
+def get_current_run() -> dict[str, Any]:
+    """Return the most recently started run, with its items."""
+    run = runs.get_current_run()
+    if run is None:
+        raise HTTPException(status_code=404, detail="No run yet")
+    return run
+
+
+@app.post("/api/runs/{run_id}/items/{claim_id}", operation_id="update_run_item")
+def update_run_item(
+    run_id: int, claim_id: str, update: RunItemUpdate
+) -> dict[str, Any]:
+    """Update one run item's status and note."""
+    try:
+        return runs.update_run_item(run_id, claim_id, update.status, update.note)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.post("/api/runs/{run_id}/finish", operation_id="finish_run")
+def finish_run(run_id: int, finish: FinishRun) -> dict[str, Any]:
+    """Finish a run, recording its summary for the handlers."""
+    try:
+        return runs.finish_run(run_id, finish.summary)
+    except runs.RunNotReady as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
