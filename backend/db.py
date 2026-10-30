@@ -2,6 +2,9 @@
 
 import os
 import sqlite3
+from collections.abc import Iterator
+from contextlib import closing, contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 from backend.data import CLAIMS
@@ -67,3 +70,15 @@ def connect() -> sqlite3.Connection:
         )
         conn.commit()
     return conn
+
+
+@contextmanager
+def connection() -> Iterator[sqlite3.Connection]:
+    """Open a connection that commits on success, rolls back on error, and closes."""
+    with closing(connect()) as conn, conn:
+        yield conn
+
+
+def now() -> str:
+    """Return the current UTC time as an ISO 8601 string."""
+    return datetime.now(UTC).isoformat()

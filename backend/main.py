@@ -1,24 +1,27 @@
-"""The UnderCover backend."""
+"""The UnderCover backend: the HTTP routes, each a thin call into the logic modules."""
 
-from datetime import UTC, datetime
 from typing import Any, Literal
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from agent import agents
-from backend import data, db, runs
-from backend.data import (
-    CLAIM_IDS_BY_SUBMITTED_ON,
-    CLAIMS,
-    CUSTOMERS,
-    HANDLERS,
-    PAYOUT_APPROVAL_LIMIT,
-    POLICIES,
-)
+from backend import claims, data, runs
+from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 
 app = FastAPI(title="UnderCover")
+
+
+@app.exception_handler(NotFound)
+def not_found(_: Request, error: NotFound) -> JSONResponse:
+    return JSONResponse({"detail": str(error)}, status_code=404)
+
+
+@app.exception_handler(Conflict)
+def conflict(_: Request, error: Conflict) -> JSONResponse:
+    return JSONResponse({"detail": str(error)}, status_code=409)
 
 
 class Decision(BaseModel):
@@ -45,16 +48,12 @@ class StartRun(BaseModel):
 
 
 class RunItemUpdate(BaseModel):
-    status: str
+    status: Literal["to do", "in progress", "done", "left for a handler"]
     note: str
 
 
 class FinishRun(BaseModel):
     summary: str
-
-
-def _now() -> str:
-    return datetime.now(UTC).isoformat()
 
 
 @app.get("/api/health", operation_id="health")
@@ -63,74 +62,28 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-def _claim_row(claim_id: str) -> dict[str, Any]:
-    conn = db.connect()
-    row = conn.execute(
-        "SELECT * FROM claims WHERE claim_id = ?", (claim_id,)
-    ).fetchone()
-    conn.close()
-    if row is None:
-        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
-    return dict(row)
-
-
 @app.get("/api/claims", operation_id="list_claims")
 def list_claims() -> list[dict[str, Any]]:
     """List every claim in the queue, oldest submitted first."""
-    conn = db.connect()
-    statuses = {
-        row["claim_id"]: row["status"]
-        for row in conn.execute("SELECT claim_id, status FROM claims")
-    }
-    conn.close()
-    return [
-        {
-            "claim_id": claim_id,
-            "claim_type": CLAIMS[claim_id]["claim_type"],
-            "summary": CLAIMS[claim_id]["summary"],
-            "amount_claimed": CLAIMS[claim_id]["amount_claimed"],
-            "status": statuses[claim_id],
-        }
-        for claim_id in CLAIM_IDS_BY_SUBMITTED_ON
-    ]
+    return claims.list_summaries()
 
 
 @app.get("/api/claims/{claim_id}", operation_id="get_claim")
 def get_claim(claim_id: str) -> dict[str, Any]:
     """Return one claim in full, with its policy and its customer's claim history."""
-    if claim_id not in CLAIMS:
-        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
-    claim = {k: v for k, v in CLAIMS[claim_id].items() if k != "status"}
-    row = _claim_row(claim_id)
-    policy = POLICIES[claim["policy_id"]]
-    customer = CUSTOMERS[claim["customer_id"]]
-    return {
-        **claim,
-        **row,
-        "policy": policy,
-        "customer_previous_claims": customer["previous_claims"],
-    }
+    return claims.get_full(claim_id)
 
 
 @app.get("/api/documents/{document}/sections", operation_id="list_sections")
 def list_sections(document: str) -> list[str]:
     """List a document's section headings, in order."""
-    sections = data.DOCUMENTS.get(document)
-    if sections is None:
-        raise HTTPException(status_code=404, detail=f"No document {document}")
-    return list(sections)
+    return list(data.get_document(document))
 
 
 @app.get("/api/documents/{document}/section", operation_id="get_section")
 def get_section(document: str, heading: str) -> dict[str, str]:
     """Return the text of one section of a document."""
-    sections = data.DOCUMENTS.get(document)
-    if sections is None:
-        raise HTTPException(status_code=404, detail=f"No document {document}")
-    text = sections.get(heading)
-    if text is None:
-        raise HTTPException(status_code=404, detail=f"No section {heading}")
-    return {"text": text}
+    return {"text": data.get_section(document, heading)}
 
 
 @app.get("/api/claim-instructions", operation_id="get_claim_instructions")
@@ -148,144 +101,52 @@ def get_queue_instructions() -> dict[str, str]:
 @app.get("/api/handlers", operation_id="list_handlers")
 def list_handlers() -> list[dict[str, Any]]:
     """List the claims handlers who can sign off an over-limit payout."""
-    return [h for h in HANDLERS if h["can_approve_over_limit"]]
+    return [h for h in data.HANDLERS if h["can_approve_over_limit"]]
 
 
 @app.post("/api/claims/{claim_id}/decision", operation_id="decide_claim")
 def decide_claim(claim_id: str, decision: Decision) -> dict[str, Any]:
     """Record a decision on a claim, approve, decline or refer."""
-    if claim_id not in CLAIMS:
-        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
-    over_limit = (
-        decision.decision == "approve" and decision.payout > PAYOUT_APPROVAL_LIMIT
-    )
-    status = "waiting for sign-off" if over_limit else "decided"
-    conn = db.connect()
-    conn.execute(
-        """UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?,
-           policy_reference = ?, decided_on = ?, over_approval_limit = ?,
-           signed_off_by = NULL, signed_off_on = NULL,
-           paid_amount = NULL, paid_on = NULL
-           WHERE claim_id = ?""",
-        (
-            status,
-            decision.decision,
-            decision.payout,
-            decision.reason,
-            decision.policy_reference,
-            _now(),
-            int(over_limit),
-            claim_id,
-        ),
-    )
-    conn.commit()
-    conn.close()
-    return _claim_row(claim_id)
+    return claims.decide(claim_id, **decision.model_dump())
 
 
 @app.post("/api/claims/{claim_id}/steps", operation_id="record_step")
 def record_step(claim_id: str, step: Step) -> dict[str, Any]:
     """Record one step of the agent's work on a claim."""
-    if claim_id not in CLAIMS:
-        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
-    conn = db.connect()
-    conn.execute(
-        "INSERT INTO claim_steps (claim_id, recorded_on, text) VALUES (?, ?, ?)",
-        (claim_id, _now(), step.text),
-    )
-    conn.execute(
-        "UPDATE claims SET status = 'in progress' "
-        "WHERE claim_id = ? AND status = 'waiting'",
-        (claim_id,),
-    )
-    conn.commit()
-    conn.close()
+    claims.record_step(claim_id, step.text)
     return {"claim_id": claim_id, "text": step.text}
 
 
 @app.get("/api/claims/{claim_id}/steps", operation_id="list_claim_steps")
 def list_claim_steps(claim_id: str) -> list[dict[str, Any]]:
     """List a claim's steps, in the order they happened."""
-    if claim_id not in CLAIMS:
-        raise HTTPException(status_code=404, detail=f"No claim {claim_id}")
-    conn = db.connect()
-    rows = conn.execute(
-        "SELECT recorded_on, text FROM claim_steps WHERE claim_id = ? ORDER BY id",
-        (claim_id,),
-    ).fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    return claims.list_steps(claim_id)
 
 
 @app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
 def sign_off_claim(claim_id: str, sign_off: SignOff) -> dict[str, Any]:
     """Have a handler sign off an over-limit approved claim's payout."""
-    row = _claim_row(claim_id)
-    if row["status"] != "waiting for sign-off":
-        raise HTTPException(status_code=409, detail="Claim is not waiting for sign-off")
-    handler = data.handler(sign_off.handler_id)
-    if handler is None or not handler["can_approve_over_limit"]:
-        raise HTTPException(
-            status_code=409, detail="This handler cannot sign off this claim"
-        )
-    conn = db.connect()
-    conn.execute(
-        """UPDATE claims SET status = 'decided', signed_off_by = ?, signed_off_on = ?
-           WHERE claim_id = ?""",
-        (sign_off.handler_id, _now(), claim_id),
-    )
-    conn.commit()
-    conn.close()
-    return _claim_row(claim_id)
+    return claims.sign_off(claim_id, sign_off.handler_id)
 
 
 @app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
 def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
     """Pay a claim's approved payout, blocked until any required sign-off is given."""
-    row = _claim_row(claim_id)
-    if row["decision"] != "approve":
-        raise HTTPException(status_code=409, detail="Claim is not approved")
-    if row["over_approval_limit"] and row["signed_off_by"] is None:
-        raise HTTPException(
-            status_code=409, detail="Claim needs a handler's sign-off before payment"
-        )
-    conn = db.connect()
-    conn.execute(
-        "UPDATE claims SET paid_amount = ?, paid_on = ? WHERE claim_id = ?",
-        (payment.amount, _now(), claim_id),
-    )
-    conn.commit()
-    conn.close()
-    return _claim_row(claim_id)
+    return claims.pay(claim_id, payment.amount)
 
 
 @app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
 def run_agent(claim_id: str, background_tasks: BackgroundTasks) -> dict[str, Any]:
     """Schedule the UnderCover Agent to decide a waiting claim."""
-    row = _claim_row(claim_id)
-    if row["status"] != "waiting":
-        raise HTTPException(status_code=409, detail="Claim is not waiting")
-    conn = db.connect()
-    conn.execute(
-        "UPDATE claims SET status = 'in progress' WHERE claim_id = ?", (claim_id,)
-    )
-    conn.commit()
-    conn.close()
+    claim = claims.start_work(claim_id)
     background_tasks.add_task(agents.decide_claim, claim_id)
-    return _claim_row(claim_id)
+    return claim
 
 
 @app.post("/api/claims/{claim_id}/requeue", operation_id="requeue_claim")
 def requeue_claim(claim_id: str) -> dict[str, Any]:
     """Put a stuck claim back in the queue as waiting."""
-    row = _claim_row(claim_id)
-    if row["status"] not in ("waiting", "in progress"):
-        raise HTTPException(status_code=409, detail="Claim is already decided")
-    conn = db.connect()
-    conn.execute("UPDATE claims SET status = 'waiting' WHERE claim_id = ?", (claim_id,))
-    conn.commit()
-    conn.close()
-    return _claim_row(claim_id)
+    return claims.requeue(claim_id)
 
 
 @app.post("/api/runs", operation_id="start_run")
@@ -297,10 +158,7 @@ def start_run(start: StartRun) -> dict[str, Any]:
 @app.get("/api/runs/current", operation_id="get_current_run")
 def get_current_run() -> dict[str, Any]:
     """Return the most recently started run, with its items."""
-    run = runs.get_current_run()
-    if run is None:
-        raise HTTPException(status_code=404, detail="No run yet")
-    return run
+    return runs.get_current_run()
 
 
 @app.post("/api/runs/{run_id}/items/{claim_id}", operation_id="update_run_item")
@@ -308,18 +166,10 @@ def update_run_item(
     run_id: int, claim_id: str, update: RunItemUpdate
 ) -> dict[str, Any]:
     """Update one run item's status and note."""
-    try:
-        return runs.update_run_item(run_id, claim_id, update.status, update.note)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+    return runs.update_run_item(run_id, claim_id, update.status, update.note)
 
 
 @app.post("/api/runs/{run_id}/finish", operation_id="finish_run")
 def finish_run(run_id: int, finish: FinishRun) -> dict[str, Any]:
     """Finish a run, recording its summary for the handlers."""
-    try:
-        return runs.finish_run(run_id, finish.summary)
-    except runs.RunNotReady as error:
-        raise HTTPException(status_code=409, detail=str(error)) from error
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+    return runs.finish_run(run_id, finish.summary)

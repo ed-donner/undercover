@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from backend.errors import NotFound
+
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
@@ -63,3 +65,18 @@ CLAIM_IDS_BY_SUBMITTED_ON: list[str] = [
 def handler(handler_id: str) -> dict[str, Any] | None:
     """Return the handler with this id, or None."""
     return next((h for h in HANDLERS if h["handler_id"] == handler_id), None)
+
+
+def get_document(name: str) -> dict[str, str]:
+    """Return a document's sections by heading, or raise NotFound."""
+    if name not in DOCUMENTS:
+        raise NotFound(f"No document {name}")
+    return DOCUMENTS[name]
+
+
+def get_section(document: str, heading: str) -> str:
+    """Return one section's text, or raise NotFound."""
+    sections = get_document(document)
+    if heading not in sections:
+        raise NotFound(f"No section {heading}")
+    return sections[heading]
