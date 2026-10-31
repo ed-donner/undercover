@@ -109,3 +109,7 @@ Replace the hello-world tool with the three tools the agent needs, and a system 
 - [x] `docs/STATUS.md` matches what's built.
 
 Along the way: the e2e tests weren't repeatable on a second run (a claim moved to `decided` by one run started the next run's "moves through the four states" test from the wrong state, since nothing in the app resets a claim backwards). Fixed with `e2e/globalSetup.ts`, which deletes the SQLite file before each `npm run e2e`/`npm run check` so every run starts from the same seeded queue. Also found and fixed that redeciding a claim left its old sign-off and payment on the row; `decide_claim` now clears `signed_off_by`, `signed_off_on`, `paid_amount`, and `paid_on` whenever a new decision is recorded.
+
+## Known gap: a crash in the single-claim button path
+
+"Run agent" marks the claim `in progress` and starts `python -m agent.cli --claim <id>` as a separate process (`backend/agent_process.py`). If that process crashes before it records a decision, nothing notices: the claim stays `in progress` and the step log just stops. The queue run's retry logic (`agent/work.py`) covers queue runs only. Fixing it would mean the backend watching the process and either returning the claim to `waiting` or retrying it.
