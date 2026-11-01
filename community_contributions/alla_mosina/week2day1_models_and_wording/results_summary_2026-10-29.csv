@@ -1,0 +1,18 @@
+experiment,run,claims,wrong,cost_of_mistakes,model_cost,seconds_per_claim
+"Baseline, Luna, no reasoning",1,25,14,9774.63,0.0078,
+"Payout tool, Luna, no reasoning",1,25,3,1582.7,0.0111,
+"Payout tool, Luna, medium reasoning",1,25,2,100.0,0.0179,
+"Payout tool, Luna, high reasoning",1,25,1,50.0,0.0188,
+"Payout tool, Grok 4.6, low reasoning",1,25,3,150.0,0.4101,
+"Payout tool, Grok 4.6, medium reasoning",1,25,0,0.0,0.7157,
+"Payout tool, Grok 4.6, high reasoning",1,25,0,0.0,0.8489,
+"Payout tool, Grok 4.7, low reasoning",1,25,3,150.0,0.5436,
+"Full wording, Luna, no reasoning",1,25,4,1766.5,0.0106,6.3
+"Concise wording, Luna, no reasoning",1,25,4,1866.5,0.0098,5.8
+"Full wording, Luna, medium reasoning",1,25,1,50.0,0.0167,15.7
+"Concise wording, Luna, medium reasoning",1,25,4,1928.0,0.0167,14.0
+"Full wording, Luna, high reasoning",1,25,2,350.0,0.0174,12.8
+"Concise wording, Luna, high reasoning",1,25,5,2213.58,0.0211,17.2
+"New concise wording, Luna, medium reasoning",1,25,1,50.0,0.0161,12.5
+"Full wording, needed sections, Luna, medium reasoning",1,25,0,0.0,0.0168,12.7
+"New concise wording, needed sections, Luna, medium reasoning",1,25,1,89.0,0.0161,12.5
