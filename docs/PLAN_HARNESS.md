@@ -98,20 +98,20 @@ Files: `dashboard/src/App.tsx` (split into `QueuePage.tsx`, `ClaimPage.tsx`, `In
 
 Files: `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/STATUS.md`.
 
-- [ ] SPEC: remove the manual from "Not for now"; decisions follow the wording and the manual; add the run with a cap, the to-do list, subagent per claim, sections read shown on the claim, recovery rules, the new statuses, the instructions page; keep the $1,000 rule and the evals rule.
-- [ ] TECH_STACK: default model `deepseek/deepseek-v4.1-flash` with low reasoning effort, `MODEL_NAME` override; the orchestrator plus subagent; SQLite tables; no new framework.
-- [ ] STATUS: what is built, how to seed (`npm run seed`), run (`npm run run -- --limit 5`), and check.
+- [x] SPEC: remove the manual from "Not for now"; decisions follow the wording and the manual; add the run with a cap, the to-do list, subagent per claim, sections read shown on the claim, recovery rules, the new statuses, the instructions page; keep the $1,000 rule and the evals rule.
+- [x] TECH_STACK: default model `deepseek/deepseek-v4.1-flash` with low reasoning effort, `MODEL_NAME` override; the orchestrator plus subagent; SQLite tables; no new framework.
+- [x] STATUS: what is built, how to seed (`npm run seed`), run (`npm run run -- --limit 5`), and check.
 - Verify: read the three against the code; commands in STATUS run.
 
 ## Phase 9: full check and live 5-claim trial
 
-- [ ] `npm run check` is green (ruff, pyright, pytest with 80% coverage, ESLint, Prettier, tsc, vitest, Playwright), with no thresholds lowered or rules disabled.
-- [ ] Stub tests exist for each new behavior: to-do list stored and shown (Phases 3, 5, 7), run cap, failed claim does not stop the run, requeue and retry, left for a handler after two failures, missed-claims check.
-- [ ] Reseed first: `npm run seed`, then check 25 claims `waiting`. Needs `OPENROUTER_API_KEY` in `.env`; the real model is used only here and only with `--limit 5`.
-- [ ] `npm run run -- --limit 5` (default model, no `MODEL_NAME`): exactly 5 claims worked on their own, 20 still `waiting`, no claim `in_progress`, none decided or paid twice, payouts over $1,000 not paid without sign-off.
-- [ ] Browser check while it runs and after: the queue page shows the to-do list filling and being ticked off; each worked claim page shows its steps and the sections read; the 20 other claims show waiting; the instructions page shows both texts.
-- [ ] If a failure shows up, fix it and, for a new live run, reseed and cap at 5 again.
-- [ ] Tick all boxes in this file, update `docs/STATUS.md`, commit (hook passes).
+- [x] `npm run check` is green (ruff, pyright, pytest with 80% coverage, ESLint, Prettier, tsc, vitest, Playwright), with no thresholds lowered or rules disabled.
+- [x] Stub tests exist for each new behavior: to-do list stored and shown (Phases 3, 5, 7), run cap, failed claim does not stop the run, requeue and retry, left for a handler after two failures, missed-claims check.
+- [x] Reseed first: `npm run seed`, then check 25 claims `waiting`. Needs `OPENROUTER_API_KEY` in `.env`; the real model is used only here and only with `--limit 5`.
+- [x] `npm run run -- --limit 5` (default model, no `MODEL_NAME`): exactly 5 claims worked on their own, 20 still `waiting`, no claim `in_progress`, none decided or paid twice, payouts over $1,000 not paid without sign-off.
+- [x] Browser check while it runs and after: the queue page shows the to-do list filling and being ticked off; each worked claim page shows its steps and the sections read; the 20 other claims show waiting; the instructions page shows both texts.
+- [x] If a failure shows up, fix it and, for a new live run, reseed and cap at 5 again.
+- [x] Tick all boxes in this file, update `docs/STATUS.md`, commit (hook passes).
 
 ## Open questions
 

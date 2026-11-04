@@ -9,6 +9,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"
 TIMEOUT_SECONDS = 90
 MAX_RETRIES = 3
+MAX_TOKENS = 8000
 
 
 def model() -> ChatOpenAI:
@@ -21,4 +22,5 @@ def model() -> ChatOpenAI:
         reasoning_effort=None if name else "low",
         timeout=TIMEOUT_SECONDS,
         max_retries=MAX_RETRIES,
+        max_completion_tokens=MAX_TOKENS,
     )
