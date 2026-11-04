@@ -87,10 +87,10 @@ Files: `backend/instructions/queue_runner.md`, `backend/instructions/claim.md`, 
 
 Files: `dashboard/src/App.tsx` (split into `QueuePage.tsx`, `ClaimPage.tsx`, `InstructionsPage.tsx`, `api.ts`), `dashboard/src/*.test.tsx`, `e2e/queue.spec.ts`, `playwright.config.ts` (test backend with its own seeded DB, no model).
 
-- [ ] Hash routes: `#/` queue, `#/claims/CLM-1001`, `#/instructions`, styled per `docs/BRAND.md`.
-- [ ] Queue page: all claims with status (waiting, in progress, awaiting sign-off, decided, left for handler); the current run's summary and to-do list with the four states, refreshed by polling every 2 seconds while a run is active.
-- [ ] Claim page: decision, payout, reason, section relied on, attempts, every step in order, and "Read" list showing document and section numbers and titles.
-- [ ] Instructions page: queue-runner and per-claim instructions, read only.
+- [x] Hash routes: `#/` queue, `#/claims/CLM-1001`, `#/instructions`, styled per `docs/BRAND.md`.
+- [x] Queue page: all claims with status (waiting, in progress, awaiting sign-off, decided, left for handler); the current run's summary and to-do list with the four states, refreshed by polling every 2 seconds while a run is active.
+- [x] Claim page: decision, payout, reason, section relied on, attempts, every step in order, and "Read" list showing document and section numbers and titles.
+- [x] Instructions page: queue-runner and per-claim instructions, read only.
 - Tests (vitest, mocked fetch, strict TS, no `any`): queue renders statuses and a to-do list with each state and updates on the next poll; claim page shows steps and sections read; instructions page shows both. Playwright: seed, call backend operations directly to write a to-do list and a step and a read, then check the pages (no model).
 - Verify: `npm run check:ts`; `npm run e2e`; look at each page in the browser with the Playwright MCP server.
 
