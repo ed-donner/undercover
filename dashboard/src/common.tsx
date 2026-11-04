@@ -18,8 +18,7 @@ export function DecisionLabel({ decision }: Readonly<{ decision: Decision }>) {
 export function Unreachable() {
   return (
     <p role="alert" className="alert">
-      Can&apos;t reach the claims system. This page will update when it&apos;s
-      back.
+      Can&apos;t reach the claims system.
     </p>
   );
 }

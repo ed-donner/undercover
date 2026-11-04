@@ -117,13 +117,13 @@ Builds the dashboard's frame: `styles.css` with the brand's fonts, colors and li
 
 Builds the claim page: the agent's decision (decision, payout, reason, policy section, and payment or sign-off state), the claim (summary, story, items with their total, documents), the policy (plan, add-ons, trip, travelers, purchase date), the customer and their earlier claims, and the agent's steps. The steps refresh every 2 seconds, and long tool results fold away. A claim waiting for sign-off shows a form to choose a handler and "Sign off and pay $1,500.00". The instructions page shows the agent's instructions with no way to edit them.
 
-- [ ] Vitest tests cover each section of the claim page, the steps list and its labels, the sign-off form appearing only when a claim is waiting for sign-off, the form posting the chosen handler and showing the payment, and the instructions page.
-- [ ] End-to-end: CLM-1001's page shows Maya Patel's story, its 3 items totaling $420.00, its 4 documents, the Premium plan and the earlier claim CLM-0412.
-- [ ] End-to-end: with CLM-1013's page open, a step posted through the API appears without a reload.
-- [ ] End-to-end: after CLM-1003 is started and approved for $1,500 through the API, its page shows "Waiting for sign-off", and a payment through the API is refused with `403`. Signing off as Dana Whitfield in the page then shows "Paid $1,500.00" and "Signed off by Dana Whitfield", and the queue shows CLM-1003 as decided.
-- [ ] End-to-end: the instructions page shows the text of `backend/instructions.md`, with no text box or button that could change it.
-- [ ] In the browser with the Playwright MCP server, a claim page reads clearly in light and dark mode, with the decision first, and the console shows no errors.
-- [ ] `npm run check` passes.
+- [x] Vitest tests cover each section of the claim page, the steps list and its labels, the sign-off form appearing only when a claim is waiting for sign-off, the form posting the chosen handler and showing the payment, and the instructions page.
+- [x] End-to-end: CLM-1001's page shows Maya Patel's story, its 3 items totaling $420.00, its 4 documents, the Premium plan and the earlier claim CLM-0412.
+- [x] End-to-end: with CLM-1013's page open, a step posted through the API appears without a reload.
+- [x] End-to-end: after CLM-1003 is started and approved for $1,500 through the API, its page shows "Waiting for sign-off", and a payment through the API is refused with `403`. Signing off as Dana Whitfield in the page then shows "Paid $1,500.00" and "Signed off by Dana Whitfield", and the queue shows CLM-1003 as decided.
+- [x] End-to-end: the instructions page shows the text of `backend/instructions.md`, with no text box or button that could change it.
+- [x] In the browser with the Playwright MCP server, a claim page reads clearly in light and dark mode, with the decision first, and the console shows no errors.
+- [x] `npm run check` passes.
 
 ## Phase 6: The pilot on real claims
 

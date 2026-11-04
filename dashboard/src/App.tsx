@@ -1,5 +1,9 @@
+import { ClaimPage } from "./ClaimPage";
 import { useHash } from "./hooks";
+import { InstructionsPage } from "./InstructionsPage";
 import { QueuePage } from "./QueuePage";
+
+const INSTRUCTIONS = "#/instructions";
 
 export function App() {
   const hash = useHash();
@@ -15,6 +19,12 @@ export function App() {
           <a href="#/" aria-current={isQueue(hash) ? "page" : undefined}>
             Queue
           </a>
+          <a
+            href={INSTRUCTIONS}
+            aria-current={hash === INSTRUCTIONS ? "page" : undefined}
+          >
+            Agent instructions
+          </a>
         </nav>
       </header>
       <main className="page">{page(hash)}</main>
@@ -28,6 +38,9 @@ function isQueue(hash: string) {
 
 function page(hash: string) {
   if (isQueue(hash)) return <QueuePage />;
+  if (hash === INSTRUCTIONS) return <InstructionsPage />;
+  const claim = /^#\/claims\/([\w-]+)$/.exec(hash);
+  if (claim) return <ClaimPage key={claim[1]} claimId={claim[1]} />;
   return (
     <>
       <h1>Page not found</h1>
