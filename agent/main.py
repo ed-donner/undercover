@@ -40,13 +40,13 @@ def get_claim(claim_id: str) -> str:
 
 @tool
 def get_policy(policy_id: str) -> str:
-    """Read a policy: its plan and limits, its add-ons, the trip and the travelers."""
+    """Read the policy with the policy_id on a claim: plan, limits, add-ons and trip."""
     return call("GET", f"/api/policies/{policy_id}").text
 
 
 @tool
 def get_customer(customer_id: str) -> str:
-    """Read a customer's name, when they became a customer and their earlier claims."""
+    """Read the earlier claims of the customer with the customer_id on a claim."""
     response = call("GET", f"/api/customers/{customer_id}")
     if response.is_error:
         return response.text

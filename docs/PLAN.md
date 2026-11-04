@@ -129,13 +129,13 @@ Builds the claim page: the agent's decision (decision, payout, reason, policy se
 
 Runs the real agent on GPT-6 Luna through OpenRouter for the first time, with `npm run dev` up and the dashboard open through the Playwright MCP server. It fixes whatever the run turns up, then brings `docs/STATUS.md` up to date. This is the only phase that calls a model.
 
-- [ ] After `uv run -m backend.seed`, `uv run -m agent CLM-1001` prints one line for the claim. While it runs, the claim page in the browser moves from waiting to in progress to its final state, with steps appearing as they happen.
-- [ ] CLM-1001 ends with a decision, a payout if approved, a reason of two or three sentences and a policy section, and if it's approved for $1,000 or less it shows as paid.
-- [ ] `uv run -m agent` works the other 24 claims. Afterwards no claim is waiting or in progress, and every claim has a decision, a reason and a policy section.
-- [ ] Every approval over $1,000 is waiting for sign-off and unpaid, and every approval of $1,000 or less is paid.
-- [ ] Signing off one held claim in the browser pays it.
-- [ ] `docs/STATUS.md` says what's built and how to run it: `npm run dev`, `uv run -m agent`, `uv run -m agent <claim ids>`, `uv run -m backend.seed` and `npm run check`.
-- [ ] `npm run check` passes, and the results are reported.
+- [x] After `uv run -m backend.seed`, `uv run -m agent CLM-1001` prints one line for the claim. While it runs, the claim page in the browser moves from waiting to in progress to its final state, with steps appearing as they happen.
+- [x] CLM-1001 ends with a decision, a payout if approved, a reason of two or three sentences and a policy section, and if it's approved for $1,000 or less it shows as paid.
+- [x] `uv run -m agent` works the other 24 claims. Afterwards no claim is waiting or in progress, and every claim has a decision, a reason and a policy section.
+- [x] Every approval over $1,000 is waiting for sign-off and unpaid, and every approval of $1,000 or less is paid.
+- [x] Signing off one held claim in the browser pays it.
+- [x] `docs/STATUS.md` says what's built and how to run it: `npm run dev`, `uv run -m agent`, `uv run -m agent <claim ids>`, `uv run -m backend.seed` and `npm run check`.
+- [x] `npm run check` passes, and the results are reported.
 
 ## Not in the pilot
 
