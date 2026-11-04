@@ -79,15 +79,15 @@ Builds `backend/db.py` (the connection and the tables), `backend/seed.py` (`uv r
 
 Builds `start_claim`, `add_step`, `list_steps`, `record_decision`, `pay_claim`, `sign_off` and `get_instructions`, with a first version of `backend/instructions.md`. This is where the business rules live, so it's built and tested before the agent that relies on them.
 
-- [ ] Within the limit: `POST /api/claims/CLM-1001/start` returns `in_progress`, and a second start returns `409`. Recording `approve` with payout 420 leaves it `in_progress`. Paying 420 makes it `decided` with `paid_amount` 420.0 and a `paid_at` time, and paying again returns `409`.
-- [ ] Over the limit: start CLM-1003 and record `approve` with payout 1500, and the claim is `waiting_for_sign_off`. `POST /api/claims/CLM-1003/payment` with 1500 returns `403` with "A payout over $1,000.00 waits for a handler's sign-off.", and the claim is still unpaid. A sign-off by `HND-01` makes it `decided`, with `signed_off_by` `HND-01` and `paid_amount` 1500.0.
-- [ ] The rule holds against workarounds. Tests show that paying an amount other than the payout returns `409`, paying 1000 against an approved 1500 returns `409`, a second payment returns `409`, and paying a declined or referred claim returns `409`.
-- [ ] Decisions are checked. Tests show that a decline or referral with a payout above $0 returns `422`, an approval of $0 returns `422`, a decision other than approve, decline or refer returns `422`, a decision on a claim that isn't in progress returns `409`, and a decline or referral makes the claim `decided`.
-- [ ] Sign-off is checked. Tests show that signing off a claim that isn't waiting for sign-off returns `409`, an unknown handler returns `404`, and a handler without `can_approve_over_limit` returns `403`.
-- [ ] Steps posted to a claim come back from `list_steps` in the order they were posted, with their thread id, kind, name, content and time.
-- [ ] `GET /api/instructions` returns the text of `backend/instructions.md`.
-- [ ] The OpenAPI test from Phase 1 passes with the new operations.
-- [ ] `npm run check:python` passes, and `uv run -m backend.seed` resets the queue after the manual checks.
+- [x] Within the limit: `POST /api/claims/CLM-1001/start` returns `in_progress`, and a second start returns `409`. Recording `approve` with payout 420 leaves it `in_progress`. Paying 420 makes it `decided` with `paid_amount` 420.0 and a `paid_at` time, and paying again returns `409`.
+- [x] Over the limit: start CLM-1003 and record `approve` with payout 1500, and the claim is `waiting_for_sign_off`. `POST /api/claims/CLM-1003/payment` with 1500 returns `403` with "A payout over $1,000.00 waits for a handler's sign-off.", and the claim is still unpaid. A sign-off by `HND-01` makes it `decided`, with `signed_off_by` `HND-01` and `paid_amount` 1500.0.
+- [x] The rule holds against workarounds. Tests show that paying an amount other than the payout returns `409`, paying 1000 against an approved 1500 returns `409`, a second payment returns `409`, and paying a declined or referred claim returns `409`.
+- [x] Decisions are checked. Tests show that a decline or referral with a payout above $0 returns `422`, an approval of $0 returns `422`, a decision other than approve, decline or refer returns `422`, a decision on a claim that isn't in progress returns `409`, and a decline or referral makes the claim `decided`.
+- [x] Sign-off is checked. Tests show that signing off a claim that isn't waiting for sign-off returns `409`, an unknown handler returns `404`, and a handler without `can_approve_over_limit` returns `403`.
+- [x] Steps posted to a claim come back from `list_steps` in the order they were posted, with their thread id, kind, name, content and time.
+- [x] `GET /api/instructions` returns the text of `backend/instructions.md`.
+- [x] The OpenAPI test from Phase 1 passes with the new operations.
+- [x] `npm run check:python` passes, and `uv run -m backend.seed` resets the queue after the manual checks.
 
 ## Phase 3: The UnderCover Agent
 
