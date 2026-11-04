@@ -93,15 +93,15 @@ Builds `start_claim`, `add_step`, `list_steps`, `record_decision`, `pay_claim`, 
 
 Builds the agent's six tools, `run(claim_id, thread_id)` and `agent/__main__.py`. `run` fetches the instructions, starts the claim, streams the agent and posts each step to the backend, then returns the agent's final reply. The command line works the queue one claim at a time and prints a line for each. Tests use a stub model that plays out a script of tool calls, as the skeleton's test does, so no test calls a real model.
 
-- [ ] A stub run that approves CLM-1001 for $420 and pays it leaves the claim `decided`, with the decision, reason, policy section and `paid_amount` 420.0. Its steps (the tool calls, the tool results and the reply) are recorded in order under the run's thread id.
-- [ ] A stub run that approves CLM-1003 for $1,500 and then tries to pay finishes normally. The pay tool hands the backend's `403` refusal back to the model, and the claim is `waiting_for_sign_off` and unpaid.
-- [ ] A stub run that declines a claim leaves it `decided` and unpaid.
-- [ ] Running a claim that isn't waiting raises an error, so a decided claim is final.
-- [ ] The agent's system prompt is the text from `GET /api/instructions`.
-- [ ] The `get_customer` tool returns the name, the customer-since date and the earlier claims, with no email, phone, date of birth or address.
-- [ ] `uv run -m agent` with no arguments works only the waiting claims, and with claim ids works only those (tested with the stub).
-- [ ] Outside its tests, `agent/` opens no files and imports nothing from `backend/`, so it reaches everything through the API: `grep -rnE "open\(|from backend|import backend" agent --include=*.py` finds matches only in `agent/tests/`.
-- [ ] `npm run check:python` passes.
+- [x] A stub run that approves CLM-1001 for $420 and pays it leaves the claim `decided`, with the decision, reason, policy section and `paid_amount` 420.0. Its steps (the tool calls, the tool results and the reply) are recorded in order under the run's thread id.
+- [x] A stub run that approves CLM-1003 for $1,500 and then tries to pay finishes normally. The pay tool hands the backend's `403` refusal back to the model, and the claim is `waiting_for_sign_off` and unpaid.
+- [x] A stub run that declines a claim leaves it `decided` and unpaid.
+- [x] Running a claim that isn't waiting raises an error, so a decided claim is final.
+- [x] The agent's system prompt is the text from `GET /api/instructions`.
+- [x] The `get_customer` tool returns the name, the customer-since date and the earlier claims, with no email, phone, date of birth or address.
+- [x] `uv run -m agent` with no arguments works only the waiting claims, and with claim ids works only those (tested with the stub).
+- [x] Outside its tests, `agent/` opens no files and imports nothing from `backend/`, so it reaches everything through the API: `grep -rnE "open\(|from backend|import backend" agent --include='*.py'` finds matches only in `agent/tests/`.
+- [x] `npm run check:python` passes.
 
 ## Phase 4: The dashboard and the queue
 
