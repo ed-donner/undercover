@@ -12,7 +12,9 @@ def main(argv: list[str] | None = None) -> str:
     """Run the agent on the queue, up to a limit, or on one named claim."""
     parser = argparse.ArgumentParser(description="Run the UnderCover Agent.")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--limit", type=int, help="work at most this many claims")
+    group.add_argument(
+        "--limit", "--cap", type=int, help="work at most this many claims"
+    )
     group.add_argument("--claim", help="work only this claim")
     args = parser.parse_args(argv)
     load_dotenv(override=True)
