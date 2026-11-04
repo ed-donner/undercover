@@ -1,0 +1,126 @@
+:root {
+  --ink: #073b4c;
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --sea-green: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  color: var(--ink);
+  background: var(--page);
+  font-family: "Instrument Sans", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #cdd8db;
+    --page: #04232e;
+    --panel: #000000;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+}
+
+main {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+}
+
+header p {
+  margin-left: auto;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+a {
+  color: var(--cerulean);
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 1rem;
+  background: var(--cerulean);
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+
+.status-waiting,
+.state-todo .tag {
+  background: var(--marigold);
+  color: #073b4c;
+}
+
+.status-in_progress,
+.state-in_progress .tag {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.status-decided,
+.state-done .tag {
+  background: var(--sea-green);
+  color: #073b4c;
+}
+
+.status-awaiting_signoff {
+  background: var(--coral);
+  color: #073b4c;
+}
+
+.status-left_for_handler,
+.state-left_for_handler .tag {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.todos {
+  list-style: none;
+  padding: 0;
+}
+
+.todos li {
+  padding: 0.25rem 0;
+}
+
+pre {
+  white-space: pre-wrap;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.9rem;
+}
