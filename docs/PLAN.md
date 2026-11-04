@@ -107,11 +107,11 @@ Builds the agent's six tools, `run(claim_id, thread_id)` and `agent/__main__.py`
 
 Builds the dashboard's frame: `styles.css` with the brand's fonts, colors and light and dark surfaces, a typed API client, the hash router, a header with links to the queue and the instructions, and a `usePolling` hook. Then the queue page: a count for each status, and a table of claims (id, customer, type, submitted, claimed, status, decision, payout) that links to each claim and refreshes every 2 seconds. Status badges use Cerulean for waiting, Marigold for in progress, Coral for waiting for sign-off and Sea Green for decided, per `docs/BRAND.md`. It also sets up the end-to-end tests' own servers and database (decision 10), and a queue test replaces the health test.
 
-- [ ] Vitest tests cover the queue rendering from a stubbed API, the status labels and counts, money shown as `$1,250.00`, the table updating on the next poll, routing to a claim, and a clear message when the backend can't be reached.
-- [ ] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with at least 80% coverage.
-- [ ] `npm run e2e` passes on ports 8001 and 5174. The queue test sees 25 claims, with CLM-1025 waiting.
-- [ ] Running `npm run e2e` while `npm run dev` is up leaves the dev queue untouched: the claims' statuses at `localhost:8000/api/claims` are the same before and after.
-- [ ] In the browser with the Playwright MCP server, `http://localhost:5173` shows the four status counts and 25 claims. In light and dark mode, the page and panels use the brand's surfaces and text colors, headings and body are in Instrument Sans, and ids and money are in JetBrains Mono. Panels are rounded with no outline, there are no one-edge borders or lines across the top, and the console shows no errors.
+- [x] Vitest tests cover the queue rendering from a stubbed API, the status labels and counts, money shown as `$1,250.00`, the table updating on the next poll, routing to a claim, and a clear message when the backend can't be reached.
+- [x] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with at least 80% coverage.
+- [x] `npm run e2e` passes on ports 8001 and 5174. The queue test sees 25 claims, with CLM-1025 waiting.
+- [x] Running `npm run e2e` while `npm run dev` is up leaves the dev queue untouched: the claims' statuses at `localhost:8000/api/claims` are the same before and after.
+- [x] In the browser with the Playwright MCP server, `http://localhost:5173` shows the four status counts and 25 claims. In light and dark mode, the page and panels use the brand's surfaces and text colors, headings and body are in Instrument Sans, and ids and money are in JetBrains Mono. Panels are rounded with no outline, there are no one-edge borders or lines across the top, and the console shows no errors.
 
 ## Phase 5: A claim in full, the live steps, sign-off and the instructions
 
