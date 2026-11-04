@@ -18,10 +18,32 @@ The pilot from `docs/PLAN.md` is built: a backend, the UnderCover Agent and a da
 
 ## Running it
 
-- `npm run dev` starts the backend on port 8000 and the dashboard on http://localhost:5173
-- `uv run -m agent` works every waiting claim, one at a time, with the backend running. `uv run -m agent CLM-1001 CLM-1004` works just those claims. This calls the model and spends on your OpenRouter key.
+### Start
+
+From the root of the repo, run:
+
+```
+npm run dev
+```
+
+This starts the backend on port 8000 and the dashboard at http://localhost:5173. Leave that terminal open while you use them.
+
+### Stop
+
+Press Ctrl+C in the terminal where `npm run dev` is running.
+
+If the servers were started somewhere else, for example by your coding agent, stop whatever is listening on the two ports:
+
+- Mac or Linux: `lsof -ti tcp:8000,5173 | xargs kill`
+- Windows PowerShell: `Get-NetTCPConnection -LocalPort 8000,5173 -State Listen | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force }`
+
+The queue is saved in `backend/undercover.db`, so stopping loses nothing.
+
+### Other commands
+
+- `uv run -m agent` works every waiting claim, one at a time. The backend must be running, so use a second terminal. `uv run -m agent CLM-1001 CLM-1004` works just those claims. This calls the model and spends on your OpenRouter key.
 - `uv run -m backend.seed` resets the queue to the records in `data/`. A decided claim is final, so run this to work the queue again.
-- `npm run check` runs every check
+- `npm run check` runs every check. Its end-to-end tests start their own servers on other ports, so it's safe to run while `npm run dev` is up.
 
 ## Not built yet
 
