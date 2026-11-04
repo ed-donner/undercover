@@ -27,9 +27,9 @@ Brief: `docs/HARNESS.md`. Written under `docs/PROCESS.md`: phases with checkbox 
 
 Files: `backend/main.py` (split into `backend/db.py`, `backend/seed.py`, `backend/routes.py` only if `main.py` gets long), `data/` read only, `.gitignore`, `package.json` (`seed` script), `backend/tests/test_claims.py`.
 
-- [ ] SQLite schema and `uv run -m backend.seed` (also `npm run seed`) load the 25 claims, policies, customers, plans and company settings; reseeding resets everything (claims `waiting`, no steps, decisions, payments, runs, to-dos). `data/evals/` is never read.
-- [ ] API: `list_claims`, `get_claim`, `get_policy`, `get_customer_history`, `record_step`, `decide_claim`, `pay_claim`, `sign_off_claim`, `get_instructions` (replaced in Phase 6, for now a placeholder text). One-line docstrings, `operation_id`s, no optional inputs.
-- [ ] `decide_claim` returns 409 if the claim is already decided. `pay_claim` takes the amount, returns 409 if already paid or if the payout is over $1,000 and not signed off; sign-off moves the claim `awaiting_signoff` to `decided`.
+- [x] SQLite schema and `uv run -m backend.seed` (also `npm run seed`) load the 25 claims, policies, customers, plans and company settings; reseeding resets everything (claims `waiting`, no steps, decisions, payments, runs, to-dos). `data/evals/` is never read.
+- [x] API: `list_claims`, `get_claim`, `get_policy`, `get_customer_history`, `record_step`, `decide_claim`, `pay_claim`, `sign_off_claim`, `get_instructions` (replaced in Phase 6, for now a placeholder text). One-line docstrings, `operation_id`s, no optional inputs.
+- [x] `decide_claim` returns 409 if the claim is already decided. `pay_claim` takes the amount, returns 409 if already paid or if the payout is over $1,000 and not signed off; sign-off moves the claim `awaiting_signoff` to `decided`.
 - Tests added (`backend/tests/`): seed count and reseed reset; decide twice gives 409; pay twice gives 409; $1,000 pays, $1,001 blocked until sign-off; no `evals` path in the seed code (grep test).
 - Verify: `uv run pytest -q backend`; `uv run -m backend.seed` prints 25 claims; `GET /api/claims` returns 25 `waiting`.
 
@@ -37,9 +37,9 @@ Files: `backend/main.py` (split into `backend/db.py`, `backend/seed.py`, `backen
 
 Files: `backend/docs_lookup.py`, `backend/main.py`, `backend/tests/test_lookup.py`.
 
-- [ ] Split `data/claims_manual.md` and `data/policy_wording.md` into numbered sections by `## ` headings at start-up.
-- [ ] API: `list_sections(document)` (number and title only), `search_sections(document, query)` (matching section numbers, titles and a one-line snippet, no full text), `read_section(claim_id, document, number)` (full section text; stores a `reads` row on the claim and a step).
-- [ ] `get_claim` returns the claim's `reads` so the dashboard can show them.
+- [x] Split `data/claims_manual.md` and `data/policy_wording.md` into numbered sections by `## ` headings at start-up.
+- [x] API: `list_sections(document)` (number and title only), `search_sections(document, query)` (matching section numbers, titles and a one-line snippet, no full text), `read_section(claim_id, document, number)` (full section text; stores a `reads` row on the claim and a step).
+- [x] `get_claim` returns the claim's `reads` so the dashboard can show them.
 - Tests: list returns 14 manual and 12 wording sections; search for "wild animal" finds manual section 7; `read_section` returns only that section (not the whole document) and a repeated read stores one row; unknown section gives 404.
 - Verify: `uv run pytest -q backend`; `curl` the three operations and see small payloads.
 
@@ -47,9 +47,9 @@ Files: `backend/docs_lookup.py`, `backend/main.py`, `backend/tests/test_lookup.p
 
 Files: `backend/main.py`, `backend/runs.py`, `backend/tests/test_runs.py`.
 
-- [ ] API: `start_run(cap)` (cap 0 not allowed; a named claim run is `cap=1` with that claim), `get_current_run` (run, summary, to-do list), `write_todos(run_id, items)` (replaces the list; each item has text, state, optional claim id), `finish_run(run_id, summary)`.
-- [ ] API: `start_claim(run_id, claim_id)` sets `in_progress`, attempts + 1, refuses a claim that is not `waiting` or is over the cap. `fail_claim(claim_id, reason)`: attempts below 2 gives `waiting`, otherwise `left_for_handler`, and sets the matching to-do item; a decided claim is left alone. `sweep_stuck()` requeues stuck `in_progress` claims by the same rule; called by `start_run` and `finish_run`.
-- [ ] `list_waiting_claims(run_id)` returns waiting claims within the run's cap (includes requeued ones) and `check_missed(run_id)` returns the waiting claims within the cap that the run has not worked.
+- [x] API: `start_run(cap)` (cap 0 not allowed; a named claim run is `cap=1` with that claim), `get_current_run` (run, summary, to-do list), `write_todos(run_id, items)` (replaces the list; each item has text, state, optional claim id), `finish_run(run_id, summary)`.
+- [x] API: `start_claim(run_id, claim_id)` sets `in_progress`, attempts + 1, refuses a claim that is not `waiting` or is over the cap. `fail_claim(claim_id, reason)`: attempts below 2 gives `waiting`, otherwise `left_for_handler`, and sets the matching to-do item; a decided claim is left alone. `sweep_stuck()` requeues stuck `in_progress` claims by the same rule; called by `start_run` and `finish_run`.
+- [x] `list_waiting_claims(run_id)` returns waiting claims within the run's cap (includes requeued ones) and `check_missed(run_id)` returns the waiting claims within the cap that the run has not worked.
 - Tests: to-do list is stored and returned with its states; cap blocks the (cap+1)th distinct claim; requeue after one failure and `left_for_handler` after two; decided claim not requeued; sweep fixes a stuck claim; missed-claims returns the unworked waiting ones.
 - Verify: `uv run pytest -q backend`.
 
@@ -57,9 +57,9 @@ Files: `backend/main.py`, `backend/runs.py`, `backend/tests/test_runs.py`.
 
 Files: `agent/main.py` (split: `agent/model.py`, `agent/tools.py`, `agent/steps.py` only as needed), `agent/tests/test_agent.py`.
 
-- [ ] `DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"`, low reasoning effort by default; `MODEL_NAME` overrides (as today, no reasoning effort then). Add a client timeout and `max_retries` for provider errors and timeouts.
-- [ ] Remove the health-only tool and prompt; keep the backend client helper.
-- [ ] Step recorder: one `wrap_tool_call` middleware that posts every claim tool call (tool, short args, short result, or the error) to `record_step`.
+- [x] `DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"`, low reasoning effort by default; `MODEL_NAME` overrides (as today, no reasoning effort then). Add a client timeout and `max_retries` for provider errors and timeouts.
+- [x] Remove the health-only tool and prompt; keep the backend client helper.
+- [x] Step recorder: one `wrap_tool_call` middleware that posts every claim tool call (tool, short args, short result, or the error) to `record_step`.
 - Tests: default model name and effort, `MODEL_NAME` override (replace the existing `openai/gpt-6-luna` test); the middleware records a step for a stub tool call and records an error step when the tool raises.
 - Verify: `uv run pytest -q agent`.
 
@@ -67,10 +67,10 @@ Files: `agent/main.py` (split: `agent/model.py`, `agent/tools.py`, `agent/steps.
 
 Files: `agent/claim_agent.py`, `agent/runner.py`, `agent/cli.py`, `package.json` (`run` script), `agent/tests/test_runner.py`.
 
-- [ ] `work_claim(claim_id)` tool: `start_claim`, build a fresh claim subagent (tools above, clean messages, thread id per attempt), invoke, return one line (`CLM-1004: approved $215` or `CLM-1004: declined`, `referred`, or `FAILED: <reason>`). On any exception it calls `fail_claim` and returns the failed line. Return value never contains the subagent's message history.
-- [ ] Queue runner agent with `list_waiting_claims`, `write_todos`, `work_claim`, `check_missed`; chooses the order; ends with a short summary stored via `finish_run`.
-- [ ] `run(limit=None, claim_id=None, llm=None)`: starts the run, invokes the runner, applies the missed-claims backstop (up to two reminders), finishes the run, sweeps. If the runner itself errors (provider error), the run is sweep-cleaned and finished as failed, never leaving a claim `in_progress`.
-- [ ] CLI: `uv run -m agent.cli --limit N` and `--claim CLM-1001`; `npm run run -- --limit 5`. The old `run(claim_id, thread_id)` entry becomes `run(claim_id=...)`.
+- [x] `work_claim(claim_id)` tool: `start_claim`, build a fresh claim subagent (tools above, clean messages, thread id per attempt), invoke, return one line (`CLM-1004: approved $215` or `CLM-1004: declined`, `referred`, or `FAILED: <reason>`). On any exception it calls `fail_claim` and returns the failed line. Return value never contains the subagent's message history.
+- [x] Queue runner agent with `list_waiting_claims`, `write_todos`, `work_claim`, `check_missed`; chooses the order; ends with a short summary stored via `finish_run`.
+- [x] `run(limit=None, claim_id=None, llm=None)`: starts the run, invokes the runner, applies the missed-claims backstop (up to two reminders), finishes the run, sweeps. If the runner itself errors (provider error), the run is sweep-cleaned and finished as failed, never leaving a claim `in_progress`.
+- [x] CLI: `uv run -m agent.cli --limit N` and `--claim CLM-1001`; `npm run run -- --limit 5`. The old `run(claim_id, thread_id)` entry becomes `run(claim_id=...)`.
 - Tests (stub model, in-process backend via `TestClient`, no network): runner writes a to-do list and it is readable via `get_current_run`; cap of 2 on 4 waiting claims works exactly 2 and leaves 2 `waiting`; a claim whose stub raises a provider error does not stop the run and the next claim is worked; that claim is `waiting` and gets retried and decided; a claim failing twice is `left_for_handler`, the run still completes; no claim decided or paid twice when the stub tries; missed-claims backstop triggers a reminder when the stub finishes early, and the missed claim is then worked; subagent history is not carried into the runner; `claim_id` run works one claim.
 - Verify: `uv run pytest -q agent`; coverage stays at or above 80%.
 
@@ -78,8 +78,8 @@ Files: `agent/claim_agent.py`, `agent/runner.py`, `agent/cli.py`, `package.json`
 
 Files: `backend/instructions/queue_runner.md`, `backend/instructions/claim.md`, `backend/main.py` (`get_instructions` returns both), `agent/` (loads them via the API), tests.
 
-- [ ] Write queue-runner instructions: work the waiting claims within the cap, choose the order, write and update the to-do list, give each claim to `work_claim` one at a time, read the one-line results, never decide a claim itself, run the missed-claims check before finishing, finish with a short summary for handlers (decided, awaiting sign-off, left for a handler, still waiting).
-- [ ] Write claim instructions from the manual section 4 order and the wording: look up only the sections needed (list, search, then read), the 90-day rule, documents (manual 5), payout order (wording 10, manual 6), the interpretation notes, referral rules (manual 8, 9), $1,000 sign-off (manual 3), customer data (manual 11), and to decide with a reason and the section relied on. No text copied from or informed by `data/evals/`.
+- [x] Write queue-runner instructions: work the waiting claims within the cap, choose the order, write and update the to-do list, give each claim to `work_claim` one at a time, read the one-line results, never decide a claim itself, run the missed-claims check before finishing, finish with a short summary for handlers (decided, awaiting sign-off, left for a handler, still waiting).
+- [x] Write claim instructions from the manual section 4 order and the wording: look up only the sections needed (list, search, then read), the 90-day rule, documents (manual 5), payout order (wording 10, manual 6), the interpretation notes, referral rules (manual 8, 9), $1,000 sign-off (manual 3), customer data (manual 11), and to decide with a reason and the section relied on. No text copied from or informed by `data/evals/`.
 - Tests: `get_instructions` returns both texts; both mention the cap check / sections lookup and sign-off; a test that the instruction files exist and do not mention the evals folder.
 - Verify: `uv run pytest -q`; read both files against the manual once.
 
