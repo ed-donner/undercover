@@ -116,9 +116,9 @@ Connect the dashboard's buttons to the backend, add polling so the queue and a c
 
 **Success criteria**
 
-- [ ] `npm run e2e` passes, including a test that seeds a claim to `waiting_for_sign_off` via direct API calls, loads its page, clicks "Sign off", and confirms it becomes `decided` with the payout shown as paid.
-- [ ] Manual check with the Playwright MCP server against `npm run dev` (not an automated test, and the one place in this plan that spends real API credits): click "Run" on CLM-1001 and watch its events appear, ending `decided` with a reason naming the trip delay and a policy wording reference; click "Run" on CLM-1003, confirm it ends `waiting_for_sign_off`, then sign it off and confirm it becomes `decided`. Screenshot each state.
-- [ ] `npm run check` passes in full.
+- [x] `npm run e2e` passes, including a test that seeds a claim to `waiting_for_sign_off` via direct API calls, loads its page, clicks "Sign off", and confirms it becomes `decided` with the payout shown as paid.
+- [x] Manual check with the Playwright MCP server against `npm run dev` (not an automated test, and the one place in this plan that spends real API credits): click "Run" on CLM-1001 and watch its events appear, ending `decided` with a reason naming the trip delay and a policy wording reference; click "Run" on CLM-1003, confirm it ends `waiting_for_sign_off`, then sign it off and confirm it becomes `decided`. Screenshot each state. (This also surfaced and fixed a real concurrency bug in `backend/db.py`: the shared SQLite connection wasn't safe for concurrent requests from multiple threads, causing intermittent 404/500s. Fixed by serializing every query, not just writes, through one lock, with two regression tests in `backend/tests/test_db.py`.)
+- [x] `npm run check` passes in full.
 
 ## Phase 6: Docs and final check
 

@@ -10,7 +10,7 @@ from fastapi import HTTPException
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-_lock = threading.Lock()
+_lock = threading.RLock()
 _state: dict[str, sqlite3.Connection | None] = {"connection": None}
 
 SCHEMA = """
@@ -97,11 +97,12 @@ CREATE TABLE claim_events (
 
 def get_connection() -> sqlite3.Connection:
     """Return the backend's one shared SQLite connection, seeding it on first use."""
-    if _state["connection"] is None:
-        _state["connection"] = sqlite3.connect(":memory:", check_same_thread=False)
-        _state["connection"].row_factory = sqlite3.Row
-        reset_database()
-    return _state["connection"]
+    with _lock:
+        if _state["connection"] is None:
+            _state["connection"] = sqlite3.connect(":memory:", check_same_thread=False)
+            _state["connection"].row_factory = sqlite3.Row
+            reset_database()
+        return _state["connection"]
 
 
 def reset_database() -> None:
@@ -252,18 +253,31 @@ def agent_instructions() -> str:
     return path.read_text()
 
 
+def _fetchone(query: str, params: tuple = ()) -> sqlite3.Row | None:
+    """Run a query and return its one row, holding the lock for the whole call.
+
+    SQLite connections aren't safe for concurrent use from multiple threads, even
+    with check_same_thread=False, so every query - not just writes - is serialized
+    through this one lock.
+    """
+    with _lock:
+        return get_connection().execute(query, params).fetchone()
+
+
+def _fetchall(query: str, params: tuple = ()) -> list[sqlite3.Row]:
+    """Run a query and return all its rows, holding the lock for the whole call."""
+    with _lock:
+        return get_connection().execute(query, params).fetchall()
+
+
 def fetch_claims() -> list[sqlite3.Row]:
     """Return every claim in the queue."""
-    return get_connection().execute("SELECT * FROM claims ORDER BY claim_id").fetchall()
+    return _fetchall("SELECT * FROM claims ORDER BY claim_id")
 
 
 def fetch_claim(claim_id: str) -> sqlite3.Row | None:
     """Return one claim, or None if it does not exist."""
-    return (
-        get_connection()
-        .execute("SELECT * FROM claims WHERE claim_id = ?", (claim_id,))
-        .fetchone()
-    )
+    return _fetchone("SELECT * FROM claims WHERE claim_id = ?", (claim_id,))
 
 
 def require_claim(claim_id: str) -> sqlite3.Row:
@@ -276,51 +290,33 @@ def require_claim(claim_id: str) -> sqlite3.Row:
 
 def fetch_customer(customer_id: str) -> sqlite3.Row | None:
     """Return one customer, or None if it does not exist."""
-    return (
-        get_connection()
-        .execute("SELECT * FROM customers WHERE customer_id = ?", (customer_id,))
-        .fetchone()
-    )
+    return _fetchone("SELECT * FROM customers WHERE customer_id = ?", (customer_id,))
 
 
 def fetch_policy(policy_id: str) -> sqlite3.Row | None:
     """Return one policy, or None if it does not exist."""
-    return (
-        get_connection()
-        .execute("SELECT * FROM policies WHERE policy_id = ?", (policy_id,))
-        .fetchone()
-    )
+    return _fetchone("SELECT * FROM policies WHERE policy_id = ?", (policy_id,))
 
 
 def fetch_plan(plan: str) -> sqlite3.Row | None:
     """Return one plan's limits, or None if it does not exist."""
-    query = "SELECT * FROM plans WHERE plan = ?"
-    return get_connection().execute(query, (plan,)).fetchone()
+    return _fetchone("SELECT * FROM plans WHERE plan = ?", (plan,))
 
 
 def fetch_handlers() -> list[sqlite3.Row]:
     """Return every claims handler."""
-    query = "SELECT * FROM handlers ORDER BY handler_id"
-    return get_connection().execute(query).fetchall()
+    return _fetchall("SELECT * FROM handlers ORDER BY handler_id")
 
 
 def fetch_handler(handler_id: str) -> sqlite3.Row | None:
     """Return one handler, or None if it does not exist."""
-    return (
-        get_connection()
-        .execute("SELECT * FROM handlers WHERE handler_id = ?", (handler_id,))
-        .fetchone()
-    )
+    return _fetchone("SELECT * FROM handlers WHERE handler_id = ?", (handler_id,))
 
 
 def fetch_events(claim_id: str) -> list[sqlite3.Row]:
     """Return a claim's event log, in order."""
-    return (
-        get_connection()
-        .execute(
-            "SELECT * FROM claim_events WHERE claim_id = ? ORDER BY id", (claim_id,)
-        )
-        .fetchall()
+    return _fetchall(
+        "SELECT * FROM claim_events WHERE claim_id = ? ORDER BY id", (claim_id,)
     )
 
 

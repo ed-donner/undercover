@@ -28,9 +28,13 @@ Building the pilot from `docs/PLAN.md`.
 
 "Run" and "Sign off" are wired to the backend, and the Queue and Claim detail pages poll while a claim is `waiting`/`in_progress` so its status and event log update live.
 
+**Phase 5: wired end to end.** `e2e/` has Playwright tests for the queue, a claim's detail page and the sign-off flow (seeded through the backend's own API, never through a model). Verified by hand against a running `npm run dev` with the real agent: CLM-1001 (a routine trip delay) runs straight through to paid, and CLM-1003 (an emergency medical claim over $1,000) runs to `waiting_for_sign_off` and completes once signed off.
+
+That manual run surfaced a real bug: `backend/db.py`'s shared SQLite connection wasn't safe for concurrent requests from multiple threads (the dashboard fires several requests on page load), causing intermittent 404s and 500s. Fixed by serializing every query - reads included, not just writes - through one lock; `backend/tests/test_db.py` has two regression tests for it.
+
 ## Not built yet
 
-End-to-end tests for the dashboard, and the manual run-through of a real claim. See `docs/PLAN.md` for the rest of the pilot.
+The final review against `docs/SPEC.md` (Phase 6 of `docs/PLAN.md`). Every feature in the spec is built.
 
 ## Running it
 
