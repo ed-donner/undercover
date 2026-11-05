@@ -5,15 +5,20 @@ import sqlite3
 
 from fastapi import FastAPI, HTTPException
 
-from backend import db
+from backend import claims, db
 from backend.schemas import (
     Claim,
+    ClaimEvent,
     ClaimSummary,
     Customer,
+    DecideClaimRequest,
     Handler,
+    PayClaimRequest,
+    PaymentResult,
     PlanLimits,
     Policy,
     PolicyWording,
+    SignOffRequest,
 )
 
 app = FastAPI(title="UnderCover")
@@ -101,13 +106,6 @@ def _claim(row: sqlite3.Row) -> Claim:
     )
 
 
-def _require_claim(claim_id: str) -> sqlite3.Row:
-    row = db.fetch_claim(claim_id)
-    if row is None:
-        raise HTTPException(status_code=404, detail=f"Claim {claim_id} not found")
-    return row
-
-
 @app.get("/api/claims", operation_id="list_claims")
 def list_claims() -> list[ClaimSummary]:
     """List every claim in the queue."""
@@ -117,7 +115,7 @@ def list_claims() -> list[ClaimSummary]:
 @app.get("/api/claims/{claim_id}", operation_id="get_claim")
 def get_claim(claim_id: str) -> Claim:
     """Return a claim with its customer, policy and plan."""
-    return _claim(_require_claim(claim_id))
+    return _claim(db.require_claim(claim_id))
 
 
 @app.get("/api/policy-wording", operation_id="get_policy_wording")
@@ -130,3 +128,31 @@ def get_policy_wording() -> PolicyWording:
 def list_handlers() -> list[Handler]:
     """List the claims handlers."""
     return [Handler(**dict(row)) for row in db.fetch_handlers()]
+
+
+@app.get("/api/claims/{claim_id}/events", operation_id="list_claim_events")
+def list_claim_events(claim_id: str) -> list[ClaimEvent]:
+    """List what the agent or a handler has done on a claim, in order."""
+    db.require_claim(claim_id)
+    return [ClaimEvent(**dict(row)) for row in db.fetch_events(claim_id)]
+
+
+@app.post("/api/claims/{claim_id}/decide", operation_id="decide_claim")
+def decide_claim(claim_id: str, request: DecideClaimRequest) -> Claim:
+    """Record a decision on a claim: approve, decline or refer."""
+    claims.decide_claim(
+        claim_id, request.decision, request.payout, request.reason, request.reference
+    )
+    return _claim(db.require_claim(claim_id))
+
+
+@app.post("/api/claims/{claim_id}/pay", operation_id="pay_claim")
+def pay_claim(claim_id: str, request: PayClaimRequest) -> PaymentResult:
+    """Pay an approved claim, or hold it for sign-off if it's over the limit."""
+    return claims.pay_claim(claim_id, request.amount)
+
+
+@app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
+def sign_off_claim(claim_id: str, request: SignOffRequest) -> PaymentResult:
+    """Sign off a claim that's waiting for a handler, releasing its payment."""
+    return claims.sign_off_claim(claim_id, request.handler_id)

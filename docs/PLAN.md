@@ -61,12 +61,12 @@ Add the operations that move a claim through the rest of its lifecycle, and the 
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes, including:
-  - [ ] `decide_claim(CLM-1001, "approve", 420.0, ..., "Policy wording, section 3")` then `pay_claim(CLM-1001, 420.0)` leaves the claim `decided` with `paid_amount: 420.0`.
-  - [ ] `decide_claim(CLM-1003, "approve", 3750.0, ..., "Policy wording, section 7")` then `pay_claim(CLM-1003, 3750.0)` leaves the claim `waiting_for_sign_off` with no `paid_amount`, and its events include one about needing sign-off. (3750.0 is the $3,800 claimed on CLM-1003 less the Premium plan's $50 deductible, both straight from `data/claims.json` and `data/plans.json`.)
-  - [ ] `sign_off_claim(CLM-1003, "HND-01")` leaves that claim `decided`, `paid_amount: 3750.0`, `signed_off_by: "HND-01"`, and its events show the sign-off followed by the payment.
-  - [ ] `decide_claim` on an already-decided claim returns 409; `pay_claim` on a declined claim returns 400; `sign_off_claim` on a claim that isn't waiting for sign-off returns 409.
-- [ ] `uv run ruff format --check`, `uv run ruff check` and `pyright` are clean; coverage stays at or above 80%.
+- [x] `uv run pytest backend -q` passes, including:
+  - [x] `decide_claim(CLM-1001, "approve", 420.0, ..., "Policy wording, section 3")` then `pay_claim(CLM-1001, 420.0)` leaves the claim `decided` with `paid_amount: 420.0`.
+  - [x] `decide_claim(CLM-1003, "approve", 3750.0, ..., "Policy wording, section 7")` then `pay_claim(CLM-1003, 3750.0)` leaves the claim `waiting_for_sign_off` with no `paid_amount`, and its events include one about needing sign-off. (3750.0 is the $3,800 claimed on CLM-1003 less the Premium plan's $50 deductible, both straight from `data/claims.json` and `data/plans.json`.)
+  - [x] `sign_off_claim(CLM-1003, "HND-01")` leaves that claim `decided`, `paid_amount: 3750.0`, `signed_off_by: "HND-01"`, and its events show the sign-off followed by the payment.
+  - [x] `decide_claim` on an already-decided claim returns 409; `pay_claim` on a declined claim returns 400; `sign_off_claim` on a claim that isn't waiting for sign-off returns 409.
+- [x] `uv run ruff format --check`, `uv run ruff check` and `pyright` are clean; coverage stays at or above 80%.
 
 ## Phase 3: The UnderCover Agent
 

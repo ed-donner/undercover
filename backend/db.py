@@ -6,6 +6,8 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from fastapi import HTTPException
+
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 _lock = threading.Lock()
@@ -256,6 +258,14 @@ def fetch_claim(claim_id: str) -> sqlite3.Row | None:
         .execute("SELECT * FROM claims WHERE claim_id = ?", (claim_id,))
         .fetchone()
     )
+
+
+def require_claim(claim_id: str) -> sqlite3.Row:
+    """Return one claim, or raise a 404 if it does not exist."""
+    row = fetch_claim(claim_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Claim {claim_id} not found")
+    return row
 
 
 def fetch_customer(customer_id: str) -> sqlite3.Row | None:
