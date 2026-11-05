@@ -79,12 +79,12 @@ Replace the hello-world agent with the real one: it reads a claim, the policy, t
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, with a test per tool (mirroring the existing `test_check_backend`) checking it calls the right route and returns the right shape.
-- [ ] An integration test scripts a `GenericFakeChatModel` to call `get_claim`, `get_policy_wording`, `decide_claim("approve", 420.0, ..., "Policy wording, section 3")`, `pay_claim(420.0)`, then reply; with `agent.main.model` monkeypatched to return it, `POST /api/claims/CLM-1001/run` returns 200 and `GET /api/claims/CLM-1001` shows `status: "decided"`, `paid_amount: 420.0`.
-- [ ] A second scripted run for CLM-1003 (`approve`, `3750.0`) leaves it `waiting_for_sign_off`; a follow-up call to `sign_off_claim` completes it, as in Phase 2.
-- [ ] `run_claim` on a claim that isn't `waiting` returns 409.
-- [ ] `GET /api/agent-instructions` returns text containing "policy wording".
-- [ ] `uv run ruff format --check`, `uv run ruff check` and `pyright` are clean; coverage stays at or above 80% for both `backend/` and `agent/`.
+- [x] `uv run pytest agent -q` passes, with a test per tool (mirroring the existing `test_check_backend`) checking it calls the right route and returns the right shape.
+- [x] An integration test scripts a `GenericFakeChatModel` to call `get_claim`, `get_policy_wording`, `decide_claim("approve", 420.0, ..., "Policy wording, section 3")`, `pay_claim(420.0)`, then reply; with `agent.main.model` monkeypatched to return it, `POST /api/claims/CLM-1001/run` returns 200 and `GET /api/claims/CLM-1001` shows `status: "decided"`, `paid_amount: 420.0`.
+- [x] A second scripted run for CLM-1003 (`approve`, `3750.0`) leaves it `waiting_for_sign_off`; a follow-up call to `sign_off_claim` completes it, as in Phase 2.
+- [x] `run_claim` on a claim that isn't `waiting` returns 409.
+- [x] `GET /api/agent-instructions` returns text containing "policy wording".
+- [x] `uv run ruff format --check`, `uv run ruff check` and `pyright` are clean; coverage stays at or above 80% for both `backend/` and `agent/`.
 
 ## Phase 4: The dashboard
 

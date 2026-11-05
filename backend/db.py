@@ -246,6 +246,12 @@ def policy_wording() -> str:
     return (DATA_DIR / "policy_wording.md").read_text()
 
 
+def agent_instructions() -> str:
+    """Return the agent's instructions."""
+    path = Path(__file__).resolve().parent / "agent_instructions.md"
+    return path.read_text()
+
+
 def fetch_claims() -> list[sqlite3.Row]:
     """Return every claim in the queue."""
     return get_connection().execute("SELECT * FROM claims ORDER BY claim_id").fetchall()

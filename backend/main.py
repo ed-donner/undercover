@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 
 from backend import claims, db
 from backend.schemas import (
+    AgentInstructions,
     Claim,
     ClaimEvent,
     ClaimSummary,
@@ -18,6 +19,7 @@ from backend.schemas import (
     PlanLimits,
     Policy,
     PolicyWording,
+    RunClaimResult,
     SignOffRequest,
 )
 
@@ -128,6 +130,18 @@ def get_policy_wording() -> PolicyWording:
 def list_handlers() -> list[Handler]:
     """List the claims handlers."""
     return [Handler(**dict(row)) for row in db.fetch_handlers()]
+
+
+@app.get("/api/agent-instructions", operation_id="get_agent_instructions")
+def get_agent_instructions() -> AgentInstructions:
+    """Return the agent's instructions."""
+    return AgentInstructions(content=db.agent_instructions())
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_claim")
+def run_claim(claim_id: str) -> RunClaimResult:
+    """Run the agent on a claim."""
+    return RunClaimResult(reply=claims.run_claim(claim_id))
 
 
 @app.get("/api/claims/{claim_id}/events", operation_id="list_claim_events")

@@ -18,9 +18,11 @@ Building the pilot from `docs/PLAN.md`.
 - `POST /api/claims/{claim_id}/sign-off` — a handler signs off a held claim, which releases its payment.
 - `GET /api/claims/{claim_id}/events` — the step-by-step log of everything done to a claim, written by each of the above.
 
+**Phase 3: the UnderCover Agent.** `agent/main.py` reads a claim and the policy wording, decides approve/decline/refer, and (if it approved) tries to pay — all through the backend's API, never touching `data/` directly. Its instructions live in `backend/agent_instructions.md`, served read-only at `GET /api/agent-instructions` and used as the agent's own system prompt, so the two can never drift apart. `POST /api/claims/{claim_id}/run` is the trigger: it moves a `waiting` claim to `in_progress` and calls the agent.
+
 ## Not built yet
 
-The agent, the dashboard, and wiring it end to end. See `docs/PLAN.md` for the rest of the pilot.
+The dashboard, and wiring it end to end. See `docs/PLAN.md` for the rest of the pilot.
 
 ## Running it
 

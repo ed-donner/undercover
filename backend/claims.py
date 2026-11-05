@@ -4,12 +4,24 @@ from datetime import UTC, datetime
 
 from fastapi import HTTPException
 
+from agent import main as agent
 from backend import db
 from backend.schemas import PaymentResult
 
 
 def _now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+def run_claim(claim_id: str) -> str:
+    """Run the agent on a claim and return its reply."""
+    claim = db.require_claim(claim_id)
+    if claim["status"] != "waiting":
+        raise HTTPException(status_code=409, detail=f"Claim {claim_id} isn't waiting")
+
+    db.update_claim(claim_id, status="in_progress")
+    db.insert_event(claim_id, "run_claim", "Started working the claim", _now())
+    return agent.run(claim_id, claim_id)
 
 
 def decide_claim(
