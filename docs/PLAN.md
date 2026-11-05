@@ -128,6 +128,6 @@ Connect the dashboard's buttons to the backend, add polling so the queue and a c
 
 **Success criteria**
 
-- [ ] `docs/STATUS.md` accurately describes the built pilot and how to run it.
-- [ ] `npm run check` passes in full, output recorded.
-- [ ] Every bullet in `docs/SPEC.md`'s "What the team needs to see" and "Rules" sections is met, and every item in "Not for now" is confirmed absent.
+- [x] `docs/STATUS.md` accurately describes the built pilot and how to run it.
+- [x] `npm run check` passes in full, output recorded.
+- [x] Every bullet in `docs/SPEC.md`'s "What the team needs to see" and "Rules" sections is met, and every item in "Not for now" is confirmed absent.
