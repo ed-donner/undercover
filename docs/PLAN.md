@@ -98,13 +98,13 @@ Build the three screens the spec asks for, styled to `docs/BRAND.md`.
 
 **Success criteria**
 
-- [ ] `npx vitest run --root dashboard --coverage` passes, with new tests for the Queue, Claim detail and Instructions components against mocked `fetch`, in the style of the existing `App.test.tsx`.
-- [ ] `npx prettier --check -u dashboard e2e *.config.*`, `npx eslint dashboard e2e *.config.*` and `npx tsc` are clean.
-- [ ] With `npm run dev` running, checked with the Playwright MCP server:
-  - [ ] `/` lists all 25 seeded claims with status "waiting".
-  - [ ] A claim's detail page shows its story, items, customer and policy.
-  - [ ] `/instructions` renders the instructions text.
-  - [ ] Headings use Instrument Sans, the palette matches `docs/BRAND.md`, and the page is legible in both light and dark mode.
+- [x] `npx vitest run --root dashboard --coverage` passes, with new tests for the Queue, Claim detail and Instructions components against mocked `fetch`, in the style of the existing `App.test.tsx`.
+- [x] `npx prettier --check -u dashboard e2e *.config.*`, `npx eslint dashboard e2e *.config.*` and `npx tsc` are clean.
+- [x] With `npm run dev` running, checked with the Playwright MCP server:
+  - [x] `/` lists all 25 seeded claims with status "waiting".
+  - [x] A claim's detail page shows its story, items, customer and policy.
+  - [x] `/instructions` renders the instructions text (as Markdown, via `react-markdown`, since the instructions file is Markdown and read raw it showed literal `#`/`**` marks).
+  - [x] Headings use Instrument Sans, the palette matches `docs/BRAND.md`, and the page is legible in both light and dark mode.
 
 ## Phase 5: Wiring it end to end
 

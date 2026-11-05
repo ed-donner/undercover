@@ -20,9 +20,17 @@ Building the pilot from `docs/PLAN.md`.
 
 **Phase 3: the UnderCover Agent.** `agent/main.py` reads a claim and the policy wording, decides approve/decline/refer, and (if it approved) tries to pay — all through the backend's API, never touching `data/` directly. Its instructions live in `backend/agent_instructions.md`, served read-only at `GET /api/agent-instructions` and used as the agent's own system prompt, so the two can never drift apart. `POST /api/claims/{claim_id}/run` is the trigger: it moves a `waiting` claim to `in_progress` and calls the agent.
 
+**Phase 4: the dashboard.** React Router with three pages, styled to `docs/BRAND.md` (Instrument Sans/Serif, JetBrains Mono, the brand palette, light and dark surfaces):
+
+- **Queue** (`/`) — every claim, with a Run button on each waiting one.
+- **Claim detail** (`/claims/:id`) — the story, items, documents, customer, policy, the decision once made, the step-by-step event log, and a sign-off control when a claim is waiting for one.
+- **Instructions** (`/instructions`) — the agent's instructions, rendered from the same Markdown the agent reads.
+
+"Run" and "Sign off" are wired to the backend, and the Queue and Claim detail pages poll while a claim is `waiting`/`in_progress` so its status and event log update live.
+
 ## Not built yet
 
-The dashboard, and wiring it end to end. See `docs/PLAN.md` for the rest of the pilot.
+End-to-end tests for the dashboard, and the manual run-through of a real claim. See `docs/PLAN.md` for the rest of the pilot.
 
 ## Running it
 
