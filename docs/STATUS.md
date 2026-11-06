@@ -4,12 +4,14 @@ The pilot from `docs/PLAN.md` is built: a backend, the UnderCover Agent and a da
 
 - `backend/`: FastAPI on SQLite. The database is `backend/undercover.db`, or the path in `UNDERCOVER_DB`. The backend seeds it from `data/` when it starts without one, and never reads `data/evals/` or `data/security/`.
   - Read operations: `list_claims`, `get_claim`, `get_policy` (with the plan's limits and add-ons), `get_customer`, `list_handlers`, `get_policy_wording`, `list_sections`, `search_documents`, `read_section`, `get_instructions`, `list_steps` and `health`. The workflow: `start_claim`, `add_step`, `record_decision`, `pay_claim` and `sign_off`.
-  - A claim is `waiting`, `in_progress`, `waiting_for_sign_off` or `decided`. A decline or referral is decided at once. An approval of $1,000 or less stays in progress until the agent pays it, and an approval over $1,000 waits for sign-off.
-  - `pay_claim` pays only an approved claim's exact payout, once, and refuses a payout over $1,000 with `403`, whatever the agent does. A handler's `sign_off` pays those.
+  - A claim is `waiting`, `in_progress`, `waiting_for_sign_off`, `decided` or `left_for_handler`. A decline or referral is decided at once. An approval of $1,000 or less stays in progress until the agent pays it, and an approval over $1,000 waits for sign-off.
+  - `release_claim` puts a claim back after a failed attempt and counts it in `attempts`. With no decision it goes back to `waiting`, and at its second failure to `left_for_handler`. An approval that wasn't paid goes to `left_for_handler` at once, since its decision is final.
+  - `pay_claim` pays only an approved claim's exact payout, once, never on a claim left for a handler, and refuses a payout over $1,000 with `403`, whatever the agent does. A handler's `sign_off` pays those.
   - `backend/documents.py` splits the policy wording (12 sections) and the claims manual (14) at their numbered headings. `search_documents` is a keyword search that returns the five best sections with their best-matching lines, with rare words counting most.
   - The agent's instructions are `backend/instructions.md`.
-- `agent/`: the UnderCover Agent, on LangChain's `create_agent` with GPT-6 Luna at low reasoning through OpenRouter, or the model in `MODEL_NAME`.
-  - `run(claim_id, thread_id)` fetches the instructions from the backend, starts the claim and posts each step to the backend as it goes.
+- `agent/`: the UnderCover Agent, on LangChain's `create_agent` with DeepSeek V4.1 Flash at low reasoning through OpenRouter, or the model in `MODEL_NAME`.
+  - `agent/common.py` holds the backend client, the model and the harness: LangChain's middleware retries a failed model call or backend call three times and stops an agent after 25 model calls, and our `FinishCheck` middleware sends an agent back, at most twice, if it tries to finish with the claim undecided or an approval of $1,000 or less unpaid.
+  - `claim_agent.work(claim_id)` starts a claim, runs one attempt (`run`) in a fresh context, posting each step to the backend, then reads the claim back. A finished claim gives a line such as "CLM-1001: approved $420.00 and paid." A claim left unfinished, by an error or otherwise, gets a failure step and is released, and the line says what went wrong.
   - Its tools each call one API operation: `get_claim`, `get_policy`, `get_customer` (name, customer since and earlier claims only, so no personal details reach the model), `list_sections`, `search_documents` and `read_section` (it looks up the wording and the manual instead of reading them whole), `record_decision` and `pay_claim`. A refusal from the backend goes back to the model as the tool's result.
 - `dashboard/`: React, Vite and TypeScript in the UnderCover brand, with light and dark mode following the system setting. Routing is by the URL's hash, and the dev server proxies `/api` to the backend in `BACKEND_URL`, by default port 8000.
   - The queue (`#/`) counts the claims in each status and lists every claim, refreshing every 2 seconds.
@@ -38,11 +40,11 @@ If the servers were started somewhere else, for example by your coding agent, st
 - Mac or Linux: `lsof -ti tcp:8000,5173 | xargs kill`
 - Windows PowerShell: `Get-NetTCPConnection -LocalPort 8000,5173 -State Listen | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force }`
 
-The queue is saved in `backend/undercover.db`, so stopping loses nothing.
+The queue is saved in `backend/undercover.db`, so stopping loses nothing. A database from the pilot is missing the harness's columns, so run `uv run -m backend.seed` once after updating.
 
 ### Other commands
 
-- `uv run -m agent` works every waiting claim, one at a time. The backend must be running, so use a second terminal. `uv run -m agent CLM-1001 CLM-1004` works just those claims. This calls the model and spends on your OpenRouter key.
+- `uv run -m agent` works every waiting claim, one at a time, and a claim that fails doesn't stop it. The backend must be running, so use a second terminal. `uv run -m agent CLM-1001 CLM-1004` works just those claims. This calls the model and spends on your OpenRouter key.
 - `uv run -m backend.seed` resets the queue to the records in `data/`. A decided claim is final, so run this to work the queue again.
 - `npm run check` runs every check. Its end-to-end tests start their own servers on other ports, so it's safe to run while `npm run dev` is up.
 

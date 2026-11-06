@@ -26,6 +26,7 @@ def test_the_queue_shows_where_each_claim_stands():
         "decision": None,
         "payout": None,
         "paid_amount": None,
+        "attempts": 0,
         "customer_name": "Maya Patel",
     }
 

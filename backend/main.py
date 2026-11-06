@@ -17,6 +17,7 @@ from backend.documents import Document
 from backend.seed import seed
 
 INSTRUCTIONS = Path(__file__).parent / "instructions.md"
+MOST_ATTEMPTS = 2
 WORKFLOW_COLUMNS = (
     "status",
     "decision",
@@ -28,6 +29,7 @@ WORKFLOW_COLUMNS = (
     "signed_off_at",
     "paid_amount",
     "paid_at",
+    "attempts",
 )
 QUEUE_FIELDS = (
     "claim_id",
@@ -39,6 +41,7 @@ QUEUE_FIELDS = (
     "decision",
     "payout",
     "paid_amount",
+    "attempts",
 )
 RECORD_QUERIES = {
     "policy": "SELECT record FROM policies WHERE policy_id = ?",
@@ -62,7 +65,7 @@ class Step(BaseModel):
     """One step the agent took on a claim."""
 
     thread_id: str
-    kind: Literal["tool_call", "tool_result", "reply"]
+    kind: Literal["tool_call", "tool_result", "reply", "reminder", "failure"]
     name: str
     content: str
 
@@ -142,7 +145,11 @@ def find_claim(db: Connection, claim_id: str) -> dict[str, Any]:
 def refusal(db: Connection, claim_id: str, action: str) -> HTTPException:
     """Explain why a claim can't take the action asked of it, or 404."""
     claim = find_claim(db, claim_id)
-    standing = claim["status"].replace("_", " ")
+    standing = (
+        "left for a handler"
+        if claim["status"] == "left_for_handler"
+        else claim["status"].replace("_", " ")
+    )
     if claim["decision"]:
         standing += f" with the decision to {claim['decision']}"
     return HTTPException(409, f"Claim {claim_id} can't {action}: it is {standing}.")
@@ -338,6 +345,8 @@ def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
         if claim["paid_amount"] is not None:
             message = f"Claim {claim_id} has already been paid {money(payout)}."
             raise HTTPException(409, message)
+        if claim["status"] == "left_for_handler":
+            raise refusal(db, claim_id, "be paid")
         if round(payment.amount, 2) != payout:
             message = (
                 f"Claim {claim_id} can't be paid {money(payment.amount)}:"
@@ -373,4 +382,20 @@ def sign_off(claim_id: str, sign_off: SignOff) -> dict[str, Any]:
         )
         if not cursor.rowcount:
             raise refusal(db, claim_id, "be signed off")
+        return find_claim(db, claim_id)
+
+
+@app.post("/api/claims/{claim_id}/release", operation_id="release_claim")
+def release_claim(claim_id: str) -> dict[str, Any]:
+    """Put back a claim after a failed attempt, or leave it for a handler."""
+    with transaction() as db:
+        cursor = db.execute(
+            "UPDATE claims SET attempts = attempts + 1, status = CASE"
+            " WHEN decision IS NULL AND attempts + 1 < ? THEN 'waiting'"
+            " ELSE 'left_for_handler' END"
+            " WHERE claim_id = ? AND status = 'in_progress'",
+            (MOST_ATTEMPTS, claim_id),
+        )
+        if not cursor.rowcount:
+            raise refusal(db, claim_id, "be released")
         return find_claim(db, claim_id)

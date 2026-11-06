@@ -76,9 +76,9 @@ Every operation keeps an `operation_id`, a one-line docstring and only required 
 These existing operations change:
 
 - `get_instructions` returns `queue` and `claim` in place of `text`.
-- `add_step` takes a fourth `kind`, `failure`.
+- `add_step` takes two more kinds: `failure`, when an attempt fails, and `reminder`, when the harness sends an agent back to work.
 - `get_claim` and `list_claims` include `attempts`, the number of failed attempts.
-- `pay_claim` also needs the claim to be in progress, so an agent can't pay a claim left for a handler.
+- `pay_claim` refuses a claim left for a handler with `409`. A claim waiting for sign-off still gets `403`, as before.
 
 The database gains a `runs` table and an `attempts` column, so a database from the pilot needs `uv run -m backend.seed`.
 
@@ -97,25 +97,25 @@ Builds `backend/documents.py`, which splits both documents at their `## ` headin
 
 ## Phase 2: A failed claim is put right
 
-Builds the claim agent's side of the harness. The backend adds `attempts`, the `left_for_handler` status, the `failure` step and `release_claim`, and `pay_claim` now needs a claim in progress. The agent splits into `agent/common.py` (the backend client and the model) and `agent/claim_agent.py`. In it, `work(claim_id)` starts the claim, runs one attempt of the claim agent in a fresh context, judges the attempt from the backend, releases the claim if it isn't done and returns one line. The claim agent gets the retry and call-limit middleware and the finish check from decision 4, and the default model becomes DeepSeek V4.1 Flash. Until Phase 3, `uv run -m agent` still works the waiting claims in a loop, now through `work`, so a failure prints a line and the loop moves on. This phase comes before the queue agent because the queue agent relies on `work` always coming back with a line.
+Builds the claim agent's side of the harness. The backend adds `attempts`, the `left_for_handler` status, the `failure` step and `release_claim`, and `pay_claim` now needs a claim in progress. The agent splits into `agent/common.py` (the backend client, the model and the harness's middleware) and `agent/claim_agent.py`, and `agent/main.py` goes. In it, `work(claim_id)` starts the claim, runs one attempt of the claim agent in a fresh context, judges the attempt from the backend, releases the claim if it isn't done and returns one line. The claim agent gets the retry and call-limit middleware and the finish check from decision 4, and the default model becomes DeepSeek V4.1 Flash. Until Phase 3, `uv run -m agent` still works the waiting claims in a loop, now through `work`, so a failure prints a line and the loop moves on. This phase comes before the queue agent because the queue agent relies on `work` always coming back with a line.
 
-- [ ] Through the API: start a claim and release it, and it's `waiting` with `attempts` 1. Start it and release it again, and it's `left_for_handler` with `attempts` 2, and a third start returns `409`.
-- [ ] Releasing a claim that is waiting, decided or waiting for sign-off returns `409` and changes nothing.
-- [ ] Releasing a claim approved for $420 and not paid leaves it `left_for_handler` with its decision, and `pay_claim` on it then returns `409`.
-- [ ] A stub run that approves CLM-1001 for $420 and pays it returns "CLM-1001: approved $420.00 and paid." Tests check the lines for a decline, a referral and an approval waiting for sign-off the same way.
-- [ ] With a stub model that raises on every call, `work` returns a line saying what went wrong instead of raising. The claim is `waiting` with `attempts` 1, with a `failure` step under that attempt's thread id. A second `work` leaves it `left_for_handler`.
-- [ ] With a stub model that raises once and then decides, the retry middleware recovers, the claim is decided and `attempts` stays 0.
-- [ ] A tool whose call to the backend fails once with a connection error is retried, and the attempt succeeds.
-- [ ] A stub model that calls `get_claim` again and again stops at the model call limit, and the claim is released.
-- [ ] The finish check: a stub that approves $420 and stops is reminded, then pays, and the claim ends `decided` and paid. A stub that stops without a decision is reminded, and if it stops again the claim is released.
-- [ ] `uv run -m agent`, tested with the stub, carries on to the next claim after one fails.
-- [ ] The default model is `deepseek/deepseek-v4.1-flash` at low reasoning, `MODEL_NAME` overrides it, and `docs/TECH_STACK.md` says so.
-- [ ] `docs/SPEC.md` adds "left for a handler" to the queue's statuses, with the rules that a claim that fails twice is left for a handler and that no claim is decided or paid twice.
-- [ ] `npm run check:python` passes.
+- [x] Through the API: start a claim and release it, and it's `waiting` with `attempts` 1. Start it and release it again, and it's `left_for_handler` with `attempts` 2, and a third start returns `409`.
+- [x] Releasing a claim that is waiting, decided or waiting for sign-off returns `409` and changes nothing.
+- [x] Releasing a claim approved for $420 and not paid leaves it `left_for_handler` with its decision, and `pay_claim` on it then returns `409`.
+- [x] A stub run that approves CLM-1001 for $420 and pays it returns "CLM-1001: approved $420.00 and paid." Tests check the lines for a decline, a referral and an approval waiting for sign-off the same way.
+- [x] With a stub model that raises on every call, `work` returns a line saying what went wrong instead of raising. The claim is `waiting` with `attempts` 1, with a `failure` step under that attempt's thread id. A second `work` leaves it `left_for_handler`.
+- [x] With a stub model that raises once and then decides, the retry middleware recovers, the claim is decided and `attempts` stays 0.
+- [x] A tool whose call to the backend fails once with a connection error is retried, and the attempt succeeds.
+- [x] A stub model that calls `get_claim` again and again stops at the model call limit, and the claim is released.
+- [x] The finish check: a stub that approves $420 and stops is reminded, then pays, and the claim ends `decided` and paid. A stub that stops without a decision is reminded, and if it stops again the claim is released.
+- [x] `uv run -m agent`, tested with the stub, carries on to the next claim after one fails.
+- [x] The default model is `deepseek/deepseek-v4.1-flash` at low reasoning, `MODEL_NAME` overrides it, and `docs/TECH_STACK.md` says so.
+- [x] `docs/SPEC.md` adds "left for a handler" to the queue's statuses, with the rules that a claim that fails twice is left for a handler and that no claim is decided or paid twice.
+- [x] `npm run check:python` passes.
 
 ## Phase 3: The queue agent
 
-Builds runs in the backend (`start_run`, `update_todos`, `finish_run` and `get_latest_run`) and `agent/queue_agent.py`. The queue agent has three tools, `list_waiting_claims`, `write_todos` and `work_claim`, with its own retry and call-limit middleware and the finish check for missed claims. `run(cap, claim_ids)` starts a run, works it and records the summary. If the queue agent itself fails, the run is finished with "The run stopped: ..." and the error goes on to the command line. No claim is left in progress, because the queue agent can only fail between claims. The instructions split into `backend/instructions/queue.md` and `claim.md`, and the dashboard's instructions page shows both. The command line becomes `uv run -m agent [--cap N] [claim ids]`. It prints each claim's line as it comes, then the summary. `agent/main.py` goes.
+Builds runs in the backend (`start_run`, `update_todos`, `finish_run` and `get_latest_run`) and `agent/queue_agent.py`. The queue agent has three tools, `list_waiting_claims`, `write_todos` and `work_claim`, with its own retry and call-limit middleware and the finish check for missed claims. `run(cap, claim_ids)` starts a run, works it and records the summary. If the queue agent itself fails, the run is finished with "The run stopped: ..." and the error goes on to the command line. No claim is left in progress, because the queue agent can only fail between claims. The instructions split into `backend/instructions/queue.md` and `claim.md`, and the dashboard's instructions page shows both. The command line becomes `uv run -m agent [--cap N] [claim ids]`. It prints each claim's line as it comes, then the summary.
 
 - [ ] Through the API: `GET /api/runs/latest` is `null` on a fresh database. `POST /api/runs` returns run 1 with an empty to-do list. `PUT /api/runs/1/todos` replaces the list, and a status other than the four returns `422`. Finishing records the summary, and after that, updating the to-do list or finishing again returns `409`. `GET /api/runs/latest` returns the newest run.
 - [ ] `GET /api/instructions` returns `queue` and `claim`, from the two files.

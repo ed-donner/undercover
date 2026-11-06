@@ -20,7 +20,7 @@ Our goal is to handle claims straight through, as accurately as our handlers do.
 
 ## What the team needs to see
 
-- The queue, with where each claim stands: waiting, in progress, waiting for sign-off or decided.
+- The queue, with where each claim stands: waiting, in progress, waiting for sign-off, decided or left for a handler.
 - Each claim in full, with the agent's decision and its reasons.
 - What the agent is doing on a claim while it works, step by step.
 - The agent's instructions, read only.
@@ -29,6 +29,7 @@ Our goal is to handle claims straight through, as accurately as our handlers do.
 
 - A payout over $1,000 needs a handler's sign-off. The agent can approve such a claim, but the payment waits until a handler signs off. The system must block the payment until then, even if the agent tries to pay.
 - Decisions follow the policy wording, which always comes first, and the claims manual, which covers what the wording leaves open, such as a third claim within 12 months, losses to wild animals and meals without receipts.
+- A claim the agent fails on goes back in the queue to be tried again, and a claim it fails on twice is left for a handler. No claim is ever decided or paid twice.
 - Our handlers' own decisions on these claims are in `data/evals/`. We use them to check the agent's work. The agent must never see them.
 - Amounts are in US dollars.
 

@@ -27,7 +27,8 @@ CREATE TABLE claims (
     signed_off_by TEXT,
     signed_off_at TEXT,
     paid_amount REAL,
-    paid_at TEXT
+    paid_at TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE policies (policy_id TEXT PRIMARY KEY, record TEXT NOT NULL);
 CREATE TABLE customers (customer_id TEXT PRIMARY KEY, record TEXT NOT NULL);
