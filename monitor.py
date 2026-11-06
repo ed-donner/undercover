@@ -12,8 +12,8 @@ import boto3
 import gradio as gr
 import plotly.graph_objects as go
 
-ALL_SPEND = "undercover-daily-spend"
-AFTER_CREDITS = "undercover-daily-spend-after-credits"
+ALL_SPEND = "shoppie-daily-spend"
+AFTER_CREDITS = "shoppie-daily-spend-after-credits"
 CHECK_EVERY_SECONDS = 5 * 60
 DAYS = 30
 

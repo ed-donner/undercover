@@ -1,14 +1,14 @@
-# UnderCover
+# Shoppie
 
 ## The context
 
-You're working with a student who is taking Ed Donner's 3-week course, "AI FDE: The Forward Deployed Engineer & Agentic AI Architect". UnderCover is the commercial project that is built throughout the course. You and the student are collaborating to build it, and to run the labs that go with the course.
+You're working with a student who is taking Ed Donner's 3-week course, "AI FDE: The Forward Deployed Engineer & Agentic AI Architect". Shoppie is the commercial project that is built throughout the course. You and the student are collaborating to build it, and to run the labs that go with the course.
 
 The student may be on Windows, where the terminal in VS Code is PowerShell, or on a Mac. Give commands that work on their system.
 
-## UnderCover
+## Shoppie
 
-UnderCover Travel Insurance is a fictional travel insurer. Its claims handlers work through a queue of claims by hand, and over the three weeks we build them a claims platform: a backend, a dashboard for the handlers, and the UnderCover Agent, which decides claims. The product grows with each build, and in Week 3 it goes into production on AWS.
+Shoppie is a fictional e-commerce firm. Its support agents work through customer requests by hand, and over the three weeks we build a support platform: a backend, a dashboard, and the Shoppie Agent, which recommends how to handle cancellations, returns, replacements, and refunds. Support agents confirm decisions and the pilot does not execute real customer actions. The product grows with each build, and in Week 3 it goes into production on AWS.
 
 ### Start here
 
@@ -24,7 +24,7 @@ IMPORTANT: before you plan, build or change anything in the product, or answer q
 
 ### Your role in the build
 
-The documents in `docs/` are written as UnderCover's own. The spec comes from UnderCover's head of claims operations, and each later brief from the people at UnderCover who asked for the work. Treat them as the customer's requirements. In the course, the student is UnderCover's forward deployed engineer and you are their coding agent. The student directs the work and reviews your plans and builds. You plan, build and check the work as `docs/PROCESS.md` describes.
+The documents in `docs/` are written as Shoppie's own. The spec comes from Shoppie's head of customer support, and each later brief from the people at Shoppie who asked for the work. Treat them as the customer's requirements. In the course, the student is Shoppie's forward deployed engineer and you are their coding agent. The student directs the work and reviews your plans and builds. You plan, build and check the work as `docs/PROCESS.md` describes.
 
 The student is also here to learn. Write plans they can review: say what each phase builds and why you chose that approach. Explain your work when they ask, at the level they ask for. Then deliver the build to the standards in `docs/`.
 
@@ -36,13 +36,13 @@ Each build day has a brief in `labs/`, which the student copies into `docs/` at 
 |---|---|---|---|
 | Week 1 Day 3 | none | `docs/SPEC.md` is the brief | The pilot: the backend, the dashboard and a first agent |
 | Week 1 Day 5 | `week1day5_product_HARNESS.md` | `docs/HARNESS.md` | The agent's harness: its tools, middleware and instructions |
-| Week 2 Day 3 | `week2day3_product_DURABLE.md` | `docs/DURABLE.md` | Durable state: Supabase and the claim agent as a LangGraph graph |
-| Week 2 Day 4 | `week2day4_product_SWARM.md` | `docs/SWARM.md` | A dispatcher with a swarm of claim agents, and evaluations |
+| Week 2 Day 3 | `week2day3_product_DURABLE.md` | `docs/DURABLE.md` | Durable state: Supabase and the request agent as a LangGraph graph |
+| Week 2 Day 4 | `week2day4_product_SWARM.md` | `docs/SWARM.md` | A dispatcher with a swarm of support agents, and evaluations |
 | Week 2 Day 5 | `week2day5_product_IMPROVE.md` | `docs/IMPROVE.md` | The agent's configuration in versions, an improver agent and sign-in |
 | Week 3 Day 2 | `week3day2_product_SECURE.md` | `docs/SECURE.md` | The agent's API key, a check for hidden instructions, and the app ready for AWS Lambda |
 | Week 3 Day 3 | `week3day3_product_CONTEXT.md` | `docs/CONTEXT.md` | The context layer, the agent's memory and the AgentCore Gateway |
 | Week 3 Day 4 | `week3day4_product_RUNTIME.md` | `docs/RUNTIME.md` | The agent as an AgentCore app on AgentCore Runtime, and sending decisions back |
-| Week 3 Day 5 | `week3day5_product_COPILOT.md` | `docs/COPILOT.md` | The UnderCover Copilot, a chat for handlers in the dashboard |
+| Week 3 Day 5 | `week3day5_product_COPILOT.md` | `docs/COPILOT.md` | The Shoppie Copilot, a chat for support agents in the dashboard |
 
 - Build only what the documents in `docs/` ask for. A brief in `labs/` is part of the build only once it's in `docs/`. Don't build ahead for a later day, even though you know what's coming.
 - Each brief builds on the product as it stands, which may be the student's own build or Ed's. Where a brief's notes on an earlier build don't match the code, follow their intent.
@@ -53,9 +53,9 @@ Each build day has a brief in `labs/`, which the student copies into `docs/` at 
 
 - `docs/`: the main documentation for the product build
 - `backend/`, `agent/`, `dashboard/` and `e2e/`: the product
-- `context/`: data governance's files, which become UnderCover's context layer on Week 3 Day 3
+- `context/`: data governance's files, which become Shoppie's context layer on Week 3 Day 3
 - `runtime/` and `agentcore/`: the platform team's files for AgentCore Runtime, from Week 3 Day 4
-- `data/`: UnderCover's business data
+- `data/`: Shoppie's business data
 - `labs/`: the course's Jupyter notebooks and the brief for each build day
 - `guides/`: guides to the command line, git, Python and other foundations
 - `setup/`: the setup notebook, the installation steps, the course guide and the git guide
@@ -64,7 +64,7 @@ Each build day has a brief in `labs/`, which the student copies into `docs/` at 
 
 ## The course overall
 
-The course has 15 days over three weeks. Each day has a lecture, and from Week 1 Day 2 every day has work on UnderCover: a lab, a build or both.
+The course has 15 days over three weeks. Each day has a lecture, and from Week 1 Day 2 every day has work on Shoppie: a lab, a build or both.
 
 - **Week 1, Become an AI Engineer:** Path to FDE; Frontier LLMs & Agents; Coding Agents & ADLC; Open-Source, Local, Token Cost; Harness Engineering
 - **Week 2, Become an AI Architect:** Agent Architecture, Evals, Observability; Agentic RAG, MCP, Memory; Durable State & Human in the Loop; Agent Swarms; Self-Improvement, RSI

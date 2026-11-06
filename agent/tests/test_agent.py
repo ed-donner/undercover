@@ -27,7 +27,7 @@ def test_run(monkeypatch):
         AIMessage(content="Hello! The backend is up."),
     ]
     assert (
-        main.run("CLM-1001", "thread-1", StubModel(messages=iter(replies)))
+        main.run("REQ-7001", "thread-1", StubModel(messages=iter(replies)))
         == "Hello! The backend is up."
     )
 

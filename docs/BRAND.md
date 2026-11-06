@@ -18,7 +18,7 @@ From Google Fonts:
 - **Ink on light backgrounds**: Midnight `#073B4C`
 - **Ink on dark backgrounds**: Sea Mist `#CDD8DB`
 
-Use Sea Green, Marigold and Coral when three things sit side by side, such as a claim's states or chart series. Add Cerulean fourth and Raspberry fifth.
+Use Sea Green, Marigold and Coral when three things sit side by side, such as request states or chart series. Add Cerulean fourth and Raspberry fifth.
 
 ## Surfaces
 

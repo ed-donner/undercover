@@ -1,10 +1,12 @@
 # Status
 
-A hello-world skeleton with every check in place:
+The Shoppie adaptation is at the pilot skeleton stage:
 
-- `backend/`: one route, `GET /api/health`
-- `agent/`: the entry point `run(claim_id, thread_id)`, with one tool that calls the health route
-- `dashboard/`: one page that shows whether the backend is up
-- `e2e/`: one test of that page
+- `backend/`: health route only (`GET /api/health`)
+- `agent/`: Shoppie Agent entry point with a backend health tool
+- `dashboard/`: placeholder page that reports backend health
+- `data/`: synthetic Shoppie customer, order, and support request records
+- `docs/`: Shoppie's sample shopping, cancellation, and returns policies
+- `data/evals/`: reference decisions kept separate from agent-readable data
 
-Nothing of UnderCover is built yet. Update this file as you build.
+The support queue, policy-based recommendations, and request detail screens are not implemented yet. Run `uv sync` and `npm install` at the repository root, then `npm run dev`.

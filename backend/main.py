@@ -1,8 +1,8 @@
-"""The UnderCover backend."""
+"""The Shoppie support backend."""
 
 from fastapi import FastAPI
 
-app = FastAPI(title="UnderCover")
+app = FastAPI(title="Shoppie")
 
 
 @app.get("/api/health", operation_id="health")

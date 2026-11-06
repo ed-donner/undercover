@@ -10,6 +10,9 @@ afterEach(() => {
 it("shows that the backend is up", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
   render(<App />);
+  expect(
+    screen.getByRole("heading", { name: "Shoppie Support" }),
+  ).toBeDefined();
   expect(await screen.findByText("Backend: up")).toBeDefined();
 });
 

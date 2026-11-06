@@ -1,12 +1,10 @@
 # AI FDE: The Forward Deployed Engineer & Agentic AI Architect
 
-## UnderCover Agent: the Travel Insurance Platform
-
-![An alien in disguise joins a line of travelers](assets/undercover.jpg)
+## Shoppie Agent: the E-commerce Support Platform
 
 Welcome to the most substantive commercial project I've ever made on any course! We will work on this project throughout the 3-week journey, culminating in a capstone that is truly enterprise grade.
 
-This is the repo that accompanies the course. UnderCover is a fictional travel insurer. Over the three weeks we build its claims platform and an AI agent that handles claims, and in Week 3 we deploy it all to AWS.
+This repo adapts the course project to Shoppie, a fictional e-commerce business. Over three weeks, the product build is a support platform for order cancellation, returns, replacements, and refunds, with a Shoppie Agent that recommends outcomes for support staff. Week 3 covers production deployment.
 
 _If you're looking at this in VS Code or Cursor, right-click `README.md` in the Explorer on the left and choose **Open Preview** to see it formatted._
 
@@ -98,7 +96,7 @@ Commit your own changes before you switch branches. Your `.env` file isn't in gi
 
 ### Week 3: Become an AI FDE
 
-This week UnderCover goes into production on AWS, and the free route uses Render. To see what you're spending on AWS, run `uv run monitor.py`.
+This week Shoppie goes into production on AWS, and the free route uses Render. To see what you're spending on AWS, run `uv run monitor.py`.
 
 **Day 1: AI Solutions Architect**
 - Lab: [labs/week3day1.ipynb](labs/week3day1.ipynb), setting up AWS, or [labs/week3day1free.ipynb](labs/week3day1free.ipynb), setting up Render
@@ -107,7 +105,7 @@ This week UnderCover goes into production on AWS, and the free route uses Render
 - To start from my build: `git checkout week3day2-start`
 - Lab 1: [labs/week3day2_lab1.ipynb](labs/week3day2_lab1.ipynb), or [labs/week3day2_lab1free.ipynb](labs/week3day2_lab1free.ipynb) on free models
 - Product brief: [labs/week3day2_product_SECURE.md](labs/week3day2_product_SECURE.md), copied to `docs/SECURE.md`
-- My build: `git checkout week3day2-end`, then add `UNDERCOVER_API_KEY` to your `.env` with a random value from `uv run python -c "import secrets; print(secrets.token_hex(32))"`
+- My build: `git checkout week3day2-end`, then add `SHOPPIE_API_KEY` to your `.env` with a random value from `uv run python -c "import secrets; print(secrets.token_hex(32))"`
 - Lab 2: [labs/week3day2_lab2.ipynb](labs/week3day2_lab2.ipynb) on AWS, or [labs/week3day2_lab2free.ipynb](labs/week3day2_lab2free.ipynb) on Render
 
 **Day 3: Enterprise Context Layer & Integrations**
@@ -135,20 +133,20 @@ This week UnderCover goes into production on AWS, and the free route uses Render
 | Command | What it gets you |
 |---|---|
 | `git checkout main` | The starting point: setup, labs, guides, data, and the product's documents and skeleton before the Week 1 Day 3 build |
-| `git checkout week1day3-end` | The pilot: a FastAPI backend, a dashboard for claims handlers and a first agent |
+| `git checkout week1day3-end` | The pilot: a FastAPI backend, a dashboard for support agents and a first agent |
 | `git checkout week1day5-start` | My build so far, with the brief in `docs/HARNESS.md` |
-| `git checkout week1day5-end` | The agent's harness: its tools, middleware and instructions, and the claims manual as documents it can search |
+| `git checkout week1day5-end` | The agent's harness: its tools, middleware and instructions, and the support policies as documents it can search |
 | `git checkout week2day3-start` | My build so far, with the brief in `docs/DURABLE.md` |
-| `git checkout week2day3-end` | Durable state: Supabase, the claim agent as a LangGraph graph that carries on after a restart, and the payout rules |
+| `git checkout week2day3-end` | Durable state: Supabase and the support request agent as a LangGraph graph that carries on after a restart |
 | `git checkout week2day4-start` | My build so far, with the brief in `docs/SWARM.md` |
-| `git checkout week2day4-end` | The swarm: a dispatcher, started from the dashboard, that works the claims with up to 25 claim agents in parallel |
+| `git checkout week2day4-end` | The swarm: a dispatcher, started from the dashboard, that works support requests with up to 25 support agents in parallel |
 | `git checkout week2day5-start` | My build so far, with the brief in `docs/IMPROVE.md` |
-| `git checkout week2day5-end` | Self-improvement: the agent's configuration in versions, an improver agent whose changes a handler approves, and sign-in for handlers |
+| `git checkout week2day5-end` | Self-improvement: the agent's configuration in versions, an improver agent whose changes a support agent approves, and sign-in |
 | `git checkout week3day2-start` | My build so far, with the brief in `docs/SECURE.md` |
-| `git checkout week3day2-end` | Security: an API key for the agent, a check for instructions hidden in claims, and the app ready to run on Lambda |
+| `git checkout week3day2-end` | Security: an API key for the agent, a check for instructions hidden in support requests, and the app ready to run on Lambda |
 | `git checkout week3day3-start` | My build so far, with the brief in `docs/CONTEXT.md` |
 | `git checkout week3day3-end` | The context layer as its own MCP server, a memory for the agent, and the agent's tools through the Gateway |
 | `git checkout week3day4-start` | My build so far, with the brief in `docs/RUNTIME.md` and the `runtime/` and `agentcore/` folders for deploying the agent |
-| `git checkout week3day4-end` | The agent as an AgentCore app, and Sign off or Send back for a claim waiting on a handler |
+| `git checkout week3day4-end` | The agent as an AgentCore app, and Sign off or Send back for a request waiting on an agent |
 | `git checkout week3day5-start` | My build so far, with the brief in `docs/COPILOT.md` |
-| `git checkout week3day5-end` | The finished product, with the UnderCover Copilot, a chat for handlers in the dashboard's sidebar |
+| `git checkout week3day5-end` | The finished product, with the Shoppie Copilot, a chat for support agents in the dashboard's sidebar |

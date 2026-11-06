@@ -1,0 +1,602 @@
+{
+  "dataset_metadata": {
+    "name": "Shoppie customer service agent harness seed data",
+    "version": "1.0.0",
+    "synthetic": true,
+    "generated_at": "2026-11-06T12:00:00Z",
+    "currency": "INR",
+    "timezone": "Asia/Kolkata",
+    "purpose": "Development and evaluation of an agent that handles order questions, cancellation requests, return requests, and related customer service cases.",
+    "notice": "All people, contact details, addresses, products, orders, and events in this dataset are fictional. Phone numbers use reserved fictional ranges and email addresses use example.test. Do not use as live customer data."
+  },
+  "harness_notes": {
+    "expected_agent_behavior": [
+      "Identify the customer and order before discussing or changing an order.",
+      "Check order status, fulfillment state, item type, and policy eligibility before proposing an action.",
+      "Do not claim an action succeeded unless the corresponding action result is present.",
+      "Ask for missing information when the request cannot be safely evaluated.",
+      "For food safety concerns, advise the customer not to consume the product and escalate promptly.",
+      "Treat policy windows as sample policy rules; applicable customer rights may supersede them."
+    ],
+    "policy_reference_files": [
+      "shopping-policy.md",
+      "cancellation-policy.md",
+      "returns-policy.md"
+    ],
+    "request_status_values": [
+      "new",
+      "needs_information",
+      "eligible_pending_customer_confirmation",
+      "ineligible",
+      "approved",
+      "rejected",
+      "completed",
+      "escalated"
+    ],
+    "fulfillment_status_values": [
+      "placed",
+      "confirmed",
+      "being_packed",
+      "prepared",
+      "dispatched",
+      "out_for_delivery",
+      "delivered",
+      "cancelled"
+    ]
+  },
+  "customers": [
+    {
+      "customer_id": "CUS-1001",
+      "name": "Aarav Mehta",
+      "email": "aarav.mehta@example.test",
+      "phone": "+91-90000-01001",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1001-A",
+        "line1": "14 Sample Garden Road",
+        "line2": "Apartment 3B",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "postal_code": "411001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10001",
+          "placed_at": "2026-11-06T08:10:00+05:30",
+          "fulfillment_status": "confirmed",
+          "payment_status": "paid",
+          "payment_method": "upi",
+          "delivery_window": {
+            "start": "2026-11-06T16:00:00+05:30",
+            "end": "2026-11-06T20:00:00+05:30"
+          },
+          "shipping_address_id": "ADDR-1001-A",
+          "items": [
+            {
+              "item_id": "ITM-10001-1",
+              "sku": "FR-PROD-044",
+              "name": "Seasonal fruit box",
+              "category": "fresh_produce",
+              "perishable": true,
+              "quantity": 1,
+              "unit_price": 349,
+              "line_total": 349,
+              "returnable_for_change_of_mind": false
+            },
+            {
+              "item_id": "ITM-10001-2",
+              "sku": "NP-KIT-012",
+              "name": "Reusable produce bags, set of 3",
+              "category": "home_goods",
+              "perishable": false,
+              "quantity": 1,
+              "unit_price": 199,
+              "line_total": 199,
+              "returnable_for_change_of_mind": true
+            }
+          ],
+          "subtotal": 548,
+          "delivery_fee": 0,
+          "total": 548,
+          "requests": [
+            {
+              "request_id": "REQ-7001",
+              "type": "cancellation",
+              "created_at": "2026-11-06T08:35:00+05:30",
+              "status": "eligible_pending_customer_confirmation",
+              "customer_message": "I ordered the wrong fruit box. Please cancel the whole order.",
+              "intent_summary": "Customer requests cancellation of the entire order.",
+              "requested_scope": "whole_order",
+              "reason_code": "ordered_by_mistake",
+              "evidence": [],
+              "policy_checks": [
+                {
+                  "rule": "Cancellation allowed before packing begins",
+                  "result": "pass",
+                  "observed_value": "confirmed"
+                }
+              ],
+              "required_action": "Confirm whether the customer wants the whole order cancelled, since the request text identifies the wrong item but asks to cancel the whole order.",
+              "permitted_actions": ["ask_clarifying_question", "cancel_order_after_confirmation"],
+              "prohibited_actions": ["claim_cancellation_completed_before_tool_result"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1002",
+      "name": "Diya Nair",
+      "email": "diya.nair@example.test",
+      "phone": "+91-90000-01002",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1002-A",
+        "line1": "22 Fictional Lake View",
+        "line2": "Flat 5A",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "postal_code": "560001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10002",
+          "placed_at": "2026-11-04T10:15:00+05:30",
+          "fulfillment_status": "delivered",
+          "delivered_at": "2026-11-05T13:20:00+05:30",
+          "payment_status": "paid",
+          "payment_method": "card",
+          "shipping_address_id": "ADDR-1002-A",
+          "items": [
+            {
+              "item_id": "ITM-10002-1",
+              "sku": "FR-DAI-008",
+              "name": "Chilled yogurt, 500 g",
+              "category": "dairy",
+              "perishable": true,
+              "quantity": 2,
+              "unit_price": 90,
+              "line_total": 180,
+              "use_by": "2026-11-09",
+              "returnable_for_change_of_mind": false
+            }
+          ],
+          "subtotal": 180,
+          "delivery_fee": 49,
+          "total": 229,
+          "requests": [
+            {
+              "request_id": "REQ-7002",
+              "type": "return_or_refund",
+              "created_at": "2026-11-05T14:05:00+05:30",
+              "status": "escalated",
+              "customer_message": "The yogurt was warm when it arrived and smells sour. I haven't eaten it. I want a refund.",
+              "intent_summary": "Customer reports potentially unsafe chilled dairy and requests a refund.",
+              "requested_scope": "item:ITM-10002-1",
+              "reason_code": "perishable_temperature_or_spoilage_concern",
+              "evidence": [
+                {"type": "photo", "reference": "synthetic://evidence/EV-7002-1", "description": "Yogurt containers and delivery bag"}
+              ],
+              "policy_checks": [
+                {"rule": "Report perishable issue within 24 hours", "result": "pass", "observed_value": "44 minutes after delivery"},
+                {"rule": "Stop consuming potentially unsafe product", "result": "pass", "observed_value": "Customer says item was not eaten"}
+              ],
+              "required_action": "Advise the customer not to consume the item and route the food safety report for priority review. A refund may be offered after verification.",
+              "permitted_actions": ["provide_safety_guidance", "escalate_food_safety_case", "request_replacement_or_refund_review"],
+              "prohibited_actions": ["ask_customer_to_consume_item", "require_return_by_regular_post", "promise_refund_before_approval"],
+              "action_result": {
+                "type": "escalation_created",
+                "reference": "CASE-9002",
+                "created_at": "2026-11-05T14:12:00+05:30"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1003",
+      "name": "Kabir Shah",
+      "email": "kabir.shah@example.test",
+      "phone": "+91-90000-01003",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1003-A",
+        "line1": "8 Example Market Lane",
+        "line2": "Unit 2",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "postal_code": "400001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10003",
+          "placed_at": "2026-11-01T18:30:00+05:30",
+          "fulfillment_status": "delivered",
+          "delivered_at": "2026-11-02T12:00:00+05:30",
+          "payment_status": "paid",
+          "payment_method": "cash_on_delivery",
+          "shipping_address_id": "ADDR-1003-A",
+          "items": [
+            {
+              "item_id": "ITM-10003-1",
+              "sku": "NP-KIT-031",
+              "name": "Glass storage jar set",
+              "category": "kitchen_goods",
+              "perishable": false,
+              "quantity": 1,
+              "unit_price": 699,
+              "line_total": 699,
+              "returnable_for_change_of_mind": true
+            }
+          ],
+          "subtotal": 699,
+          "delivery_fee": 0,
+          "total": 699,
+          "requests": [
+            {
+              "request_id": "REQ-7003",
+              "type": "return",
+              "created_at": "2026-11-06T09:30:00+05:30",
+              "status": "eligible_pending_customer_confirmation",
+              "customer_message": "The jars are unused and still in the box. I changed my mind. Can you arrange a return?",
+              "intent_summary": "Customer requests a change-of-mind return for an unused non-perishable item.",
+              "requested_scope": "item:ITM-10003-1",
+              "reason_code": "change_of_mind",
+              "evidence": [],
+              "policy_checks": [
+                {"rule": "Non-perishable return requested within 7 calendar days", "result": "pass", "observed_value": "4 days after delivery"},
+                {"rule": "Item unused and in original packaging", "result": "customer_reported_pass", "observed_value": "Customer reports unused and boxed"},
+                {"rule": "Return pickup fee may apply", "result": "disclose_before_confirmation", "observed_value": "₹75 sample pickup fee"}
+              ],
+              "required_action": "Explain the sample ₹75 return pickup fee and ask the customer to confirm before arranging pickup.",
+              "permitted_actions": ["explain_return_terms", "request_customer_confirmation", "create_return_after_confirmation"],
+              "prohibited_actions": ["schedule_fee_based_pickup_without_disclosure_and_confirmation"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1004",
+      "name": "Mira Iyer",
+      "email": "mira.iyer@example.test",
+      "phone": "+91-90000-01004",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1004-A",
+        "line1": "31 Placeholder Residency",
+        "line2": "Tower B, 9C",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "postal_code": "600001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10004",
+          "placed_at": "2026-11-06T07:00:00+05:30",
+          "fulfillment_status": "being_packed",
+          "payment_status": "paid",
+          "payment_method": "upi",
+          "shipping_address_id": "ADDR-1004-A",
+          "items": [
+            {
+              "item_id": "ITM-10004-1",
+              "sku": "FR-VEG-017",
+              "name": "Leafy greens bundle",
+              "category": "fresh_produce",
+              "perishable": true,
+              "quantity": 1,
+              "unit_price": 129,
+              "line_total": 129,
+              "returnable_for_change_of_mind": false
+            }
+          ],
+          "subtotal": 129,
+          "delivery_fee": 49,
+          "total": 178,
+          "requests": [
+            {
+              "request_id": "REQ-7004",
+              "type": "cancellation",
+              "created_at": "2026-11-06T07:25:00+05:30",
+              "status": "needs_information",
+              "customer_message": "Cancel the greens, please. Keep the rest of the order if it has already gone through.",
+              "intent_summary": "Customer appears to request item-level cancellation, but the order contains one item and fulfillment has started.",
+              "requested_scope": "unclear_item_or_whole_order",
+              "reason_code": "unspecified",
+              "evidence": [],
+              "policy_checks": [
+                {"rule": "Cancellation allowed before packing begins", "result": "fail_or_requires_review", "observed_value": "being_packed"}
+              ],
+              "required_action": "Explain that packing has started and ask whether the customer wants Shoppie to try to stop the one-item order. Do not promise success.",
+              "permitted_actions": ["explain_fulfillment_status", "request_stop_fulfillment_attempt", "escalate_to_operations"],
+              "prohibited_actions": ["guarantee_cancellation", "mark_order_cancelled_without_fulfillment_confirmation"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1005",
+      "name": "Rohan Das",
+      "email": "rohan.das@example.test",
+      "phone": "+91-90000-01005",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1005-A",
+        "line1": "5 Demo Cross Street",
+        "line2": "House 11",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "postal_code": "700001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10005",
+          "placed_at": "2026-10-29T11:40:00+05:30",
+          "fulfillment_status": "delivered",
+          "delivered_at": "2026-10-30T16:45:00+05:30",
+          "payment_status": "paid",
+          "payment_method": "card",
+          "shipping_address_id": "ADDR-1005-A",
+          "items": [
+            {
+              "item_id": "ITM-10005-1",
+              "sku": "NP-HOM-205",
+              "name": "Cotton kitchen towel pack",
+              "category": "home_goods",
+              "perishable": false,
+              "quantity": 1,
+              "unit_price": 399,
+              "line_total": 399,
+              "returnable_for_change_of_mind": true
+            }
+          ],
+          "subtotal": 399,
+          "delivery_fee": 49,
+          "total": 448,
+          "requests": [
+            {
+              "request_id": "REQ-7005",
+              "type": "return",
+              "created_at": "2026-11-06T10:00:00+05:30",
+              "status": "ineligible",
+              "customer_message": "I want to return these towels. They are still folded in the packet.",
+              "intent_summary": "Customer requests a change-of-mind return 7 days after delivery.",
+              "requested_scope": "item:ITM-10005-1",
+              "reason_code": "change_of_mind",
+              "evidence": [],
+              "policy_checks": [
+                {"rule": "Non-perishable return requested within 7 calendar days", "result": "fail", "observed_value": "7 days and 17 hours after delivery"}
+              ],
+              "required_action": "Explain that the sample return window has elapsed. Offer escalation for an exception review and do not imply statutory rights are waived.",
+              "permitted_actions": ["explain_sample_window", "offer_exception_review", "escalate_if_customer_disputes"],
+              "prohibited_actions": ["state_customer_has_no_rights_of_any_kind", "approve_return_without_exception_or_policy_override"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1006",
+      "name": "Anika Rao",
+      "email": "anika.rao@example.test",
+      "phone": "+91-90000-01006",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1006-A",
+        "line1": "17 Mockingbird Avenue",
+        "line2": "Flat 12",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "postal_code": "500001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10006",
+          "placed_at": "2026-11-03T09:00:00+05:30",
+          "fulfillment_status": "delivered",
+          "delivered_at": "2026-11-04T15:10:00+05:30",
+          "payment_status": "paid",
+          "payment_method": "net_banking",
+          "shipping_address_id": "ADDR-1006-A",
+          "items": [
+            {
+              "item_id": "ITM-10006-1",
+              "sku": "NP-ELC-022",
+              "name": "Rechargeable desk lamp",
+              "category": "electronics",
+              "perishable": false,
+              "quantity": 1,
+              "unit_price": 1499,
+              "line_total": 1499,
+              "returnable_for_change_of_mind": true,
+              "warranty_days": 180
+            }
+          ],
+          "subtotal": 1499,
+          "delivery_fee": 0,
+          "total": 1499,
+          "requests": [
+            {
+              "request_id": "REQ-7006",
+              "type": "replacement_or_refund",
+              "created_at": "2026-11-05T19:20:00+05:30",
+              "status": "needs_information",
+              "customer_message": "The lamp stopped working. Can you replace it?",
+              "intent_summary": "Customer reports a possible defect and requests replacement.",
+              "requested_scope": "item:ITM-10006-1",
+              "reason_code": "suspected_defect",
+              "evidence": [],
+              "policy_checks": [
+                {"rule": "Issue reported within 7 calendar days", "result": "pass", "observed_value": "1 day and 4 hours after delivery"},
+                {"rule": "Return or replacement inspection may be needed", "result": "pending_information", "observed_value": null}
+              ],
+              "required_action": "Ask the customer to confirm whether the lamp powers on, whether the charger and accessories were tried, and whether there is visible damage. Offer a safe troubleshooting step only if appropriate.",
+              "permitted_actions": ["ask_clarifying_questions", "open_defect_case_after_details", "offer_replacement_review"],
+              "prohibited_actions": ["deny_request_without_review", "instruct_customer_to_open_or_repair_electrical_device"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1007",
+      "name": "Ishaan Kapoor",
+      "email": "ishaan.kapoor@example.test",
+      "phone": "+91-90000-01007",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1007-A",
+        "line1": "9 Fictional Park Street",
+        "line2": "Suite 4",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "postal_code": "302001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10007",
+          "placed_at": "2026-11-02T14:20:00+05:30",
+          "fulfillment_status": "delivered",
+          "delivered_at": "2026-11-03T11:30:00+05:30",
+          "payment_status": "paid",
+          "payment_method": "upi",
+          "shipping_address_id": "ADDR-1007-A",
+          "items": [
+            {
+              "item_id": "ITM-10007-1",
+              "sku": "FR-BAK-015",
+              "name": "Wholegrain bread loaf",
+              "category": "bakery",
+              "perishable": true,
+              "quantity": 1,
+              "unit_price": 99,
+              "line_total": 99,
+              "use_by": "2026-11-05",
+              "returnable_for_change_of_mind": false
+            },
+            {
+              "item_id": "ITM-10007-2",
+              "sku": "NP-DRY-024",
+              "name": "Roasted chickpeas, 200 g",
+              "category": "pantry",
+              "perishable": false,
+              "quantity": 1,
+              "unit_price": 120,
+              "line_total": 120,
+              "returnable_for_change_of_mind": false
+            }
+          ],
+          "subtotal": 219,
+          "delivery_fee": 49,
+          "total": 268,
+          "requests": [
+            {
+              "request_id": "REQ-7007",
+              "type": "missing_item",
+              "created_at": "2026-11-03T12:15:00+05:30",
+              "status": "completed",
+              "customer_message": "The bread was missing from the bag. The chickpeas arrived.",
+              "intent_summary": "Customer reports one missing item from a delivered order.",
+              "requested_scope": "item:ITM-10007-1",
+              "reason_code": "missing_item",
+              "evidence": [
+                {"type": "photo", "reference": "synthetic://evidence/EV-7007-1", "description": "Delivered bag and item contents"}
+              ],
+              "policy_checks": [
+                {"rule": "Report non-perishable issue within 48 hours or other applicable window", "result": "pass", "observed_value": "45 minutes after delivery"},
+                {"rule": "Item-level resolution", "result": "pass", "observed_value": "Only bread marked missing"}
+              ],
+              "required_action": "Resolve the missing item without cancelling or refunding unaffected items.",
+              "permitted_actions": ["refund_missing_item", "create_replacement_if_customer_prefers"],
+              "prohibited_actions": ["refund_entire_order_without_reason", "mark_all_items_missing"],
+              "action_result": {
+                "type": "refund_initiated",
+                "amount": 99,
+                "currency": "INR",
+                "refund_reference": "RF-8007",
+                "created_at": "2026-11-03T13:00:00+05:30"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "customer_id": "CUS-1008",
+      "name": "Sara Fernandes",
+      "email": "sara.fernandes@example.test",
+      "phone": "+91-90000-01008",
+      "preferred_language": "en-IN",
+      "default_address": {
+        "address_id": "ADDR-1008-A",
+        "line1": "2 Sample Seaside Road",
+        "line2": "Apartment 6",
+        "city": "Kochi",
+        "state": "Kerala",
+        "postal_code": "682001",
+        "country": "IN"
+      },
+      "orders": [
+        {
+          "order_id": "ORD-2026-10008",
+          "placed_at": "2026-11-06T08:45:00+05:30",
+          "fulfillment_status": "dispatched",
+          "payment_status": "paid",
+          "payment_method": "wallet",
+          "shipping_address_id": "ADDR-1008-A",
+          "items": [
+            {
+              "item_id": "ITM-10008-1",
+              "sku": "NP-ORG-010",
+              "name": "Organic lentils, 1 kg",
+              "category": "pantry",
+              "perishable": false,
+              "quantity": 2,
+              "unit_price": 180,
+              "line_total": 360,
+              "returnable_for_change_of_mind": true
+            }
+          ],
+          "subtotal": 360,
+          "delivery_fee": 49,
+          "total": 409,
+          "requests": [
+            {
+              "request_id": "REQ-7008",
+              "type": "cancellation",
+              "created_at": "2026-11-06T10:10:00+05:30",
+              "status": "ineligible",
+              "customer_message": "Please cancel this order; I will not be home today.",
+              "intent_summary": "Customer requests cancellation after dispatch due to availability for delivery.",
+              "requested_scope": "whole_order",
+              "reason_code": "delivery_unavailable",
+              "evidence": [],
+              "policy_checks": [
+                {"rule": "Customer cancellation before dispatch", "result": "fail", "observed_value": "dispatched"}
+              ],
+              "required_action": "Explain that dispatch has started and offer to contact the carrier to request a delivery hold or redelivery, if supported. Confirm any fee before charging it.",
+              "permitted_actions": ["explain_dispatch_status", "request_delivery_hold", "offer_redelivery_options"],
+              "prohibited_actions": ["promise_cancellation_or_refund", "charge_undisclosed_redelivery_fee"],
+              "action_result": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

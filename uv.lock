@@ -3433,7 +3433,7 @@ wheels = [
 ]
 
 [[package]]
-name = "undercover"
+name = "shoppie"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

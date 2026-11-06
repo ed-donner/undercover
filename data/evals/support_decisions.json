@@ -1,0 +1,224 @@
+{
+  "source": "docs/synthetic-customer-orders.json",
+  "note": "human_agent_decision contains proposed illustrative decisions for the synthetic tickets, based on recorded request data and sample policies; these are not historical decisions made by real agents.",
+  "tickets": [
+    {
+      "ticket_id": "REQ-7001",
+      "customer": {
+        "customer_id": "CUS-1001",
+        "name": "Aarav Mehta"
+      },
+      "order_id": "ORD-2026-10001",
+      "type": "cancellation",
+      "created_at": "2026-11-06T08:35:00+05:30",
+      "status": "eligible_pending_customer_confirmation",
+      "customer_message": "I ordered the wrong fruit box. Please cancel the whole order.",
+      "intent_summary": "Customer requests cancellation of the entire order.",
+      "reason_code": "ordered_by_mistake",
+      "requested_scope": "whole_order",
+      "required_action": "Confirm whether the customer wants the whole order cancelled, since the request text identifies the wrong item but asks to cancel the whole order.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "pending_customer_confirmation",
+        "rationale": "The order is confirmed and has not begun packing, so cancellation is currently eligible. The request wording is ambiguous because it mentions the fruit box but asks to cancel the whole order.",
+        "next_action": "Ask the customer to confirm whether to cancel the entire order; then cancel and initiate the full refund if confirmed.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "pending"
+    },
+    {
+      "ticket_id": "REQ-7002",
+      "customer": {
+        "customer_id": "CUS-1002",
+        "name": "Diya Nair"
+      },
+      "order_id": "ORD-2026-10002",
+      "type": "return_or_refund",
+      "created_at": "2026-11-05T14:05:00+05:30",
+      "status": "escalated",
+      "customer_message": "The yogurt was warm when it arrived and smells sour. I haven't eaten it. I want a refund.",
+      "intent_summary": "Customer reports potentially unsafe chilled dairy and requests a refund.",
+      "reason_code": "perishable_temperature_or_spoilage_concern",
+      "requested_scope": "item:ITM-10002-1",
+      "required_action": "Advise the customer not to consume the item and route the food safety report for priority review. A refund may be offered after verification.",
+      "recorded_action_result": {
+        "type": "escalation_created",
+        "reference": "CASE-9002",
+        "created_at": "2026-11-05T14:12:00+05:30"
+      },
+      "human_agent_decision": {
+        "outcome": "escalate_for_food_safety_review",
+        "rationale": "The customer reported warm, sour-smelling yogurt within the sample 24-hour window and says it was not consumed. The source records escalation CASE-9002; a refund is not yet approved.",
+        "next_action": "Advise the customer not to consume it, prioritize food-safety review, and decide refund or replacement after verification.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "pending"
+    },
+    {
+      "ticket_id": "REQ-7003",
+      "customer": {
+        "customer_id": "CUS-1003",
+        "name": "Kabir Shah"
+      },
+      "order_id": "ORD-2026-10003",
+      "type": "return",
+      "created_at": "2026-11-06T09:30:00+05:30",
+      "status": "eligible_pending_customer_confirmation",
+      "customer_message": "The jars are unused and still in the box. I changed my mind. Can you arrange a return?",
+      "intent_summary": "Customer requests a change-of-mind return for an unused non-perishable item.",
+      "reason_code": "change_of_mind",
+      "requested_scope": "item:ITM-10003-1",
+      "required_action": "Explain the sample ₹75 return pickup fee and ask the customer to confirm before arranging pickup.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "eligible_pending_customer_confirmation",
+        "rationale": "The jars are non-perishable, unused, and reported within the sample seven-day return window. A change-of-mind pickup fee may apply.",
+        "next_action": "Disclose the ₹75 sample pickup fee and arrange the return only after the customer confirms.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "pending"
+    },
+    {
+      "ticket_id": "REQ-7004",
+      "customer": {
+        "customer_id": "CUS-1004",
+        "name": "Mira Iyer"
+      },
+      "order_id": "ORD-2026-10004",
+      "type": "cancellation",
+      "created_at": "2026-11-06T07:25:00+05:30",
+      "status": "needs_information",
+      "customer_message": "Cancel the greens, please. Keep the rest of the order if it has already gone through.",
+      "intent_summary": "Customer appears to request item-level cancellation, but the order contains one item and fulfillment has started.",
+      "reason_code": "unspecified",
+      "requested_scope": "unclear_item_or_whole_order",
+      "required_action": "Explain that packing has started and ask whether the customer wants Shoppie to try to stop the one-item order. Do not promise success.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "hold_for_clarification_and_fulfillment_check",
+        "rationale": "Packing has started, so cancellation may no longer be possible. The request scope is unclear because it references greens while the order contains one item.",
+        "next_action": "Clarify the requested scope and ask fulfillment whether the order can still be stopped; do not promise cancellation.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "pending"
+    },
+    {
+      "ticket_id": "REQ-7005",
+      "customer": {
+        "customer_id": "CUS-1005",
+        "name": "Rohan Das"
+      },
+      "order_id": "ORD-2026-10005",
+      "type": "return",
+      "created_at": "2026-11-06T10:00:00+05:30",
+      "status": "ineligible",
+      "customer_message": "I want to return these towels. They are still folded in the packet.",
+      "intent_summary": "Customer requests a change-of-mind return 7 days after delivery.",
+      "reason_code": "change_of_mind",
+      "requested_scope": "item:ITM-10005-1",
+      "required_action": "Explain that the sample return window has elapsed. Offer escalation for an exception review and do not imply statutory rights are waived.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "decline_under_sample_policy_and_offer_review",
+        "rationale": "The change-of-mind return request falls outside the sample seven-day window. The policy preserves applicable statutory rights.",
+        "next_action": "Explain the sample window and offer escalation for an exception review without suggesting statutory rights are waived.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "declined"
+    },
+    {
+      "ticket_id": "REQ-7006",
+      "customer": {
+        "customer_id": "CUS-1006",
+        "name": "Anika Rao"
+      },
+      "order_id": "ORD-2026-10006",
+      "type": "replacement_or_refund",
+      "created_at": "2026-11-05T19:20:00+05:30",
+      "status": "needs_information",
+      "customer_message": "The lamp stopped working. Can you replace it?",
+      "intent_summary": "Customer reports a possible defect and requests replacement.",
+      "reason_code": "suspected_defect",
+      "requested_scope": "item:ITM-10006-1",
+      "required_action": "Ask the customer to confirm whether the lamp powers on, whether the charger and accessories were tried, and whether there is visible damage. Offer a safe troubleshooting step only if appropriate.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "request_more_information",
+        "rationale": "A possible defect is reported within the sample reporting window, but there is not enough information to verify the issue or choose a remedy.",
+        "next_action": "Ask whether the lamp powers on, whether the charger and accessories were tried, and whether there is visible damage; then review for replacement or refund.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "pending"
+    },
+    {
+      "ticket_id": "REQ-7007",
+      "customer": {
+        "customer_id": "CUS-1007",
+        "name": "Ishaan Kapoor"
+      },
+      "order_id": "ORD-2026-10007",
+      "type": "missing_item",
+      "created_at": "2026-11-03T12:15:00+05:30",
+      "status": "completed",
+      "customer_message": "The bread was missing from the bag. The chickpeas arrived.",
+      "intent_summary": "Customer reports one missing item from a delivered order.",
+      "reason_code": "missing_item",
+      "requested_scope": "item:ITM-10007-1",
+      "required_action": "Resolve the missing item without cancelling or refunding unaffected items.",
+      "recorded_action_result": {
+        "type": "refund_initiated",
+        "amount": 99,
+        "currency": "INR",
+        "refund_reference": "RF-8007",
+        "created_at": "2026-11-03T13:00:00+05:30"
+      },
+      "human_agent_decision": {
+        "outcome": "approve_partial_refund",
+        "rationale": "The bread was reported missing while the rest of the order arrived. The source records a completed ₹99 refund with reference RF-8007.",
+        "next_action": "Confirm the ₹99 refund was initiated for the missing bread only.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "approved"
+    },
+    {
+      "ticket_id": "REQ-7008",
+      "customer": {
+        "customer_id": "CUS-1008",
+        "name": "Sara Fernandes"
+      },
+      "order_id": "ORD-2026-10008",
+      "type": "cancellation",
+      "created_at": "2026-11-06T10:10:00+05:30",
+      "status": "ineligible",
+      "customer_message": "Please cancel this order; I will not be home today.",
+      "intent_summary": "Customer requests cancellation after dispatch due to availability for delivery.",
+      "reason_code": "delivery_unavailable",
+      "requested_scope": "whole_order",
+      "required_action": "Explain that dispatch has started and offer to contact the carrier to request a delivery hold or redelivery, if supported. Confirm any fee before charging it.",
+      "recorded_action_result": null,
+      "human_agent_decision": {
+        "outcome": "decline_cancellation_after_dispatch_and_offer_delivery_help",
+        "rationale": "The order has been dispatched, so cancellation is no longer available under the sample policy. A delivery hold or redelivery may still be possible.",
+        "next_action": "Explain dispatch has started and offer to contact the carrier about a hold or redelivery; confirm any fee before charging it.",
+        "decision_source": "proposed_illustrative_decision",
+        "human_agent_id": null
+      },
+      "human_agent_id": null,
+      "decision": "declined"
+    }
+  ]
+}

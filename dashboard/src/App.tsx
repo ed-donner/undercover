@@ -12,7 +12,7 @@ export function App() {
 
   return (
     <main>
-      <h1>UnderCover</h1>
+      <h1>Shoppie Support</h1>
       <p>Backend: {status}</p>
     </main>
   );
