@@ -37,12 +37,12 @@ Replace the health-check-only agent behavior with a request workflow. Keep `run(
 
 Replace the health placeholder with the handler dashboard. Show all requests, their order reference, request type, time, and queue state. Selecting a row opens the full request, the order details needed to assess it, the recommendation and policy reasons, and the progress timeline. Provide a clear way to start or retry agent work where appropriate, and let a support agent record a reviewed outcome to move the request to decided. Keep agent instructions visible in a read-only view.
 
-- [ ] Vitest tests cover loading, empty, and backend-error states; queue rows; request selection; recommendation display; and read-only instructions.
-- [ ] The Playwright browser check opens the queue and shows all eight seeded requests with their states.
-- [ ] The Playwright browser check opens `REQ-7001`, shows its order and customer request, starts agent work, and displays progress and the resulting recommendation.
-- [ ] The Playwright browser check confirms the instruction text can be read and has no edit control.
-- [ ] A support-agent review API test records a reviewed outcome and changes the queue state to decided without recording an external customer action.
-- [ ] `npm run check:ts` passes.
+- [x] Vitest tests cover loading, empty, and backend-error states; queue rows; request selection; recommendation display; and read-only instructions.
+- [x] The Playwright browser check opens the queue and shows all eight seeded requests with their states.
+- [x] The Playwright browser check opens `REQ-7001`, shows its order and customer request, starts agent work, and displays progress and the resulting recommendation.
+- [x] The Playwright browser check confirms the instruction text can be read and has no edit control.
+- [x] A support-agent review API test records a reviewed outcome and changes the queue state to decided without recording an external customer action.
+- [x] `npm run check:ts` passes.
 
 ## Phase 5: Enforce the support and safety boundaries
 

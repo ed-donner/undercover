@@ -2,8 +2,9 @@
 
 import os
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from pydantic import BaseModel
@@ -35,6 +36,13 @@ class ProgressInput(BaseModel):
     """A supported progress stage supplied by the agent."""
 
     stage: str
+
+
+class ReviewInput(BaseModel):
+    """A support agent's reviewed recommendation."""
+
+    outcome: Literal["approve", "decline", "request_information"]
+    notes: str = ""
 
 
 def run_request_in_background(store: Store, request_id: str) -> None:
@@ -114,3 +122,23 @@ def run_request(
         raise HTTPException(status_code=409, detail="Request cannot be run")
     background_tasks.add_task(run_request_in_background, store, request_id)
     return {"request_id": request_id, "status": "in_progress"}
+
+
+@app.post("/api/requests/{request_id}/review", operation_id="review_request")
+def review_request(
+    request_id: str, review: ReviewInput, request: Request
+) -> dict[str, Any]:
+    """Record a support decision without processing the order."""
+    result = request.app.state.store.get_request(request_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Support request not found")
+    if result["status"] != "waiting_for_agent_review":
+        raise HTTPException(status_code=409, detail="Request is not ready for review")
+    saved_review = {
+        "outcome": review.outcome,
+        "notes": review.notes,
+        "reviewed_at": datetime.now(UTC).isoformat(),
+    }
+    if not request.app.state.store.record_review(request_id, saved_review):
+        raise HTTPException(status_code=409, detail="Request was already reviewed")
+    return {"request_id": request_id, "status": "decided", "review": saved_review}

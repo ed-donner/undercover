@@ -138,3 +138,34 @@ def test_agent_progress_endpoint_and_failed_run(tmp_path, monkeypatch):
     assert detail["recommendation"] is None
     assert detail["steps"][-1]["stage"] == "error"
     assert invalid_stage.status_code == 422
+
+
+def test_support_review_decides_without_running_an_order_action(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "review.sqlite3"))
+    monkeypatch.setattr(
+        "backend.main.run_agent",
+        lambda *args: {
+            "outcome": "approve",
+            "rationale": "Eligible under the sample policy.",
+            "policy_citations": ["Cancellation Policy"],
+            "next_action": "Support agent to review.",
+            "priority_human_review": False,
+        },
+    )
+    with TestClient(app) as client:
+        client.post("/api/requests/REQ-7001/run")
+        response = client.post(
+            "/api/requests/REQ-7001/review",
+            json={"outcome": "approve", "notes": "Confirmed by support."},
+        )
+        detail = client.get("/api/requests/REQ-7001").json()
+        duplicate = client.post(
+            "/api/requests/REQ-7001/review", json={"outcome": "approve"}
+        )
+
+    assert response.status_code == 200
+    assert detail["status"] == "decided"
+    assert detail["review"]["outcome"] == "approve"
+    assert detail["review"]["notes"] == "Confirmed by support."
+    assert detail["action_result"] is None
+    assert duplicate.status_code == 409

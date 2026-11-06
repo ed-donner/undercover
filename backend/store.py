@@ -180,6 +180,7 @@ class Store:
                 for history in history_rows
             ],
             "status": row["queue_status"],
+            "action_result": self.decode(row["action_result_json"]),
             "recommendation": self.decode(row["recommendation_json"]),
             "review": self.decode(row["review_json"]),
             "steps": [dict(step) for step in step_rows],
@@ -246,6 +247,18 @@ class Store:
             )
             if cursor.rowcount == 1:
                 self._insert_step(connection, request_id, "error")
+        return cursor.rowcount == 1
+
+    def record_review(self, request_id: str, review: dict[str, Any]) -> bool:
+        """Store a support-agent decision without executing an order action."""
+        with closing(self.connect()) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE support_requests SET
+                       review_json = ?, queue_status = 'decided'
+                   WHERE request_id = ?
+                     AND queue_status = 'waiting_for_agent_review'""",
+                (json.dumps(review), request_id),
+            )
         return cursor.rowcount == 1
 
     @staticmethod
