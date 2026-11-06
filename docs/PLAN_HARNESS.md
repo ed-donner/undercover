@@ -143,14 +143,14 @@ Builds the run panel on the queue page. It shows the latest run's number, when i
 - The decision panel covers a claim left for a handler and a claim back in the queue after a failure.
 - The decision's section is labeled "Relied on", since it can now come from the manual.
 
-- [ ] Vitest tests cover the run panel from a stubbed API (no run yet, a running run with an item in each status, and a finished run with its summary), the five status counts, the badge for a claim left for a handler, the list of sections read with their titles, the lookup labels, the failure steps and the attempt lines, and the decision panel for a claim left for a handler.
-- [ ] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with at least 80% coverage.
-- [ ] End-to-end: after a run is started and its to-do list posted through the API, the queue page shows each item and its status. An update shows without a reload, and after the run finishes, the page shows its summary.
-- [ ] End-to-end: a claim started and released twice through the API shows "Left for a handler" on its page, with its failure steps, and the queue shows it as left for a handler.
-- [ ] End-to-end: after a `read_section` step for the claims manual's section 9 is posted through the API, the claim page lists "Claims manual, section 9: Repeat claims" under what the agent read.
-- [ ] End-to-end: the instructions page shows both sets of instructions.
-- [ ] In the browser with the Playwright MCP server, the queue page with a run, and a claim page with lookups and a failure, read clearly in light and dark mode and follow the brand, and the console shows no errors.
-- [ ] `npm run check` passes.
+- [x] Vitest tests cover the run panel from a stubbed API (no run yet, a running run with an item in each status, and a finished run with its summary), the five status counts, the badge for a claim left for a handler, the list of sections read with their titles, the lookup labels, the failure steps and the attempt lines, and the decision panel for a claim left for a handler.
+- [x] `npm run check:ts` passes: Prettier, ESLint, tsc and vitest with at least 80% coverage.
+- [x] End-to-end: after a run is started and its to-do list posted through the API, the queue page shows each item and its status. An update shows without a reload, and after the run finishes, the page shows its summary.
+- [x] End-to-end: a claim started and released twice through the API shows "Left for a handler" on its page, with its failure steps, and the queue shows it as left for a handler.
+- [x] End-to-end: after a `read_section` step for the claims manual's section 9 is posted through the API, the claim page lists "Claims manual, section 9: Repeat claims" under what the agent read.
+- [x] End-to-end: the instructions page shows both sets of instructions.
+- [x] In the browser with the Playwright MCP server, the queue page with a run, and a claim page with lookups and a failure, read clearly in light and dark mode and follow the brand, and the console shows no errors.
+- [x] `npm run check` passes.
 
 ## Phase 5: The harness on real claims
 

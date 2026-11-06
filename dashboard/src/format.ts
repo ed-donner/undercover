@@ -1,10 +1,11 @@
-import type { Decision, Status } from "./api";
+import type { Decision, DocumentName, Status, TodoStatus } from "./api";
 
 export const STATUSES: Status[] = [
   "waiting",
   "in_progress",
   "waiting_for_sign_off",
   "decided",
+  "left_for_handler",
 ];
 
 export const STATUS_LABELS: Record<Status, string> = {
@@ -12,6 +13,19 @@ export const STATUS_LABELS: Record<Status, string> = {
   in_progress: "In progress",
   waiting_for_sign_off: "Waiting for sign-off",
   decided: "Decided",
+  left_for_handler: "Left for a handler",
+};
+
+export const TODO_LABELS: Record<TodoStatus, string> = {
+  to_do: "To do",
+  in_progress: "In progress",
+  done: "Done",
+  left_for_handler: "Left for a handler",
+};
+
+export const DOCUMENT_NAMES: Record<DocumentName, string> = {
+  policy_wording: "Policy wording",
+  claims_manual: "Claims manual",
 };
 
 export const DECISION_LABELS: Record<Decision, string> = {

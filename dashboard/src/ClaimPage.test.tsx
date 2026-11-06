@@ -98,7 +98,7 @@ it("shows the decision, its reasons and the payment", async () => {
     ),
   ).toBeDefined();
   expect(
-    within(decision).getByText("Policy wording: Section 3, Trip Delay"),
+    within(decision).getByText("Relied on: Section 3, Trip Delay"),
   ).toBeDefined();
   expect(within(decision).getByText(/^Paid \$420\.00 on Nov/)).toBeDefined();
 });
@@ -186,4 +186,43 @@ it("says when a claim can't be loaded", async () => {
   expect((await screen.findByRole("alert")).textContent).toContain(
     "Can't load claim CLM-9999.",
   );
+});
+
+it.each([
+  [
+    claim({ status: "waiting", attempts: 1 }),
+    "The agent's last attempt at this claim failed, so it's back in the queue for one more try.",
+  ],
+  [
+    claim({ status: "left_for_handler", attempts: 2 }),
+    "The agent couldn't finish this claim in two attempts, so it's left for a handler. Its steps show what went wrong.",
+  ],
+])("says where a claim stands after a failed attempt", async (shown, text) => {
+  stubApi(claimRoutes(shown));
+  render(<ClaimPage claimId="CLM-1001" />);
+  const decision = await screen.findByRole("region", { name: "Decision" });
+  expect(within(decision).getByText(text)).toBeDefined();
+});
+
+it("shows an approval the agent couldn't pay, left for a handler", async () => {
+  stubApi(
+    claimRoutes(
+      claim({
+        status: "left_for_handler",
+        attempts: 1,
+        decision: "approve",
+        payout: 420,
+        reason: "The delay is covered.",
+        policy_section: "Policy wording, section 3, Trip Delay",
+      }),
+    ),
+  );
+  render(<ClaimPage claimId="CLM-1001" />);
+  const decision = await screen.findByRole("region", { name: "Decision" });
+  expect(
+    within(decision).getByText(
+      "The agent approved this claim but couldn't pay it, so it's left for a handler.",
+    ),
+  ).toBeDefined();
+  expect(screen.getAllByText("Left for a handler")).toHaveLength(1);
 });

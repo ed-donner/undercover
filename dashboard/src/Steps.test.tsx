@@ -1,8 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { Step } from "./api";
 import { Steps } from "./Steps";
-import { stubApi } from "./testing";
+import { sections, stubApi } from "./testing";
 
 afterEach(() => {
   cleanup();
@@ -67,4 +67,110 @@ it("points out when the claims system refused the agent", async () => {
   ).toBeDefined();
   expect(screen.getByText("The request wasn't valid.")).toBeDefined();
   expect(screen.getAllByText("Refused")).toHaveLength(2);
+});
+
+function stepOf(
+  threadId: string,
+  kind: Step["kind"],
+  name: string,
+  content: string,
+) {
+  return { ...step(kind, name, content), thread_id: threadId };
+}
+
+it("shows what the agent looked up and lists the sections it read", async () => {
+  stubApi({
+    "GET /api/documents/sections": sections,
+    "GET /api/claims/CLM-1001/steps": [
+      step("tool_call", "list_sections", "{}"),
+      step("tool_call", "search_documents", '{"query": "repeat claims"}'),
+      step(
+        "tool_call",
+        "read_section",
+        '{"document": "claims_manual", "section": 9}',
+      ),
+      step(
+        "tool_call",
+        "read_section",
+        '{"document": "claims_manual", "section": 9}',
+      ),
+      step(
+        "tool_call",
+        "read_section",
+        '{"document": "policy_wording", "section": 12}',
+      ),
+    ],
+  });
+  render(<Steps claimId="CLM-1001" />);
+  const read = await screen.findByRole("region", {
+    name: "What the agent read",
+  });
+  expect(
+    await within(read).findByText("Claims manual, section 9: Repeat claims"),
+  ).toBeDefined();
+  expect(
+    within(read)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual([
+    "Claims manual, section 9: Repeat claims",
+    "Policy wording, section 12",
+  ]);
+  expect(
+    screen.getByText("Reading the contents of the wording and the manual"),
+  ).toBeDefined();
+  expect(
+    screen.getByText('Searching the documents for "repeat claims"'),
+  ).toBeDefined();
+  expect(
+    screen.getAllByText("Reading Claims manual, section 9: Repeat claims"),
+  ).toHaveLength(2);
+});
+
+it("leaves out what the agent read when it read no section", async () => {
+  stubApi({
+    "GET /api/claims/CLM-1001/steps": [
+      step("tool_call", "read_section", "{}"),
+      step("reply", "agent", "Done."),
+    ],
+  });
+  render(<Steps claimId="CLM-1001" />);
+  expect(await screen.findByText("Done.")).toBeDefined();
+  expect(
+    screen.queryByRole("region", { name: "What the agent read" }),
+  ).toBeNull();
+});
+
+it("marks reminders and failures, and where each attempt starts", async () => {
+  stubApi({
+    "GET /api/claims/CLM-1002/steps": [
+      stepOf("first", "reply", "agent", "Done."),
+      stepOf(
+        "first",
+        "reminder",
+        "harness",
+        "You haven't recorded a decision.",
+      ),
+      stepOf("first", "failure", "harness", "This attempt failed: it stopped."),
+      stepOf("second", "reply", "agent", "Declined."),
+    ],
+  });
+  render(<Steps claimId="CLM-1002" />);
+  expect(await screen.findByText("Reminder")).toBeDefined();
+  expect(screen.getByText("Failed").className).toBe("badge step-failure");
+  expect(screen.getByText("This attempt failed: it stopped.")).toBeDefined();
+  expect(
+    screen
+      .getAllByRole("heading", { name: /^Attempt/ })
+      .map((h) => h.textContent),
+  ).toEqual(["Attempt 1", "Attempt 2"]);
+});
+
+it("doesn't number a claim's only attempt", async () => {
+  stubApi({
+    "GET /api/claims/CLM-1001/steps": [step("reply", "agent", "Declined.")],
+  });
+  render(<Steps claimId="CLM-1001" />);
+  expect(await screen.findByText("Declined.")).toBeDefined();
+  expect(screen.queryByRole("heading", { name: /^Attempt/ })).toBeNull();
 });

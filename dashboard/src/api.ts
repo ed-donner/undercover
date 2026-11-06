@@ -1,5 +1,9 @@
 export type Status =
-  "waiting" | "in_progress" | "waiting_for_sign_off" | "decided";
+  | "waiting"
+  | "in_progress"
+  | "waiting_for_sign_off"
+  | "decided"
+  | "left_for_handler";
 export type Decision = "approve" | "decline" | "refer";
 
 export interface QueueEntry {
@@ -13,6 +17,7 @@ export interface QueueEntry {
   decision: Decision | null;
   payout: number | null;
   paid_amount: number | null;
+  attempts: number;
 }
 
 export interface ClaimItem {
@@ -50,6 +55,7 @@ export interface Claim {
   signed_off_at: string | null;
   paid_amount: number | null;
   paid_at: string | null;
+  attempts: number;
 }
 
 export interface AddOn {
@@ -102,10 +108,33 @@ export interface Handler {
 export interface Step {
   step_id: number;
   thread_id: string;
-  kind: "tool_call" | "tool_result" | "reply";
+  kind: "tool_call" | "tool_result" | "reply" | "reminder" | "failure";
   name: string;
   content: string;
   created_at: string;
+}
+
+export type TodoStatus = "to_do" | "in_progress" | "done" | "left_for_handler";
+
+export interface Todo {
+  content: string;
+  status: TodoStatus;
+}
+
+export interface Run {
+  run_id: number;
+  todos: Todo[];
+  summary: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+export type DocumentName = "policy_wording" | "claims_manual";
+
+export interface Section {
+  document: DocumentName;
+  section: number;
+  title: string;
 }
 
 function errorMessage(body: unknown, status: number): string {
@@ -137,6 +166,8 @@ export const getPolicy = (policyId: string) =>
 export const getCustomer = (customerId: string) =>
   request<Customer>(`/api/customers/${customerId}`);
 export const listHandlers = () => request<Handler[]>("/api/handlers");
+export const getLatestRun = () => request<Run | null>("/api/runs/latest");
+export const listSections = () => request<Section[]>("/api/documents/sections");
 export interface Instructions {
   queue: string;
   claim: string;

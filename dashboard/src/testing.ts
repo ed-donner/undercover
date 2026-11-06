@@ -1,5 +1,12 @@
 import { vi } from "vitest";
-import type { Claim, Customer, Handler, Policy, QueueEntry } from "./api";
+import type {
+  Claim,
+  Customer,
+  Handler,
+  Policy,
+  QueueEntry,
+  Section,
+} from "./api";
 
 /** A reply from the API with an error status. */
 export class Failure {
@@ -12,8 +19,8 @@ export class Failure {
 /** Stub fetch so each "METHOD /path" in routes answers with its JSON reply. */
 export function stubApi(routes: Record<string, unknown>) {
   const fetchStub = vi.fn((url: string, init?: RequestInit) => {
-    const reply =
-      routes[`${init?.method ?? "GET"} ${url}`] ?? new Failure(404, "None");
+    const route = `${init?.method ?? "GET"} ${url}`;
+    const reply = route in routes ? routes[route] : new Failure(404, "None");
     if (reply instanceof Failure) {
       return Promise.resolve(
         Response.json({ detail: reply.detail }, { status: reply.status }),
@@ -37,6 +44,7 @@ export function queueEntry(overrides: Partial<QueueEntry> = {}): QueueEntry {
     decision: null,
     payout: null,
     paid_amount: null,
+    attempts: 0,
     ...overrides,
   };
 }
@@ -74,6 +82,7 @@ export function claim(overrides: Partial<Claim> = {}): Claim {
     signed_off_at: null,
     paid_amount: null,
     paid_at: null,
+    attempts: 0,
     ...overrides,
   };
 }
@@ -127,6 +136,11 @@ export const handlers: Handler[] = [
   { handler_id: "HND-03", name: "Priya Raman", can_approve_over_limit: false },
 ];
 
+export const sections: Section[] = [
+  { document: "policy_wording", section: 3, title: "Trip Delay" },
+  { document: "claims_manual", section: 9, title: "Repeat claims" },
+];
+
 /** The API routes a claim page loads, for the claim given. */
 export function claimRoutes(shown: Claim): Record<string, unknown> {
   return {
@@ -135,5 +149,6 @@ export function claimRoutes(shown: Claim): Record<string, unknown> {
     "GET /api/policies/POL-2001": policy,
     "GET /api/customers/CUS-3001": customer,
     "GET /api/handlers": handlers,
+    "GET /api/documents/sections": sections,
   };
 }

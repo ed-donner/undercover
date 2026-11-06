@@ -71,11 +71,7 @@ function Outcome({
     return (
       <section className="panel" aria-label="Decision">
         <h2>Decision</h2>
-        <p className="muted">
-          {claim.status === "waiting"
-            ? "The agent hasn't started on this claim."
-            : "The agent is working on this claim."}
-        </p>
+        <p className="muted">{undecided(claim)}</p>
       </section>
     );
   }
@@ -88,7 +84,7 @@ function Outcome({
         )}
       </div>
       <blockquote className="reason">{claim.reason}</blockquote>
-      <p className="muted">Policy wording: {claim.policy_section}</p>
+      <p className="muted">Relied on: {claim.policy_section}</p>
       <Payment claim={claim} handlers={handlers} onSignedOff={onSignedOff} />
     </section>
   );
@@ -102,6 +98,14 @@ function Payment({
   if (claim.decision === "decline") return <p>Nothing to pay.</p>;
   if (claim.decision === "refer") {
     return <p>A handler takes this claim from here.</p>;
+  }
+  if (claim.status === "left_for_handler") {
+    return (
+      <p>
+        The agent approved this claim but couldn&apos;t pay it, so it&apos;s
+        left for a handler.
+      </p>
+    );
   }
   if (claim.status === "waiting_for_sign_off") {
     return (
@@ -127,6 +131,18 @@ function Payment({
       )}
     </p>
   );
+}
+
+function undecided(claim: Claim): string {
+  if (claim.status === "left_for_handler") {
+    return "The agent couldn't finish this claim in two attempts, so it's left for a handler. Its steps show what went wrong.";
+  }
+  if (claim.status === "in_progress")
+    return "The agent is working on this claim.";
+  if (claim.attempts > 0) {
+    return "The agent's last attempt at this claim failed, so it's back in the queue for one more try.";
+  }
+  return "The agent hasn't started on this claim.";
 }
 
 function ClaimDetails({ claim }: Readonly<{ claim: Claim }>) {

@@ -2,6 +2,7 @@ import { listClaims, type QueueEntry } from "./api";
 import { DecisionLabel, StatusBadge, Unreachable } from "./common";
 import { formatDate, humanize, money, STATUSES } from "./format";
 import { POLL_MS, useApi } from "./hooks";
+import { RunPanel } from "./RunPanel";
 
 export function QueuePage() {
   const { data: claims, failed } = useApi(listClaims, POLL_MS);
@@ -11,6 +12,7 @@ export function QueuePage() {
       {failed && <Unreachable />}
       {!claims && !failed && <p className="muted">Loading the queue.</p>}
       {claims && <StatusCounts claims={claims} />}
+      <RunPanel />
       {claims && <QueueTable claims={claims} />}
     </>
   );

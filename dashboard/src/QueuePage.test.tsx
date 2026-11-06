@@ -54,6 +54,7 @@ it("counts the claims in each status", async () => {
       queueEntry(),
       queueEntry({ claim_id: "CLM-1002" }),
       queueEntry({ claim_id: "CLM-1003", status: "waiting_for_sign_off" }),
+      queueEntry({ claim_id: "CLM-1004", status: "left_for_handler" }),
     ],
   });
   render(<QueuePage />);
@@ -61,7 +62,11 @@ it("counts the claims in each status", async () => {
     name: "Claims by status",
   });
   expect(counts.textContent).toBe(
-    "2Waiting0In progress1Waiting for sign-off0Decided",
+    "2Waiting0In progress1Waiting for sign-off0Decided1Left for a handler",
+  );
+  const left = screen.getByRole("row", { name: /CLM-1004/ });
+  expect(within(left).getByText("Left for a handler").className).toContain(
+    "status-left_for_handler",
   );
 });
 
