@@ -27,11 +27,11 @@ Add backend operations that return the minimum request context the agent needs: 
 
 Replace the health-check-only agent behavior with a request workflow. Keep `run(request_id, thread_id)` as the entry point, retrieve records and policies through backend API tools, and return a structured recommendation: approve, decline, or request information. Persist the recommendation and policy citations, but leave the request in waiting-for-agent-review after the agent finishes; only a support agent can mark it decided. Start work through a backend operation and record progress steps as the agent works so the dashboard can display them. Use a stub model in tests.
 
-- [ ] Agent tests cover each recommendation outcome, policy citations, missing context, and a tool-call path using a stub model; no test calls a live model.
-- [ ] A backend test runs a request and verifies it moves from waiting to in progress and then to waiting for agent review with a stored recommendation.
-- [ ] An API test verifies `POST /api/requests/REQ-7001/run` starts work and returns an in-progress response; `GET /api/requests/REQ-7001` then exposes the saved recommendation and ordered progress steps.
-- [ ] Tests verify a model or tool error leaves the request available for agent review and does not record an unsupported decision.
-- [ ] `uv run pytest -q` passes with the configured 80% coverage threshold.
+- [x] Agent tests cover each recommendation outcome, policy citations, missing context, and a tool-call path using a stub model; no test calls a live model.
+- [x] A backend test runs a request and verifies it moves from waiting to in progress and then to waiting for agent review with a stored recommendation.
+- [x] An API test verifies `POST /api/requests/REQ-7001/run` starts work and returns an in-progress response; `GET /api/requests/REQ-7001` then exposes the saved recommendation and ordered progress steps.
+- [x] Tests verify a model or tool error leaves the request available for agent review and does not record an unsupported decision.
+- [x] `uv run pytest -q` passes with the configured 80% coverage threshold.
 
 ## Phase 4: Build the support queue and request detail screens
 

@@ -91,3 +91,50 @@ def test_request_context_rejects_an_unsupported_type(tmp_path, monkeypatch):
     with TestClient(app) as client:
         response = client.get("/api/requests/REQ-7001/context")
     assert response.status_code == 422
+
+
+def test_request_run_persists_recommendation_and_progress(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "run.sqlite3"))
+    monkeypatch.setattr(
+        "backend.main.run_agent",
+        lambda request_id, thread_id: {
+            "outcome": "request_information",
+            "rationale": "Need the item photo.",
+            "policy_citations": ["Returns Policy"],
+            "next_action": "Ask support agent to request a photo.",
+            "priority_human_review": False,
+        },
+    )
+    with TestClient(app) as client:
+        response = client.post("/api/requests/REQ-7001/run")
+        detail = client.get("/api/requests/REQ-7001").json()
+        duplicate = client.post("/api/requests/REQ-7001/run")
+
+    assert response.status_code == 200
+    assert response.json() == {"request_id": "REQ-7001", "status": "in_progress"}
+    assert detail["status"] == "waiting_for_agent_review"
+    assert detail["recommendation"]["outcome"] == "request_information"
+    assert [step["stage"] for step in detail["steps"]] == [
+        "started",
+        "preparing_recommendation",
+    ]
+    assert duplicate.status_code == 200
+
+
+def test_agent_progress_endpoint_and_failed_run(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "failed.sqlite3"))
+    monkeypatch.setattr(
+        "backend.main.run_agent", lambda *args: (_ for _ in ()).throw(RuntimeError())
+    )
+    with TestClient(app) as client:
+        started = client.post("/api/requests/REQ-7001/run")
+        detail = client.get("/api/requests/REQ-7001").json()
+        invalid_stage = client.post(
+            "/api/requests/REQ-7001/steps", json={"stage": "finished"}
+        )
+
+    assert started.status_code == 200
+    assert detail["status"] == "waiting_for_agent_review"
+    assert detail["recommendation"] is None
+    assert detail["steps"][-1]["stage"] == "error"
+    assert invalid_stage.status_code == 422

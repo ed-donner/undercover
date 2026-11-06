@@ -3,10 +3,20 @@
 import json
 import sqlite3
 from contextlib import closing
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "customer_orders.json"
+STEP_MESSAGES = {
+    "started": "The Shoppie Agent started reviewing this request.",
+    "reading_request": "The agent retrieved the customer request and order details.",
+    "checking_policy": "The agent checked the applicable Shoppie policy.",
+    "preparing_recommendation": (
+        "The agent prepared a recommendation for support review."
+    ),
+    "error": "The agent could not complete its review; support review is needed.",
+}
 
 
 class Store:
@@ -174,6 +184,79 @@ class Store:
             "review": self.decode(row["review_json"]),
             "steps": [dict(step) for step in step_rows],
         }
+
+    def start_run(self, request_id: str) -> bool:
+        """Move an eligible request into progress and reset its prior run."""
+        with closing(self.connect()) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE support_requests SET queue_status = 'in_progress',
+                       recommendation_json = NULL, review_json = NULL
+                   WHERE request_id = ? AND queue_status IN (
+                       'waiting', 'waiting_for_agent_review'
+                   )""",
+                (request_id,),
+            )
+            if cursor.rowcount != 1:
+                return False
+            connection.execute(
+                "DELETE FROM request_steps WHERE request_id = ?", (request_id,)
+            )
+            self._insert_step(connection, request_id, "started")
+        return True
+
+    def add_step(self, request_id: str, stage: str) -> bool:
+        """Record a fixed progress message while a request is running."""
+        if stage not in STEP_MESSAGES or stage in {"started", "error"}:
+            return False
+        with closing(self.connect()) as connection, connection:
+            status = connection.execute(
+                "SELECT queue_status FROM support_requests WHERE request_id = ?",
+                (request_id,),
+            ).fetchone()
+            if status is None or status["queue_status"] != "in_progress":
+                return False
+            self._insert_step(connection, request_id, stage)
+        return True
+
+    def save_recommendation(
+        self, request_id: str, recommendation: dict[str, Any]
+    ) -> bool:
+        """Persist an agent recommendation and await support review."""
+        with closing(self.connect()) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE support_requests SET recommendation_json = ?,
+                       queue_status = 'waiting_for_agent_review'
+                   WHERE request_id = ? AND queue_status = 'in_progress'""",
+                (json.dumps(recommendation), request_id),
+            )
+            if cursor.rowcount != 1:
+                return False
+            self._insert_step(connection, request_id, "preparing_recommendation")
+        return True
+
+    def fail_run(self, request_id: str) -> bool:
+        """Keep failed agent work in the support review queue."""
+        with closing(self.connect()) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE support_requests SET
+                       queue_status = 'waiting_for_agent_review',
+                       recommendation_json = NULL
+                   WHERE request_id = ? AND queue_status = 'in_progress'""",
+                (request_id,),
+            )
+            if cursor.rowcount == 1:
+                self._insert_step(connection, request_id, "error")
+        return cursor.rowcount == 1
+
+    @staticmethod
+    def _insert_step(
+        connection: sqlite3.Connection, request_id: str, stage: str
+    ) -> None:
+        connection.execute(
+            """INSERT INTO request_steps (request_id, stage, message, created_at)
+               VALUES (?, ?, ?, ?)""",
+            (request_id, stage, STEP_MESSAGES[stage], datetime.now(UTC).isoformat()),
+        )
 
     @staticmethod
     def decode(value: str | None) -> Any:

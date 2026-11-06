@@ -5,9 +5,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from pydantic import BaseModel
 
 from agent.instructions import SYSTEM_PROMPT
+from agent.main import run as run_agent
 from backend.policies import policy_for_request_type
 from backend.store import Store
 
@@ -27,6 +29,22 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Shoppie", lifespan=lifespan)
+
+
+class ProgressInput(BaseModel):
+    """A supported progress stage supplied by the agent."""
+
+    stage: str
+
+
+def run_request_in_background(store: Store, request_id: str) -> None:
+    """Run the Shoppie Agent and persist the result for agent review."""
+    try:
+        recommendation = run_agent(request_id, f"request-{request_id}")
+        if not store.save_recommendation(request_id, recommendation):
+            store.fail_run(request_id)
+    except Exception:
+        store.fail_run(request_id)
 
 
 @app.get("/api/health", operation_id="health")
@@ -69,3 +87,30 @@ def get_request_context(request_id: str, request: Request) -> dict[str, Any]:
 def get_agent_instructions() -> dict[str, str]:
     """Return the current read-only Shoppie Agent instructions."""
     return {"instructions": SYSTEM_PROMPT}
+
+
+@app.post("/api/requests/{request_id}/steps", operation_id="add_request_step")
+def add_request_step(
+    request_id: str, progress: ProgressInput, request: Request
+) -> dict[str, str]:
+    """Record a supported agent progress step."""
+    allowed = {"reading_request", "checking_policy"}
+    if progress.stage not in allowed:
+        raise HTTPException(status_code=422, detail="Unsupported progress stage")
+    if not request.app.state.store.add_step(request_id, progress.stage):
+        raise HTTPException(status_code=409, detail="Request is not in progress")
+    return {"status": "recorded", "stage": progress.stage}
+
+
+@app.post("/api/requests/{request_id}/run", operation_id="run_request")
+def run_request(
+    request_id: str, request: Request, background_tasks: BackgroundTasks
+) -> dict[str, str]:
+    """Start agent work for a support request."""
+    store: Store = request.app.state.store
+    if store.get_request(request_id) is None:
+        raise HTTPException(status_code=404, detail="Support request not found")
+    if not store.start_run(request_id):
+        raise HTTPException(status_code=409, detail="Request cannot be run")
+    background_tasks.add_task(run_request_in_background, store, request_id)
+    return {"request_id": request_id, "status": "in_progress"}
