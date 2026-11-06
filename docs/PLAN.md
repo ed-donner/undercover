@@ -18,10 +18,10 @@ Turn `data/customer_orders.json` into the application's source of truth. Add a s
 
 Add backend operations that return the minimum request context the agent needs: its customer request, order state and item details, relevant request history, and the applicable policy text. Add a read-only operation for the current agent instructions. Select the shopping, cancellation, or returns policy by request type, and avoid returning unrelated customer fields.
 
-- [ ] API tests verify cancellation requests receive the cancellation policy, return/refund requests receive the returns policy, and order questions can receive the shopping policy.
-- [ ] API tests verify context responses omit unrelated contact data and contain no reference decision fields.
-- [ ] API tests verify the instructions operation returns the configured prompt without allowing edits.
-- [ ] `uv run pytest -q` passes with the configured 80% coverage threshold.
+- [x] API and policy-selection tests verify cancellation requests receive the cancellation policy, return/refund requests receive the returns policy, and order questions can receive the shopping policy.
+- [x] API tests verify context responses omit unrelated contact data and contain no reference decision fields.
+- [x] API tests verify the instructions operation returns the configured prompt without allowing edits.
+- [x] `uv run pytest -q` passes with the configured 80% coverage threshold.
 
 ## Phase 3: Run the Shoppie Agent and record recommendations
 

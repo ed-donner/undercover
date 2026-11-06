@@ -10,17 +10,13 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
+from agent.instructions import SYSTEM_PROMPT
+
 load_dotenv(override=True)
 
 BACKEND_URL = "http://localhost:8000"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-6-luna"
-SYSTEM_PROMPT = """You are the Shoppie Agent, an assistant for customer support.
-Use only order details and policies provided by the system when evaluating requests.
-Recommend an outcome and cite the relevant policy. A support agent confirms decisions.
-Do not claim an action happened unless the system confirms it.
-Ask for missing information or refer issues needing judgment to a support agent.
-If the needed order or policy information is unavailable, say so instead of guessing."""
 
 
 def backend() -> httpx.Client:

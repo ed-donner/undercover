@@ -7,6 +7,8 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 
+from agent.instructions import SYSTEM_PROMPT
+from backend.policies import policy_for_request_type
 from backend.store import Store
 
 DEFAULT_DATABASE_PATH = (
@@ -46,3 +48,24 @@ def get_request(request_id: str, request: Request) -> dict[str, Any]:
     if result is None:
         raise HTTPException(status_code=404, detail="Support request not found")
     return result
+
+
+@app.get("/api/requests/{request_id}/context", operation_id="get_request_context")
+def get_request_context(request_id: str, request: Request) -> dict[str, Any]:
+    """Return the request context and policy available to the agent."""
+    result = request.app.state.store.get_request(request_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Support request not found")
+    try:
+        result["policy"] = policy_for_request_type(result["request"]["type"])
+    except KeyError as error:
+        raise HTTPException(
+            status_code=422, detail="Unsupported request type"
+        ) from error
+    return result
+
+
+@app.get("/api/agent/instructions", operation_id="get_agent_instructions")
+def get_agent_instructions() -> dict[str, str]:
+    """Return the current read-only Shoppie Agent instructions."""
+    return {"instructions": SYSTEM_PROMPT}
