@@ -14,7 +14,7 @@ We want an AI agent, the UnderCover Agent, to work the queue the way a handler d
 - find and read the sections of the policy wording and the claims manual that the claim needs, as a handler would, and show what it read
 - approve, decline or refer the claim
 - work out the payout when it approves
-- explain the decision in two or three sentences, along with the relevant section of the policy
+- explain the decision in two or three sentences, along with the section of the policy wording or the claims manual it rests on
 
 Our goal is to handle claims straight through, as accurately as our handlers do.
 

@@ -297,6 +297,7 @@ h3 {
 .summary {
   max-width: 70ch;
   margin: 0;
+  white-space: pre-line;
   font-family: var(--serif);
   font-size: 20px;
   line-height: 1.35;

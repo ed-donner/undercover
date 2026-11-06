@@ -156,14 +156,14 @@ Builds the run panel on the queue page. It shows the latest run's number, when i
 
 Runs the real queue agent on DeepSeek V4.1 Flash through OpenRouter for the first time, capped at five claims as the brief asks. `npm run dev` is up, with the dashboard open through the Playwright MCP server. The phase fixes whatever the run turns up, most likely in the instructions, and reseeds before any second run. It's the only phase that calls a model, and five claims on this model should cost a few cents.
 
-- [ ] After `uv run -m backend.seed`, `uv run -m agent --cap 5` prints a line for each of five claims, then a summary for the handlers.
-- [ ] While it runs, the queue page shows the to-do list appear and its items move to in progress and then done, and at the end the run shows as finished with its summary.
-- [ ] Afterwards, five claims have left `waiting`, 20 are still waiting, and none is in progress.
-- [ ] Each of the five claim pages shows the agent's steps, with at least one section of the manual or the wording under what the agent read. Each decided claim has a decision, a reason of two or three sentences and the section it relies on.
-- [ ] Among the five, every approval of $1,000 or less is paid, and every approval over $1,000 is waiting for sign-off and unpaid.
-- [ ] If the run retried a claim or left one for a handler, its page shows the failure, and if the cause is in our code or instructions, it's fixed.
-- [ ] `docs/STATUS.md`, `docs/SPEC.md` and `docs/TECH_STACK.md` describe the product as it now is. `docs/STATUS.md` says how to run it (`npm run dev`, `uv run -m agent --cap 5`, `uv run -m agent <claim ids>`, `uv run -m agent`, `uv run -m backend.seed` and `npm run check`) and that a database from the pilot needs reseeding.
-- [ ] `npm run check` passes, and the results are reported.
+- [x] After `uv run -m backend.seed`, `uv run -m agent --cap 5` prints a line for each of five claims, then a summary for the handlers.
+- [x] While it runs, the queue page shows the to-do list appear and its items move to in progress and then done, and at the end the run shows as finished with its summary.
+- [x] Afterwards, five claims have left `waiting`, 20 are still waiting, and none is in progress.
+- [x] Each of the five claim pages shows the agent's steps, with at least one section of the manual or the wording under what the agent read. Each decided claim has a decision, a reason of two or three sentences and the section it relies on.
+- [x] Among the five, every approval of $1,000 or less is paid, and every approval over $1,000 is waiting for sign-off and unpaid.
+- [x] If the run retried a claim or left one for a handler, its page shows the failure, and if the cause is in our code or instructions, it's fixed. Neither happened in the two live runs: all five claims were decided on the first attempt both times.
+- [x] `docs/STATUS.md`, `docs/SPEC.md` and `docs/TECH_STACK.md` describe the product as it now is. `docs/STATUS.md` says how to run it (`npm run dev`, `uv run -m agent --cap 5`, `uv run -m agent <claim ids>`, `uv run -m agent`, `uv run -m backend.seed` and `npm run check`) and that a database from the pilot needs reseeding.
+- [x] `npm run check` passes, and the results are reported.
 
 ## Not in this build
 
