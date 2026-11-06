@@ -7,14 +7,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("shows that the backend is up", async () => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}")));
+it("shows the nav and the queue by default", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]")));
   render(<App />);
-  expect(await screen.findByText("Backend: up")).toBeDefined();
-});
 
-it("shows that the backend is down", async () => {
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-  render(<App />);
-  expect(await screen.findByText("Backend: down")).toBeDefined();
+  expect(screen.getByRole("link", { name: "Queue" })).toBeDefined();
+  expect(screen.getByRole("link", { name: "Instructions" })).toBeDefined();
+  await screen.findByRole("table");
 });

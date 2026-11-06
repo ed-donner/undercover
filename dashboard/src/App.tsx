@@ -1,19 +1,24 @@
-import { useEffect, useState } from "react";
+import { NavLink, Route, BrowserRouter, Routes } from "react-router-dom";
+import "./brand.css";
+import { ClaimDetail } from "./pages/ClaimDetail";
+import { Instructions } from "./pages/Instructions";
+import { Queue } from "./pages/Queue";
 
 export function App() {
-  const [status, setStatus] = useState("checking");
-
-  useEffect(() => {
-    void fetch("/api/health")
-      .then((response) => (response.ok ? "up" : "down"))
-      .catch(() => "down")
-      .then(setStatus);
-  }, []);
-
   return (
-    <main>
-      <h1>UnderCover</h1>
-      <p>Backend: {status}</p>
-    </main>
+    <BrowserRouter>
+      <nav>
+        <strong>UnderCover</strong>
+        <NavLink to="/">Queue</NavLink>
+        <NavLink to="/instructions">Instructions</NavLink>
+      </nav>
+      <main>
+        <Routes>
+          <Route element={<Queue />} path="/" />
+          <Route element={<ClaimDetail />} path="/claims/:claimId" />
+          <Route element={<Instructions />} path="/instructions" />
+        </Routes>
+      </main>
+    </BrowserRouter>
   );
 }
