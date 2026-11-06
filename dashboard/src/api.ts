@@ -137,8 +137,12 @@ export const getPolicy = (policyId: string) =>
 export const getCustomer = (customerId: string) =>
   request<Customer>(`/api/customers/${customerId}`);
 export const listHandlers = () => request<Handler[]>("/api/handlers");
-export const getInstructions = () =>
-  request<{ text: string }>("/api/instructions");
+export interface Instructions {
+  queue: string;
+  claim: string;
+}
+
+export const getInstructions = () => request<Instructions>("/api/instructions");
 
 export const signOff = (claimId: string, handlerId: string) =>
   request<Claim>(`/api/claims/${claimId}/sign-off`, {

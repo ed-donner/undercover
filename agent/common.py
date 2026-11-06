@@ -28,6 +28,7 @@ MODEL_TIMEOUT_SECONDS = 120
 RETRIES = 3
 RETRY_DELAY_SECONDS = 1.0
 MOST_REMINDERS = 2
+LONGEST_ERROR = 200
 
 
 def backend() -> httpx.Client:
@@ -62,6 +63,12 @@ def model() -> ChatOpenAI:
         timeout=MODEL_TIMEOUT_SECONDS,
         max_retries=0,
     )
+
+
+def describe(error: Exception) -> str:
+    """Describe an error in one short line."""
+    first_line = str(error).partition("\n")[0].rstrip(".")
+    return f"{type(error).__name__}: {first_line}"[:LONGEST_ERROR]
 
 
 def money(amount: float) -> str:

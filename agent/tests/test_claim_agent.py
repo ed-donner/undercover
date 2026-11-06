@@ -3,10 +3,13 @@ import json
 import httpx
 from langchain_core.messages import AIMessage
 
-from agent import __main__ as cli
 from agent import claim_agent, common
 from agent.tests.stubs import api, calls, claim, decision, steps, stub
 from backend.main import INSTRUCTIONS
+
+
+def work(claim_id, model):
+    return claim_agent.start(claim_id) or claim_agent.attempt(claim_id, model)
 
 
 def approve_and_pay(claim_id, payout):
@@ -29,7 +32,7 @@ def test_an_approval_within_the_limit_is_decided_paid_and_recorded_step_by_step(
         calls(("pay_claim", {"claim_id": "CLM-1001", "amount": 420})),
         AIMessage(content="Approved $420.00 for the delay."),
     )
-    assert claim_agent.work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
+    assert work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
     decided = claim("CLM-1001")
     assert decided["status"] == "decided"
     assert decided["reason"] == "The wording covers it."
@@ -55,7 +58,7 @@ def test_an_approval_within_the_limit_is_decided_paid_and_recorded_step_by_step(
 
 
 def test_the_backend_refuses_the_agent_a_payment_over_the_limit():
-    line = claim_agent.work("CLM-1003", approve_and_pay("CLM-1003", 1500))
+    line = work("CLM-1003", approve_and_pay("CLM-1003", 1500))
     assert line == "CLM-1003: approved $1,500.00, waiting for a handler's sign-off."
     held = claim("CLM-1003")
     assert held["status"] == "waiting_for_sign_off"
@@ -74,20 +77,20 @@ def test_a_decline_and_a_referral_are_decided_and_unpaid():
             calls(("record_decision", decision(claim_id, choice, 0))),
             AIMessage(content="Done."),
         )
-        assert claim_agent.work(claim_id, model) == line
+        assert work(claim_id, model) == line
         assert claim(claim_id)["status"] == "decided"
         assert claim(claim_id)["paid_amount"] is None
 
 
 def test_a_claim_that_isnt_waiting_isnt_worked():
     api.post("/api/claims/CLM-1001/start")
-    line = claim_agent.work("CLM-1001", stub(AIMessage(content="Done.")))
+    line = work("CLM-1001", stub(AIMessage(content="Done.")))
     assert line == "Claim CLM-1001 can't be started: it is in progress."
     assert steps("CLM-1001") == []
 
 
 def test_a_failed_claim_goes_back_in_the_queue_then_is_left_for_a_handler():
-    line = claim_agent.work("CLM-1002", stub(failures=99))
+    line = work("CLM-1002", stub(failures=99))
     assert line == (
         "CLM-1002 failed: ConnectionError: The model provider timed out."
         " It's back in the queue for one more try."
@@ -99,7 +102,7 @@ def test_a_failed_claim_goes_back_in_the_queue_then_is_left_for_a_handler():
     failure = steps("CLM-1002")[-1]
     assert failure["kind"] == "failure"
     assert failure["content"].startswith("This attempt failed: ConnectionError")
-    second = claim_agent.work("CLM-1002", stub(failures=99))
+    second = work("CLM-1002", stub(failures=99))
     assert second.endswith("It's left for a handler.")
     assert claim("CLM-1002")["status"] == "left_for_handler"
     assert len({step["thread_id"] for step in steps("CLM-1002")}) == 2
@@ -108,7 +111,7 @@ def test_a_failed_claim_goes_back_in_the_queue_then_is_left_for_a_handler():
 def test_a_model_call_that_fails_is_retried():
     model = approve_and_pay("CLM-1001", 420)
     model.failures = 2
-    assert claim_agent.work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
+    assert work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
     assert claim("CLM-1001")["attempts"] == 0
 
 
@@ -123,9 +126,7 @@ def test_a_tool_whose_call_to_the_backend_fails_is_retried(monkeypatch):
         return real_call(method, url, *args, **kwargs)
 
     monkeypatch.setattr(common, "call", flaky)
-    assert claim_agent.work("CLM-1001", approve_and_pay("CLM-1001", 420)).endswith(
-        "and paid."
-    )
+    assert work("CLM-1001", approve_and_pay("CLM-1001", 420)).endswith("and paid.")
     assert failed
 
 
@@ -133,7 +134,7 @@ def test_an_agent_going_round_in_circles_stops_at_the_model_call_limit():
     going_round = stub(
         *[calls(("get_claim", {"claim_id": "CLM-1004"})) for _ in range(40)]
     )
-    line = claim_agent.work("CLM-1004", going_round)
+    line = work("CLM-1004", going_round)
     assert line.startswith("CLM-1004 failed: ModelCallLimitExceededError")
     calls_made = [step for step in steps("CLM-1004") if step["kind"] == "tool_call"]
     assert len(calls_made) == claim_agent.MODEL_CALLS
@@ -147,7 +148,7 @@ def test_an_agent_that_forgets_to_pay_is_reminded():
         calls(("pay_claim", {"claim_id": "CLM-1001", "amount": 420})),
         AIMessage(content="Paid."),
     )
-    assert claim_agent.work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
+    assert work("CLM-1001", model) == "CLM-1001: approved $420.00 and paid."
     reminder = next(step for step in steps("CLM-1001") if step["kind"] == "reminder")
     assert reminder["content"] == (
         "You approved CLM-1001 for $420.00 but haven't paid it. Pay it before you"
@@ -157,7 +158,7 @@ def test_an_agent_that_forgets_to_pay_is_reminded():
 
 def test_an_agent_that_stops_without_deciding_is_reminded_twice_then_released():
     model = stub(*[AIMessage(content="Done.") for _ in range(3)])
-    line = claim_agent.work("CLM-1005", model)
+    line = work("CLM-1005", model)
     assert line == (
         "CLM-1005 failed: the agent stopped without recording a decision."
         " It's back in the queue for one more try."
@@ -171,7 +172,7 @@ def test_an_approval_left_unpaid_is_left_for_a_handler():
         calls(("record_decision", decision("CLM-1001", "approve", 420))),
         *[AIMessage(content="Approved.") for _ in range(3)],
     )
-    line = claim_agent.work("CLM-1001", model)
+    line = work("CLM-1001", model)
     assert line == (
         "CLM-1001 failed: the agent approved $420.00 but didn't pay it."
         " It's left for a handler."
@@ -188,8 +189,8 @@ def test_the_instructions_come_from_the_backend(monkeypatch):
 
     real_create_agent = claim_agent.create_agent
     monkeypatch.setattr(claim_agent, "create_agent", create_agent)
-    claim_agent.work("CLM-1013", stub(AIMessage(content="Done.")))
-    assert prompts == [INSTRUCTIONS.read_text(encoding="utf-8")]
+    work("CLM-1013", stub(AIMessage(content="Done.")))
+    assert prompts == [(INSTRUCTIONS / "claim.md").read_text(encoding="utf-8")]
 
 
 def test_the_agent_looks_up_sections_and_its_steps_show_what_it_read():
@@ -246,41 +247,6 @@ def test_tools_hand_refusals_back_to_the_model():
     )
     refusal = claim_agent.pay_claim.invoke({"claim_id": "CLM-1001", "amount": 420})
     assert "only an approved claim" in refusal
-
-
-def test_the_command_line_works_only_the_waiting_claims(monkeypatch, capsys):
-    worked = []
-    monkeypatch.setattr(
-        claim_agent, "work", lambda claim_id: worked.append(claim_id) or "ok"
-    )
-    api.post("/api/claims/CLM-1001/start")
-    cli.work([])
-    assert worked == [f"CLM-{number}" for number in range(1002, 1026)]
-    assert capsys.readouterr().out.startswith("ok\nok\n")
-
-
-def test_the_command_line_carries_on_after_a_claim_fails(monkeypatch, capsys):
-    models = iter(
-        [
-            stub(failures=99),
-            stub(
-                calls(("record_decision", decision("CLM-1013", "decline", 0))),
-                AIMessage(content="Declined."),
-            ),
-        ]
-    )
-    monkeypatch.setattr(common, "model", lambda: next(models))
-    cli.work(["CLM-1002", "CLM-1013"])
-    lines = capsys.readouterr().out.splitlines()
-    assert lines[0].startswith("CLM-1002 failed")
-    assert lines[1] == "CLM-1013: declined."
-
-
-def test_the_command_line_says_when_nothing_is_waiting(capsys):
-    for number in range(1001, 1026):
-        api.post(f"/api/claims/CLM-{number}/start")
-    cli.work([])
-    assert capsys.readouterr().out == "No claims are waiting.\n"
 
 
 def test_model_name(monkeypatch):

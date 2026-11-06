@@ -226,7 +226,8 @@ def test_steps_need_a_known_claim_and_kind():
 
 def test_get_instructions():
     assert client.get("/api/instructions").json() == {
-        "text": INSTRUCTIONS.read_text(encoding="utf-8")
+        "queue": (INSTRUCTIONS / "queue.md").read_text(encoding="utf-8"),
+        "claim": (INSTRUCTIONS / "claim.md").read_text(encoding="utf-8"),
     }
 
 

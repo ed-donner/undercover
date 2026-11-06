@@ -1,22 +1,21 @@
-"""Work the claims queue: uv run -m agent, or uv run -m agent CLM-1001 CLM-1004"""
+"""Work the claims queue: uv run -m agent [--cap N] [claim ids]"""
 
+import argparse
 import sys
 
-from agent import claim_agent, common
+from agent import queue_agent
 
 
-def work(claim_ids: list[str]) -> None:
-    """Work the claims given, or else every waiting claim, one at a time."""
-    if not claim_ids:
-        claims = common.call("GET", "/api/claims").raise_for_status().json()
-        claim_ids = [
-            claim["claim_id"] for claim in claims if claim["status"] == "waiting"
-        ]
-    if not claim_ids:
-        print("No claims are waiting.")
-    for claim_id in claim_ids:
-        print(claim_agent.work(claim_id), flush=True)
+def main(arguments: list[str]) -> None:
+    """Run the queue agent once, then print its summary for the handlers."""
+    parser = argparse.ArgumentParser(
+        prog="uv run -m agent", description="Work the waiting claims in the queue."
+    )
+    parser.add_argument("--cap", type=int, help="the most claims the run may start")
+    parser.add_argument("claim_ids", nargs="*", help="work only these claims")
+    options = parser.parse_args(arguments)
+    print(queue_agent.run(options.cap, options.claim_ids), flush=True)
 
 
 if __name__ == "__main__":
-    work(sys.argv[1:])
+    main(sys.argv[1:])

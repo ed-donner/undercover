@@ -9,6 +9,7 @@ from pathlib import Path
 DATA = Path(__file__).resolve().parent.parent / "data"
 
 SCHEMA = """
+DROP TABLE IF EXISTS runs;
 DROP TABLE IF EXISTS steps;
 DROP TABLE IF EXISTS claims;
 DROP TABLE IF EXISTS policies;
@@ -41,6 +42,13 @@ CREATE TABLE steps (
     name TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+CREATE TABLE runs (
+    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    todos TEXT NOT NULL DEFAULT '[]',
+    summary TEXT,
+    started_at TEXT NOT NULL,
+    finished_at TEXT
 );
 """
 

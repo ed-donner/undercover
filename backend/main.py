@@ -16,7 +16,7 @@ from backend.db import DATA, path, transaction
 from backend.documents import Document
 from backend.seed import seed
 
-INSTRUCTIONS = Path(__file__).parent / "instructions.md"
+INSTRUCTIONS = Path(__file__).parent / "instructions"
 MOST_ATTEMPTS = 2
 WORKFLOW_COLUMNS = (
     "status",
@@ -92,6 +92,25 @@ class Payment(BaseModel):
     """A payment on an approved claim."""
 
     amount: Annotated[float, Field(gt=0)]
+
+
+class Todo(BaseModel):
+    """One item on the agent's to-do list for a run."""
+
+    content: Annotated[str, Field(min_length=1)]
+    status: Literal["to_do", "in_progress", "done", "left_for_handler"]
+
+
+class TodoList(BaseModel):
+    """The agent's whole to-do list for a run."""
+
+    todos: list[Todo]
+
+
+class Summary(BaseModel):
+    """The agent's summary of a run for the handlers."""
+
+    summary: Annotated[str, Field(min_length=1)]
 
 
 class SignOff(BaseModel):
@@ -258,8 +277,11 @@ def read_section(document: Document, section: int) -> dict[str, Any]:
 
 @app.get("/api/instructions", operation_id="get_instructions")
 def get_instructions() -> dict[str, str]:
-    """Get the instructions the agent works from."""
-    return {"text": INSTRUCTIONS.read_text(encoding="utf-8")}
+    """Get the agent's instructions for running the queue and for working a claim."""
+    return {
+        agent: (INSTRUCTIONS / f"{agent}.md").read_text(encoding="utf-8")
+        for agent in ("queue", "claim")
+    }
 
 
 @app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
@@ -399,3 +421,64 @@ def release_claim(claim_id: str) -> dict[str, Any]:
         if not cursor.rowcount:
             raise refusal(db, claim_id, "be released")
         return find_claim(db, claim_id)
+
+
+def run_from(row: Row) -> dict[str, Any]:
+    """Describe a run with its to-do list."""
+    return {**dict(row), "todos": json.loads(row["todos"])}
+
+
+def find_run(db: Connection, run_id: int) -> dict[str, Any]:
+    """Return a run, or 404 if there's no such run."""
+    row = db.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+    if row is None:
+        raise HTTPException(404, f"There is no run {run_id}.")
+    return run_from(row)
+
+
+def unfinished_run(db: Connection, run_id: int, rowcount: int) -> dict[str, Any]:
+    """Return a run just changed, or explain that it had already finished."""
+    run = find_run(db, run_id)
+    if not rowcount:
+        raise HTTPException(409, f"Run {run_id} has finished.")
+    return run
+
+
+@app.post("/api/runs", operation_id="start_run")
+def start_run() -> dict[str, Any]:
+    """Start a run of the agent on the queue, with an empty to-do list."""
+    with transaction() as db:
+        cursor = db.execute("INSERT INTO runs (started_at) VALUES (?)", (now(),))
+        return find_run(db, cursor.lastrowid or 0)
+
+
+@app.put("/api/runs/{run_id}/todos", operation_id="update_todos")
+def update_todos(run_id: int, todo_list: TodoList) -> dict[str, Any]:
+    """Replace the agent's to-do list for a run that hasn't finished."""
+    todos = json.dumps([todo.model_dump() for todo in todo_list.todos])
+    with transaction() as db:
+        cursor = db.execute(
+            "UPDATE runs SET todos = ? WHERE run_id = ? AND finished_at IS NULL",
+            (todos, run_id),
+        )
+        return unfinished_run(db, run_id, cursor.rowcount)
+
+
+@app.post("/api/runs/{run_id}/finish", operation_id="finish_run")
+def finish_run(run_id: int, summary: Summary) -> dict[str, Any]:
+    """Finish a run with the agent's summary for the handlers."""
+    with transaction() as db:
+        cursor = db.execute(
+            "UPDATE runs SET summary = ?, finished_at = ?"
+            " WHERE run_id = ? AND finished_at IS NULL",
+            (summary.summary, now(), run_id),
+        )
+        return unfinished_run(db, run_id, cursor.rowcount)
+
+
+@app.get("/api/runs/latest", operation_id="get_latest_run")
+def get_latest_run() -> dict[str, Any] | None:
+    """Get the most recent run, or nothing before the first."""
+    with transaction() as db:
+        row = db.execute("SELECT * FROM runs ORDER BY run_id DESC LIMIT 1").fetchone()
+    return None if row is None else run_from(row)

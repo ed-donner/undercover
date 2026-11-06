@@ -8,14 +8,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("shows the agent's instructions, read only", async () => {
+it("shows both sets of the agent's instructions, read only", async () => {
   stubApi({
-    "GET /api/instructions": { text: "You are the UnderCover Agent." },
+    "GET /api/instructions": {
+      queue: "You run the claims queue.",
+      claim: "You decide one claim.",
+    },
   });
   render(<InstructionsPage />);
+  const queue = await screen.findByRole("region", {
+    name: "Running the queue",
+  });
+  expect(queue.textContent).toContain("You run the claims queue.");
   expect(
-    await screen.findByText("You are the UnderCover Agent."),
-  ).toBeDefined();
+    screen.getByRole("region", { name: "Working a claim" }).textContent,
+  ).toContain("You decide one claim.");
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByRole("button")).toBeNull();
 });

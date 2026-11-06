@@ -41,7 +41,10 @@ it("says when a page doesn't exist, and goes back to the queue", async () => {
 it("opens a claim and the agent's instructions", async () => {
   stubApi({
     ...claimRoutes(claim()),
-    "GET /api/instructions": { text: "You are the UnderCover Agent." },
+    "GET /api/instructions": {
+      queue: "You run the claims queue.",
+      claim: "You are the UnderCover Agent.",
+    },
   });
   render(<App />);
   go("#/claims/CLM-1001");

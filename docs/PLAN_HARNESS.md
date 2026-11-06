@@ -117,21 +117,21 @@ Builds the claim agent's side of the harness. The backend adds `attempts`, the `
 
 Builds runs in the backend (`start_run`, `update_todos`, `finish_run` and `get_latest_run`) and `agent/queue_agent.py`. The queue agent has three tools, `list_waiting_claims`, `write_todos` and `work_claim`, with its own retry and call-limit middleware and the finish check for missed claims. `run(cap, claim_ids)` starts a run, works it and records the summary. If the queue agent itself fails, the run is finished with "The run stopped: ..." and the error goes on to the command line. No claim is left in progress, because the queue agent can only fail between claims. The instructions split into `backend/instructions/queue.md` and `claim.md`, and the dashboard's instructions page shows both. The command line becomes `uv run -m agent [--cap N] [claim ids]`. It prints each claim's line as it comes, then the summary.
 
-- [ ] Through the API: `GET /api/runs/latest` is `null` on a fresh database. `POST /api/runs` returns run 1 with an empty to-do list. `PUT /api/runs/1/todos` replaces the list, and a status other than the four returns `422`. Finishing records the summary, and after that, updating the to-do list or finishing again returns `409`. `GET /api/runs/latest` returns the newest run.
-- [ ] `GET /api/instructions` returns `queue` and `claim`, from the two files.
-- [ ] The cap: a stub run with a cap of 2 that tries to work three claims gets a refusal for the third, which stays waiting, and exactly two claims have left `waiting`.
-- [ ] The to-do list: a stub run's `write_todos` calls are saved to the run, and `GET /api/runs/latest` returns the last list with its statuses.
-- [ ] A failed claim doesn't stop the run: with the claim agent stubbed to fail on CLM-1002, the run goes on to decide CLM-1003, and CLM-1002 is `waiting` with `attempts` 1.
-- [ ] A failed claim is tried again: the same run works CLM-1002 a second time and decides it, and with a cap of 2 the second try isn't refused.
-- [ ] A claim that fails twice is reported to the queue agent as left for a handler, its status is `left_for_handler`, and the run finishes normally.
-- [ ] The check for missed claims: a stub that finishes after one of the two claims within its cap is sent back with the missed claim's id, works it and finishes. A stub that keeps finishing early is reminded twice, and then the run ends. A run that has used its cap finishes with the other claims still waiting and gets no reminder.
-- [ ] A named run: with `CLM-1004` named, the queue agent can work CLM-1004 and nothing else, and `work_claim` on any other claim is refused.
-- [ ] The summary is saved by `finish_run` and printed last. A queue agent whose every model call fails leaves the run finished with "The run stopped" and no claim in progress.
-- [ ] `list_waiting_claims` gives the queue agent no customer names, and `get_customer` still gives the claim agent no personal details.
-- [ ] Outside its tests, `agent/` opens no files and imports nothing from `backend/`: `grep -rnE "open\(|from backend|import backend" agent --include='*.py'` finds matches only in `agent/tests/`.
-- [ ] Vitest: the instructions page shows the instructions for running the queue and for working a claim, with no way to change them.
-- [ ] `docs/SPEC.md` describes one run for the whole queue, the cap, the to-do list and the summary. `docs/TECH_STACK.md` describes the two agents and their entry points.
-- [ ] `npm run check` passes.
+- [x] Through the API: `GET /api/runs/latest` is `null` on a fresh database. `POST /api/runs` returns run 1 with an empty to-do list. `PUT /api/runs/1/todos` replaces the list, and a status other than the four returns `422`. Finishing records the summary, and after that, updating the to-do list or finishing again returns `409`. `GET /api/runs/latest` returns the newest run.
+- [x] `GET /api/instructions` returns `queue` and `claim`, from the two files.
+- [x] The cap: a stub run with a cap of 2 that tries to work three claims gets a refusal for the third, which stays waiting, and exactly two claims have left `waiting`.
+- [x] The to-do list: a stub run's `write_todos` calls are saved to the run, and `GET /api/runs/latest` returns the last list with its statuses.
+- [x] A failed claim doesn't stop the run: with the claim agent stubbed to fail on CLM-1002, the run goes on to decide CLM-1003, and CLM-1002 is `waiting` with `attempts` 1.
+- [x] A failed claim is tried again: the same run works CLM-1002 a second time and decides it, and with a cap of 2 the second try isn't refused.
+- [x] A claim that fails twice is reported to the queue agent as left for a handler, its status is `left_for_handler`, and the run finishes normally.
+- [x] The check for missed claims: a stub that finishes after one of the two claims within its cap is sent back with the missed claim's id, works it and finishes. A stub that keeps finishing early is reminded twice, and then the run ends. A run that has used its cap finishes with the other claims still waiting and gets no reminder.
+- [x] A named run: with `CLM-1004` named, the queue agent can work CLM-1004 and nothing else, and `work_claim` on any other claim is refused.
+- [x] The summary is saved by `finish_run` and printed last. A queue agent whose every model call fails leaves the run finished with "The run stopped" and no claim in progress.
+- [x] `list_waiting_claims` gives the queue agent no customer names, and `get_customer` still gives the claim agent no personal details.
+- [x] Outside its tests, `agent/` opens no files and imports nothing from `backend/`: `grep -rnE "open\(|from backend|import backend" agent --include='*.py'` finds matches only in `agent/tests/`.
+- [x] Vitest: the instructions page shows the instructions for running the queue and for working a claim, with no way to change them.
+- [x] `docs/SPEC.md` describes one run for the whole queue, the cap, the to-do list and the summary. `docs/TECH_STACK.md` describes the two agents and their entry points.
+- [x] `npm run check` passes.
 
 ## Phase 4: The dashboard
 

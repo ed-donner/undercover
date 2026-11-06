@@ -14,7 +14,6 @@ from agent.common import money
 
 CUSTOMER_FIELDS_FOR_THE_MODEL = ("name", "customer_since", "previous_claims")
 MODEL_CALLS = 25
-LONGEST_ERROR = 200
 
 
 @tool
@@ -145,7 +144,7 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     agent = create_agent(
         llm or common.model(),
         tools=TOOLS,
-        system_prompt=instructions["text"],
+        system_prompt=instructions["claim"],
         middleware=common.harness(MODEL_CALLS, lambda: unfinished(claim_id)),
     )
     updates = agent.stream(
@@ -189,18 +188,20 @@ def outcome(decided: dict[str, Any]) -> str:
 def what_went_wrong(current: dict[str, Any], error: Exception | None) -> str:
     """Describe a failed attempt in a few words."""
     if error is not None:
-        first_line = str(error).partition("\n")[0].rstrip(".")
-        return f"{type(error).__name__}: {first_line}"[:LONGEST_ERROR]
+        return common.describe(error)
     if current["decision"] is None:
         return "the agent stopped without recording a decision"
     return f"the agent approved {money(current['payout'])} but didn't pay it"
 
 
-def work(claim_id: str, llm: BaseChatModel | None = None) -> str:
-    """Start a claim, make one attempt at it in a fresh context, and report a line."""
+def start(claim_id: str) -> str | None:
+    """Start work on a waiting claim, or say why it can't be started."""
     started = common.call("POST", f"/api/claims/{claim_id}/start")
-    if started.is_error:
-        return common.detail(started)
+    return common.detail(started) if started.is_error else None
+
+
+def attempt(claim_id: str, llm: BaseChatModel | None = None) -> str:
+    """Make one attempt at a started claim in a fresh context, and report a line."""
     thread_id = str(uuid.uuid4())
     error = None
     try:
