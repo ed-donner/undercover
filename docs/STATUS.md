@@ -1,6 +1,6 @@
 # Status
 
-The Shoppie pilot is in progress:
+The Shoppie pilot is implemented:
 
 - `backend/`: health, SQLite seed and repository, request list/detail, policy context, read-only instructions, agent-run/progress APIs, and support review API
 - `agent/`: Shoppie Agent with request-bound context/progress tools, structured recommendations, and safety overrides for ambiguous cancellation and food-safety cases

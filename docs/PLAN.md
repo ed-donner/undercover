@@ -58,7 +58,7 @@ Apply the sample policies to the seeded request types and edge cases. Keep custo
 
 Connect the queue, backend, agent, and dashboard; refine loading and error states; and document the data and local run instructions. Confirm the synthetic policies are clearly treated as sample business rules and amounts/times display as INR/IST. Update `docs/STATUS.md` when the pilot is complete.
 
-- [ ] `npm run check` passes Python formatting/lint/type checks and tests, TypeScript formatting/lint/type checks and tests, and Playwright end-to-end tests.
-- [ ] The browser workflow covers the queue, request detail, progress timeline, recommendation, and read-only instructions at desktop and mobile widths.
-- [ ] A final API check confirms the queue contains eight seeded requests and no reference decisions are available through runtime routes.
-- [ ] `git diff --check` passes, and `docs/STATUS.md` describes the implemented Shoppie pilot and its run command.
+- [x] `npm run check` passes Python formatting/lint/type checks and tests, TypeScript formatting/lint/type checks and tests, and Playwright end-to-end tests.
+- [x] The browser workflow covers the queue, request detail, progress timeline, recommendation, and read-only instructions at desktop and mobile widths.
+- [x] A final API check confirms the queue contains eight seeded requests and no reference decisions are available through runtime routes.
+- [x] `git diff --check` passes, and `docs/STATUS.md` describes the implemented Shoppie pilot and its run command.

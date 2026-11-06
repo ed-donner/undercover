@@ -22,6 +22,18 @@ def test_seed_is_idempotent(tmp_path):
     assert len(store.list_requests()) == 8
 
 
+def test_final_runtime_queue_has_no_reference_decision_route(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "runtime.sqlite3"))
+    with TestClient(app) as client:
+        queue = client.get("/api/requests")
+        references = client.get("/api/evals/support_decisions.json")
+
+    assert len(queue.json()) == 8
+    assert references.status_code == 404
+    api_routes = [route for route in app.routes if isinstance(route, APIRoute)]
+    assert all("eval" not in route.path.casefold() for route in api_routes)
+
+
 def test_request_queue_and_safe_detail(tmp_path, monkeypatch):
     monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "queue.sqlite3"))
     with TestClient(app) as client:
