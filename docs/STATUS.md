@@ -3,7 +3,7 @@
 The Shoppie pilot is in progress:
 
 - `backend/`: health, SQLite seed and repository, request list/detail, policy context, read-only instructions, agent-run/progress APIs, and support review API
-- `agent/`: Shoppie Agent with request-bound context/progress tools and structured recommendations
+- `agent/`: Shoppie Agent with request-bound context/progress tools, structured recommendations, and safety overrides for ambiguous cancellation and food-safety cases
 - `dashboard/`: responsive support queue and request detail screens, agent progress/recommendations, support review, and read-only instructions
 - `data/`: synthetic Shoppie customer, order, and support request records
 - `docs/`: Shoppie's sample shopping, cancellation, and returns policies

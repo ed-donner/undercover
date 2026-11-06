@@ -48,11 +48,11 @@ Replace the health placeholder with the handler dashboard. Show all requests, th
 
 Apply the sample policies to the seeded request types and edge cases. Keep customer confirmation, policy exceptions, food-safety concerns, and insufficient information with a support agent. Recommendations must never imply that a real order or payment action was completed. Keep the agent's context restricted to backend operations and the minimum customer/order data needed.
 
-- [ ] Tests verify a request that needs clarification is held for agent review and that a food-safety report is flagged for priority human review.
-- [ ] Tests verify no API operation or dashboard action executes a cancellation, return, replacement, refund, or customer message.
-- [ ] Tests verify the agent does not claim an action succeeded without a confirming system result and does not guess when request or policy data is missing.
-- [ ] API and agent tests verify customer/order context is limited to the fields needed for the request.
-- [ ] `uv run pytest -q` passes with the configured 80% coverage threshold.
+- [x] Tests verify a request that needs clarification is held for agent review and that a food-safety report is flagged for priority human review.
+- [x] Tests verify no API operation or dashboard action executes a cancellation, return, replacement, refund, or customer message.
+- [x] Tests verify the agent does not claim an action succeeded without a confirming system result and does not guess when request or policy data is missing.
+- [x] API and agent tests verify customer/order context is limited to the fields needed for the request.
+- [x] `uv run pytest -q` passes with the configured 80% coverage threshold.
 
 ## Phase 6: Integrate, verify, and document the pilot
 

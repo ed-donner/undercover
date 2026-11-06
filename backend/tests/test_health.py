@@ -52,6 +52,12 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         assert route.endpoint.__doc__
         assert "\n" not in route.endpoint.__doc__
         assert route.dependant.query_params == []
+    post_paths = {route.path for route in routes if "POST" in (route.methods or set())}
+    assert post_paths == {
+        "/api/requests/{request_id}/steps",
+        "/api/requests/{request_id}/run",
+        "/api/requests/{request_id}/review",
+    }
 
 
 def test_policy_context_and_read_only_instructions(tmp_path, monkeypatch):
@@ -68,6 +74,11 @@ def test_policy_context_and_read_only_instructions(tmp_path, monkeypatch):
     assert "required_action" not in cancellation["request"]
     assert "email" not in cancellation["customer"]
     assert "phone" not in cancellation["customer"]
+    assert set(cancellation["customer"]) == {"customer_id", "name"}
+    assert "shipping_address_id" not in cancellation["order"]
+    assert "phone" not in cancellation["order"]
+    assert "required_action" not in cancellation
+    assert "policy_checks" not in cancellation
     assert "Return" in returns["policy"]["name"]
     assert "Returns, Replacements, and Refunds" in returns["policy"]["content"]
     assert missing.status_code == 404

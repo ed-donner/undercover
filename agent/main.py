@@ -10,9 +10,11 @@ from langchain.agents.structured_output import ToolStrategy
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, SecretStr
+from pydantic import SecretStr
 
 from agent.instructions import SYSTEM_PROMPT
+from agent.models import Recommendation
+from agent.safety import apply_context_overrides, contains_unsupported_execution_claim
 
 load_dotenv(override=True)
 
@@ -20,16 +22,6 @@ BACKEND_URL = "http://localhost:8000"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-6-luna"
 ProgressStage = Literal["reading_request", "checking_policy"]
-
-
-class Recommendation(BaseModel):
-    """Structured recommendation for a support agent to review."""
-
-    outcome: Literal["approve", "decline", "request_information"]
-    rationale: str
-    policy_citations: list[str]
-    next_action: str
-    priority_human_review: bool
 
 
 def backend() -> httpx.Client:
@@ -52,6 +44,7 @@ def run(
     request_id: str, thread_id: str, llm: BaseChatModel | None = None
 ) -> dict[str, object]:
     """Run the agent on one support request and return its recommendation."""
+    request_context: dict[str, object] = {}
 
     @tool
     def get_request_context() -> str:
@@ -59,6 +52,7 @@ def run(
         with backend() as client:
             response = client.get(f"/api/requests/{request_id}/context")
         response.raise_for_status()
+        request_context.update(response.json())
         return response.text
 
     @tool
@@ -86,8 +80,11 @@ def run(
         config={"configurable": {"thread_id": thread_id}},
     )
     structured = result["structured_response"]
-    return (
-        structured.model_dump()
-        if isinstance(structured, Recommendation)
-        else structured
-    )
+    if not isinstance(structured, Recommendation):
+        raise TypeError("The Shoppie Agent returned an invalid recommendation")
+    if not request_context:
+        raise ValueError("The agent did not retrieve request context")
+    if contains_unsupported_execution_claim(structured):
+        raise ValueError("The recommendation claims an unconfirmed customer action")
+    structured = apply_context_overrides(request_context, structured)
+    return structured.model_dump()
