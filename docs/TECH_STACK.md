@@ -6,4 +6,4 @@
 - `e2e/`: Playwright tests.
 - `data/`: Shoppie's synthetic customer, order, and support request data. The agent never sees `data/evals/`, which holds reference decisions for evaluation.
 
-Python 3.12 with uv, all in the root `pyproject.toml`. Node 26. The OpenRouter key is `OPENROUTER_API_KEY` in `.env`.
+Python 3.12 with uv, all in the root `pyproject.toml`. Node.js 24.15.0, pinned in `.nvmrc`. The OpenRouter key is `OPENROUTER_API_KEY` in `.env`.

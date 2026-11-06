@@ -12,9 +12,7 @@ The setup steps from the course, day by day. On a PC, the terminal in VS Code is
    - PC: `winget install --id Git.Git -e --source winget`
    - Mac: `git --version` offers to install the Command Line Tools, which include Git. Click **Install**.
 
-3. **Node**: check with `node --version`. You need v24 or later. If not:
-   - PC: `winget install OpenJS.NodeJS.LTS`
-   - Mac: download the LTS installer from https://nodejs.org and run it
+3. **Node**: use Node.js 24.15.0. With nvm, run `nvm install` and `nvm use` in the repository; `.nvmrc` selects the version. Otherwise, download version 24.15.0 from the Node.js release archive and install the Windows or macOS package for your computer.
 
 4. **uv**:
    - PC: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
