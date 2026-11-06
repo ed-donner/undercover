@@ -8,10 +8,12 @@ from pathlib import Path
 from sqlite3 import Connection, Row
 from typing import Annotated, Any, Literal, Self
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
+from backend import documents
 from backend.db import DATA, path, transaction
+from backend.documents import Document
 from backend.seed import seed
 
 INSTRUCTIONS = Path(__file__).parent / "instructions.md"
@@ -221,6 +223,30 @@ def get_policy_wording() -> dict[str, str]:
         "version": reference("company.json")["policy_wording_version"],
         "text": (DATA / "policy_wording.md").read_text(encoding="utf-8"),
     }
+
+
+@app.get("/api/documents/sections", operation_id="list_sections")
+def list_sections() -> list[dict[str, Any]]:
+    """List the sections of the policy wording and the claims manual."""
+    return documents.contents()
+
+
+@app.get("/api/documents/search", operation_id="search_documents")
+def search_documents(
+    query: Annotated[str, Query(min_length=1)],
+) -> list[dict[str, Any]]:
+    """Find the sections of the policy wording and the claims manual on a query."""
+    return documents.search(query)
+
+
+@app.get("/api/documents/{document}/sections/{section}", operation_id="read_section")
+def read_section(document: Document, section: int) -> dict[str, Any]:
+    """Read one section of the policy wording or the claims manual in full."""
+    found = documents.find(document, section)
+    if found is None:
+        name = document.replace("_", " ")
+        raise HTTPException(404, f"There is no section {section} in the {name}.")
+    return found
 
 
 @app.get("/api/instructions", operation_id="get_instructions")

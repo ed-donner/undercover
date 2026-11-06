@@ -59,7 +59,7 @@ def test_an_approval_within_the_limit_is_decided_paid_and_recorded_step_by_step(
             ("get_claim", {"claim_id": "CLM-1001"}),
             ("get_policy", {"policy_id": "POL-2001"}),
             ("get_customer", {"customer_id": "CUS-3001"}),
-            ("get_policy_wording", {}),
+            ("read_section", {"document": "policy_wording", "section": 3}),
         ),
         calls(("record_decision", decision("CLM-1001", "approve", 420))),
         calls(("pay_claim", {"claim_id": "CLM-1001", "amount": 420})),
@@ -74,7 +74,7 @@ def test_an_approval_within_the_limit_is_decided_paid_and_recorded_step_by_step(
     assert decided["paid_amount"] == 420.0
     steps = api.get("/api/claims/CLM-1001/steps").json()
     kinds_and_names = [(step["kind"], step["name"]) for step in steps]
-    reads = ["get_claim", "get_policy", "get_customer", "get_policy_wording"]
+    reads = ["get_claim", "get_policy", "get_customer", "read_section"]
     assert kinds_and_names[:4] == [("tool_call", name) for name in reads]
     assert sorted(kinds_and_names[4:8]) == sorted(
         ("tool_result", name) for name in reads
@@ -133,6 +133,46 @@ def test_the_instructions_come_from_the_backend(monkeypatch):
     monkeypatch.setattr(main, "create_agent", create_agent)
     main.run("CLM-1001", "thread-1", stub(AIMessage(content="Done.")))
     assert prompts == [INSTRUCTIONS.read_text(encoding="utf-8")]
+
+
+def test_the_agent_looks_up_sections_and_its_steps_show_what_it_read():
+    model = stub(
+        calls(("search_documents", {"query": "wild animals"})),
+        calls(("read_section", {"document": "claims_manual", "section": 7})),
+        AIMessage(content="Read the note on wild animals."),
+    )
+    main.run("CLM-1001", "thread-1", model)
+    steps = api.get("/api/claims/CLM-1001/steps").json()
+    assert [(step["kind"], step["name"]) for step in steps] == [
+        ("tool_call", "search_documents"),
+        ("tool_result", "search_documents"),
+        ("tool_call", "read_section"),
+        ("tool_result", "read_section"),
+        ("reply", "agent"),
+    ]
+    assert json.loads(steps[1]["content"])[0]["title"] == "Interpretation notes"
+    assert json.loads(steps[2]["content"]) == {
+        "document": "claims_manual",
+        "section": 7,
+    }
+    assert "**Wild animals.**" in json.loads(steps[3]["content"])["text"]
+
+
+def test_the_agent_looks_things_up_instead_of_reading_whole_documents():
+    assert [tool.name for tool in main.TOOLS] == [
+        "get_claim",
+        "get_policy",
+        "get_customer",
+        "list_sections",
+        "search_documents",
+        "read_section",
+        "record_decision",
+        "pay_claim",
+    ]
+    contents = json.loads(main.list_sections.invoke({}))
+    assert {"document": "claims_manual", "section": 9, "title": "Repeat claims"} in (
+        contents
+    )
 
 
 def test_the_model_sees_no_personal_details():

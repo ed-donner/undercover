@@ -26,10 +26,15 @@ def backend() -> httpx.Client:
     return httpx.Client(base_url=BACKEND_URL, timeout=30)
 
 
-def call(method: str, url: str, body: dict[str, Any] | None = None) -> httpx.Response:
+def call(
+    method: str,
+    url: str,
+    body: dict[str, Any] | None = None,
+    params: dict[str, str] | None = None,
+) -> httpx.Response:
     """Call the backend and return its response, refusals included."""
     with backend() as client:
-        return client.request(method, url, json=body)
+        return client.request(method, url, json=body, params=params)
 
 
 @tool
@@ -55,9 +60,23 @@ def get_customer(customer_id: str) -> str:
 
 
 @tool
-def get_policy_wording() -> str:
-    """Read the policy wording, which every decision follows."""
-    return call("GET", "/api/policy-wording").text
+def list_sections() -> str:
+    """List the sections of the policy wording and the claims manual."""
+    return call("GET", "/api/documents/sections").text
+
+
+@tool
+def search_documents(query: str) -> str:
+    """Search the policy wording and the claims manual for the sections on a topic."""
+    return call("GET", "/api/documents/search", params={"query": query}).text
+
+
+@tool
+def read_section(
+    document: Literal["policy_wording", "claims_manual"], section: int
+) -> str:
+    """Read one numbered section of the policy wording or the claims manual."""
+    return call("GET", f"/api/documents/{document}/sections/{section}").text
 
 
 @tool
@@ -88,7 +107,9 @@ TOOLS = [
     get_claim,
     get_policy,
     get_customer,
-    get_policy_wording,
+    list_sections,
+    search_documents,
+    read_section,
     record_decision,
     pay_claim,
 ]
