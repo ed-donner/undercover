@@ -86,12 +86,12 @@ The backend's `start_run` runs the queue agent in the background. `uv run -m age
 
 ## Phase 5: The dashboard
 
-On the queue page, Initiate processing gets a number input for the cap, 1 to 8 with 5 to start with, and calls `POST /api/runs`. A to-do panel beside the queue polls `GET /api/runs/current` while a run is going. It shows each item with its status (to do, in progress, done, left for support), using the brand's three-state colors, then the run summary when the run finishes. The request page shows the policy sections the agent read, from its `read_section` steps. The instructions view shows the queue agent's and the request agent's instructions under separate headings, read only. Requests left for support show a "Left for support" badge in the queue.
+On the queue page, Initiate processing gets a number input for the cap, from 1 to the number of requests in the queue, with 5 to start with, and calls `POST /api/runs`. A to-do panel beside the queue polls `GET /api/runs/current` while a run is going. It shows each item with its status (to do, in progress, done, left for support), using the brand's three-state colors, then the run summary when the run finishes. The request page shows the policy sections the agent read, from its `read_section` steps. The instructions view shows the queue agent's and the request agent's instructions under separate headings, read only. A request waiting for review with no recommendation (one left for support) shows a "Left for support" badge in the queue.
 
-- [ ] Vitest tests cover the cap input, starting a run, the to-do panel in each item state and the summary, a 409 when a run is already going, the sections-read list, and both instruction sets.
-- [ ] Playwright, with the queue agent stubbed: start a capped run, see the to-do list fill in and get ticked off, and open a request to see the sections it read. Checked at desktop and mobile widths.
-- [ ] Playwright confirms the instructions view has no edit control.
-- [ ] `npm run check:ts` and `npm run e2e` pass.
+- [x] Vitest tests cover the cap input, starting a run, the to-do panel in each item state and the summary, a 409 when a run is already going, the sections-read list, and both instruction sets.
+- [x] Playwright, with the queue agent stubbed: start a capped run, see the to-do list fill in and get ticked off, and open a request to see the sections it read. Checked at desktop and mobile widths.
+- [x] Playwright confirms the instructions view has no edit control.
+- [x] `npm run check:ts` and `npm run e2e` pass.
 
 ## Phase 6: Live check and documents
 

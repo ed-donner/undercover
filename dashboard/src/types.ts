@@ -9,6 +9,7 @@ export interface QueueItem {
   type: string;
   created_at: string;
   status: QueueStatus;
+  attempts: number;
   recommendation: Recommendation | null;
   review: Review | null;
 }
@@ -59,7 +60,31 @@ export interface RequestDetail {
     total: number;
   };
   status: QueueStatus;
+  attempts: number;
   recommendation: Recommendation | null;
   review: Review | null;
   steps: { stage: string; message: string; created_at: string }[];
+}
+
+export type TodoStatus = "to_do" | "in_progress" | "done" | "left_for_support";
+
+export interface Todo {
+  request_id: string;
+  title: string;
+  status: TodoStatus;
+}
+
+export interface Run {
+  run_id: string;
+  cap: number;
+  status: "running" | "finished" | "failed";
+  started_at: string;
+  finished_at: string | null;
+  summary: string | null;
+  todos: Todo[];
+}
+
+export interface Instructions {
+  queue: string;
+  request: string;
 }

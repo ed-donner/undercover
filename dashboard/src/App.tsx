@@ -8,11 +8,19 @@ import {
   RecommendationCard,
   RequestOverview,
   ReviewRecord,
+  RunPanel,
 } from "./components";
-import type { Outcome, QueueItem, RequestDetail } from "./types";
+import type {
+  Instructions,
+  Outcome,
+  QueueItem,
+  RequestDetail,
+  Run,
+} from "./types";
 import "./app.css";
 
 type QueueState = "loading" | "ready" | "error";
+const DEFAULT_CAP = 5;
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
@@ -25,12 +33,13 @@ export function App() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<RequestDetail | null>(null);
-  const [instructions, setInstructions] = useState<string | null>(null);
+  const [instructions, setInstructions] = useState<Instructions | null>(null);
+  const [run, setRun] = useState<Run | null>(null);
+  const [cap, setCap] = useState(DEFAULT_CAP);
   const [queueState, setQueueState] = useState<QueueState>("loading");
   const [detailError, setDetailError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
 
   const loadQueue = useCallback(async () => {
     setQueueState("loading");
@@ -46,12 +55,18 @@ export function App() {
 
   const loadInstructions = useCallback(async () => {
     try {
-      const result = await getJson<{ instructions: string }>(
-        "/api/agent/instructions",
-      );
-      setInstructions(result.instructions);
+      setInstructions(await getJson<Instructions>("/api/agent/instructions"));
     } catch {
-      setInstructions("Agent instructions are unavailable.");
+      const unavailable = "Agent instructions are unavailable.";
+      setInstructions({ queue: unavailable, request: unavailable });
+    }
+  }, []);
+
+  const loadRun = useCallback(async () => {
+    try {
+      setRun(await getJson<Run | null>("/api/runs/current"));
+    } catch {
+      setRun(null);
     }
   }, []);
 
@@ -70,11 +85,12 @@ export function App() {
     const timer = window.setTimeout(() => {
       void loadQueue();
       void loadInstructions();
+      void loadRun();
     }, 0);
     return () => {
       window.clearTimeout(timer);
     };
-  }, [loadInstructions, loadQueue]);
+  }, [loadInstructions, loadQueue, loadRun]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -86,22 +102,21 @@ export function App() {
     };
   }, [loadDetail, selectedId]);
 
-  const active = queue.some(
-    (item) =>
-      item.status === "in_progress" ||
-      (processing && item.status === "waiting"),
-  );
+  const active =
+    run?.status === "running" ||
+    queue.some((item) => item.status === "in_progress");
 
   useEffect(() => {
     if (!active) return;
     const timer = window.setInterval(() => {
       void loadQueue();
+      void loadRun();
       if (selectedId) void loadDetail(selectedId);
     }, 1500);
     return () => {
       window.clearInterval(timer);
     };
-  }, [active, loadDetail, loadQueue, selectedId]);
+  }, [active, loadDetail, loadQueue, loadRun, selectedId]);
 
   async function post(url: string, done: string, body?: object) {
     setBusy(true);
@@ -121,6 +136,7 @@ export function App() {
       setMessage(done);
       await Promise.all([
         loadQueue(),
+        loadRun(),
         selectedId ? loadDetail(selectedId) : Promise.resolve(),
       ]);
     } catch (error) {
@@ -137,9 +153,15 @@ export function App() {
     setMessage(null);
   }
 
+  const maxCap = Math.max(queue.length, 1);
+  const runCap = Math.min(cap, maxCap);
+
   function initiateProcessing() {
-    setProcessing(true);
-    void post("/api/requests/run", "Processing started for every request.");
+    void post(
+      "/api/runs",
+      `Processing started for up to ${String(runCap)} waiting requests.`,
+      { cap: runCap },
+    );
   }
 
   function recordReview(outcome: Outcome, notes: string) {
@@ -160,6 +182,9 @@ export function App() {
     <main className="shell">
       <Header
         busy={busy || active}
+        cap={runCap}
+        maxCap={maxCap}
+        onCapChange={setCap}
         onInitiate={initiateProcessing}
         onRefresh={refreshQueue}
       />
@@ -168,6 +193,7 @@ export function App() {
           {message}
         </div>
       )}
+      <RunPanel run={run} />
       <div className="workspace">
         <QueuePanel
           items={queue}
@@ -218,11 +244,21 @@ export function App() {
 
 interface HeaderProps {
   busy: boolean;
+  cap: number;
+  maxCap: number;
+  onCapChange: (cap: number) => void;
   onInitiate: () => void;
   onRefresh: () => void;
 }
 
-function Header({ busy, onInitiate, onRefresh }: Readonly<HeaderProps>) {
+function Header({
+  busy,
+  cap,
+  maxCap,
+  onCapChange,
+  onInitiate,
+  onRefresh,
+}: Readonly<HeaderProps>) {
   return (
     <>
       <header className="topbar">
@@ -253,6 +289,23 @@ function Header({ busy, onInitiate, onRefresh }: Readonly<HeaderProps>) {
           <button className="secondary-button" onClick={onRefresh}>
             <span aria-hidden="true">↻</span> Refresh queue
           </button>
+          <label className="cap-input">
+            Requests to work
+            <input
+              type="number"
+              min={1}
+              max={maxCap}
+              value={cap}
+              onChange={(event) => {
+                onCapChange(
+                  Math.min(
+                    maxCap,
+                    Math.max(1, Number(event.target.value) || 1),
+                  ),
+                );
+              }}
+            />
+          </label>
           <button
             className="primary-button"
             disabled={busy}

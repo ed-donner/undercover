@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { SyntheticEvent } from "react";
 import type {
+  Instructions,
   Outcome,
   QueueItem,
   QueueStatus,
   Recommendation,
   RequestDetail,
+  Run,
+  TodoStatus,
 } from "./types";
 import { formatDate, formatMoney, humanize } from "./format";
 
@@ -25,13 +28,38 @@ const decisionLabels: Record<Outcome, string> = {
   decline: "Decline",
   request_information: "Needs info",
 };
+const todoLabels: Record<TodoStatus, string> = {
+  to_do: "To do",
+  in_progress: "In progress",
+  done: "Done",
+  left_for_support: "Left for support",
+};
+const runLabels: Record<Run["status"], string> = {
+  running: "Running",
+  finished: "Finished",
+  failed: "Stopped",
+};
 const reviewedLabels: Record<Outcome, string> = {
   approve: "Approved",
   decline: "Declined",
   request_information: "Info requested",
 };
 
+function leftForSupport(item: {
+  status: QueueStatus;
+  recommendation: Recommendation | null;
+}) {
+  return item.status === "waiting_for_agent_review" && !item.recommendation;
+}
+
 export function QueueBadge({ item }: Readonly<{ item: QueueItem }>) {
+  if (leftForSupport(item))
+    return (
+      <span className="status-badge todo-left_for_support">
+        <i />
+        Left for support
+      </span>
+    );
   const decision =
     item.status === "decided" ? item.review : item.recommendation;
   if (!decision || item.status === "in_progress")
@@ -270,6 +298,9 @@ export function RecommendationCard({
 }
 
 export function ProgressCard({ detail }: Readonly<{ detail: RequestDetail }>) {
+  const sectionsRead = detail.steps
+    .filter((step) => step.stage === "read_section")
+    .map((step) => step.message.replace(/^Read /, "").replace(/\.$/, ""));
   return (
     <article className="panel timeline-panel">
       <div className="panel-heading">
@@ -283,6 +314,16 @@ export function ProgressCard({ detail }: Readonly<{ detail: RequestDetail }>) {
           </span>
         )}
       </div>
+      {sectionsRead.length > 0 && (
+        <div className="citation-block sections-read">
+          <small>POLICY SECTIONS READ</small>
+          <ul>
+            {[...new Set(sectionsRead)].map((section) => (
+              <li key={section}>{section}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {detail.steps.length === 0 ? (
         <p className="muted">No agent activity yet.</p>
       ) : (
@@ -290,7 +331,7 @@ export function ProgressCard({ detail }: Readonly<{ detail: RequestDetail }>) {
           {detail.steps.map((step, index) => (
             <li
               className="timeline-step"
-              key={`${step.stage}-${step.created_at}`}
+              key={`${String(index)}-${step.created_at}`}
             >
               <span
                 className={`timeline-dot ${index === detail.steps.length - 1 && detail.status === "in_progress" ? "active" : ""}`}
@@ -383,7 +424,7 @@ function actionHeading(status: QueueStatus) {
 
 export function InstructionsPanel({
   instructions,
-}: Readonly<{ instructions: string | null }>) {
+}: Readonly<{ instructions: Instructions | null }>) {
   return (
     <details className="instructions-panel panel">
       <summary>
@@ -395,8 +436,66 @@ export function InstructionsPanel({
           Read only <span aria-hidden="true">＋</span>
         </span>
       </summary>
-      <pre>{instructions ?? "Loading instructions…"}</pre>
+      {instructions ? (
+        <>
+          <h3>Running the queue</h3>
+          <pre>{instructions.queue}</pre>
+          <h3>Working a request</h3>
+          <pre>{instructions.request}</pre>
+        </>
+      ) : (
+        <pre>Loading instructions…</pre>
+      )}
     </details>
+  );
+}
+
+export function RunPanel({ run }: Readonly<{ run: Run | null }>) {
+  if (!run) return null;
+  const done = run.todos.filter((todo) =>
+    ["done", "left_for_support"].includes(todo.status),
+  ).length;
+  return (
+    <section className="panel run-panel" aria-label="Agent run">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">
+            AGENT RUN <span className="eyebrow-dot">·</span> {run.run_id}
+          </p>
+          <h2>To-do list</h2>
+          <p>
+            {done} of {run.todos.length} worked · cap {run.cap} · started{" "}
+            {formatDate(run.started_at)} IST
+          </p>
+        </div>
+        <span className={`status-badge run-${run.status}`}>
+          <i />
+          {runLabels[run.status]}
+        </span>
+      </div>
+      {run.todos.length === 0 ? (
+        <p className="muted">The agent is planning its run.</p>
+      ) : (
+        <ol className="todo-list">
+          {run.todos.map((todo) => (
+            <li className="todo-item" key={todo.request_id}>
+              <span className="request-id">{todo.request_id}</span>
+              <span className="todo-title">{todo.title}</span>
+              <span className={`status-badge todo-${todo.status}`}>
+                <i />
+                {todoLabels[todo.status]}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {run.summary && run.status !== "running" && (
+        <div className="run-summary">
+          <small>RUN SUMMARY</small>
+          <p>{run.summary}</p>
+        </div>
+      )}
+    </section>
   );
 }
 

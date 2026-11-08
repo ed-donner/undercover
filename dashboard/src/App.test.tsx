@@ -46,6 +46,7 @@ const baseDetail = {
     total: 349,
   },
   status: "waiting",
+  attempts: 0,
   recommendation: null,
   review: null,
   steps: [],
@@ -58,11 +59,15 @@ const queue = [
     type: "cancellation",
     created_at: "2026-11-06T08:35:00+05:30",
     status: "waiting",
+    attempts: 0,
     recommendation: null,
     review: null,
   },
 ];
-const instructions = "You are the Shoppie Agent. Use provided policies.";
+const instructions = {
+  queue: "You are the Shoppie Agent, running the support queue.",
+  request: "You are the Shoppie Agent, working one support request.",
+};
 
 function urlOf(input: RequestInfo | URL) {
   if (typeof input === "string") return input;
@@ -70,12 +75,16 @@ function urlOf(input: RequestInfo | URL) {
   return input.url;
 }
 
-function installFetch(detail = baseDetail, queueData: unknown[] = queue) {
+function installFetch(
+  detail: unknown = baseDetail,
+  queueData: unknown[] = queue,
+) {
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
     const url = urlOf(input);
     let body: unknown = detail;
     if (url === "/api/requests") body = queueData;
-    if (url === "/api/agent/instructions") body = { instructions };
+    if (url === "/api/agent/instructions") body = instructions;
+    if (url === "/api/runs/current") body = null;
     return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -92,7 +101,9 @@ it("shows loading and empty queue states", async () => {
           finish = resolve;
         });
       }
-      return Promise.resolve(new Response(JSON.stringify({ instructions })));
+      if (urlOf(input) === "/api/runs/current")
+        return Promise.resolve(new Response("null"));
+      return Promise.resolve(new Response(JSON.stringify(instructions)));
     }),
   );
   render(<App />);
@@ -124,7 +135,10 @@ it("shows queue rows, selected request, order, and read-only instructions", asyn
   expect(screen.getByText("Fruit box")).toBeDefined();
   expect(screen.getAllByText("₹349.00")).toHaveLength(3);
   fireEvent.click(screen.getByText("Shoppie Agent instructions"));
-  expect(await screen.findByText(instructions)).toBeDefined();
+  expect(await screen.findByText(instructions.queue)).toBeDefined();
+  expect(screen.getByText(instructions.request)).toBeDefined();
+  expect(screen.getByText("Running the queue")).toBeDefined();
+  expect(screen.getByText("Working a request")).toBeDefined();
   const instructionPanel = screen
     .getByText("Shoppie Agent instructions")
     .closest("details");
@@ -137,7 +151,7 @@ it("shows queue rows, selected request, order, and read-only instructions", asyn
   ).toBeNull();
 });
 
-it("initiates processing for every request and shows decisions in the queue", async () => {
+it("starts a capped run and shows the to-do list and decisions", async () => {
   const recommendation = {
     outcome: "approve",
     rationale: "The order has not been dispatched.",
@@ -163,14 +177,31 @@ it("initiates processing for every request and shows decisions in the queue", as
     status: "waiting_for_agent_review",
     recommendation: { ...recommendation, outcome: "decline" },
   };
+  const finishedRun = {
+    run_id: "RUN-1",
+    cap: 2,
+    status: "finished",
+    started_at: "2026-11-06T09:00:00+05:30",
+    finished_at: "2026-11-06T09:05:00+05:30",
+    summary: "Two requests are waiting for support review.",
+    todos: [
+      {
+        request_id: "REQ-7001",
+        title: "REQ-7001 cancellation",
+        status: "done",
+      },
+      { request_id: "REQ-7002", title: "REQ-7002 return", status: "done" },
+    ],
+  };
   let started = false;
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
     const url = urlOf(input);
     let body: unknown = started ? completedDetail : baseDetail;
-    if (url === "/api/requests/run") {
+    if (url === "/api/runs") {
       started = true;
-      body = { request_ids: ["REQ-7001", "REQ-7002"] };
+      body = { run_id: "RUN-1", cap: 2, status: "running" };
     }
+    if (url === "/api/runs/current") body = started ? finishedRun : null;
     if (url === "/api/requests")
       body = started
         ? [
@@ -178,12 +209,19 @@ it("initiates processing for every request and shows decisions in the queue", as
             declined,
           ]
         : [queue[0], { ...declined, status: "waiting", recommendation: null }];
-    if (url === "/api/agent/instructions") body = { instructions };
+    if (url === "/api/agent/instructions") body = instructions;
     return Promise.resolve(new Response(JSON.stringify(body)));
   });
   vi.stubGlobal("fetch", fetchMock);
   render(<App />);
   expect(screen.queryByRole("button", { name: /Ask agent/ })).toBeNull();
+  const capInput = await screen.findByLabelText("Requests to work");
+  expect(capInput).toHaveProperty("value", "2");
+  fireEvent.change(capInput, { target: { value: "9" } });
+  expect(capInput).toHaveProperty("value", "2");
+  fireEvent.change(capInput, { target: { value: "0" } });
+  expect(capInput).toHaveProperty("value", "1");
+  fireEvent.change(capInput, { target: { value: "2" } });
   fireEvent.click(
     await screen.findByRole("button", { name: "Initiate processing" }),
   );
@@ -197,9 +235,22 @@ it("initiates processing for every request and shows decisions in the queue", as
     screen.getByText(/checked the applicable Shoppie policy/),
   ).toBeDefined();
   expect(fetchMock).toHaveBeenCalledWith(
-    "/api/requests/run",
-    expect.objectContaining({ method: "POST" }),
+    "/api/runs",
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ cap: 2 }),
+    }),
   );
+  const runPanel = screen.getByLabelText("Agent run");
+  expect(within(runPanel).getByText("REQ-7001 cancellation")).toBeDefined();
+  expect(within(runPanel).getAllByText("Done")).toHaveLength(2);
+  expect(within(runPanel).getByText("Finished")).toBeDefined();
+  expect(
+    within(runPanel).getByText("Two requests are waiting for support review."),
+  ).toBeDefined();
+  expect(
+    screen.getByText("Processing started for up to 2 waiting requests."),
+  ).toBeDefined();
 });
 
 it("shows reviewed outcomes and failed runs in the queue", async () => {
@@ -219,7 +270,7 @@ it("shows reviewed outcomes and failed runs in the queue", async () => {
   render(<App />);
   const queuePanel = await screen.findByLabelText("Support request queue");
   expect(await within(queuePanel).findByText("Info requested")).toBeDefined();
-  expect(within(queuePanel).getByText("Needs review")).toBeDefined();
+  expect(within(queuePanel).getByText("Left for support")).toBeDefined();
   expect(within(queuePanel).getByText("In progress")).toBeDefined();
   expect(screen.getByRole("button", { name: "Processing…" })).toHaveProperty(
     "disabled",
@@ -259,7 +310,9 @@ it("records a support reviewed outcome without a customer action", async () => {
         ),
       );
     if (url === "/api/agent/instructions")
-      return Promise.resolve(new Response(JSON.stringify({ instructions })));
+      return Promise.resolve(new Response(JSON.stringify(instructions)));
+    if (url === "/api/runs/current")
+      return Promise.resolve(new Response("null"));
     detailCalls += 1;
     return Promise.resolve(
       new Response(JSON.stringify(detailCalls === 1 ? reviewDetail : reviewed)),
@@ -287,4 +340,139 @@ it("records a support reviewed outcome without a customer action", async () => {
   expect(
     screen.getByText(/No customer or order action is performed here/),
   ).toBeDefined();
+});
+
+it("shows each to-do state while a run is going", async () => {
+  const run = {
+    run_id: "RUN-2",
+    cap: 4,
+    status: "running",
+    started_at: "2026-11-06T09:00:00+05:30",
+    finished_at: null,
+    summary: null,
+    todos: [
+      { request_id: "REQ-7001", title: "First", status: "to_do" },
+      { request_id: "REQ-7002", title: "Second", status: "in_progress" },
+      { request_id: "REQ-7003", title: "Third", status: "done" },
+      { request_id: "REQ-7004", title: "Fourth", status: "left_for_support" },
+    ],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = urlOf(input);
+      let body: unknown = baseDetail;
+      if (url === "/api/requests") body = queue;
+      if (url === "/api/agent/instructions") body = instructions;
+      if (url === "/api/runs/current") body = run;
+      return Promise.resolve(new Response(JSON.stringify(body)));
+    }),
+  );
+  render(<App />);
+  const runPanel = await screen.findByLabelText("Agent run");
+  for (const label of ["To do", "In progress", "Done", "Left for support"])
+    expect(within(runPanel).getByText(label)).toBeDefined();
+  expect(within(runPanel).getByText("Running")).toBeDefined();
+  expect(within(runPanel).getByText(/2 of 4 worked · cap 4/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "Processing…" })).toHaveProperty(
+    "disabled",
+    true,
+  );
+});
+
+it("shows a stopped run that is still planning nothing", async () => {
+  const run = {
+    run_id: "RUN-3",
+    cap: 1,
+    status: "failed",
+    started_at: "2026-11-06T09:00:00+05:30",
+    finished_at: "2026-11-06T09:01:00+05:30",
+    summary: "The run stopped: provider down",
+    todos: [],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = urlOf(input);
+      let body: unknown = baseDetail;
+      if (url === "/api/requests") body = queue;
+      if (url === "/api/agent/instructions") body = instructions;
+      if (url === "/api/runs/current") body = run;
+      return Promise.resolve(new Response(JSON.stringify(body)));
+    }),
+  );
+  render(<App />);
+  const runPanel = await screen.findByLabelText("Agent run");
+  expect(within(runPanel).getByText("Stopped")).toBeDefined();
+  expect(
+    within(runPanel).getByText("The agent is planning its run."),
+  ).toBeDefined();
+  expect(
+    within(runPanel).getByText("The run stopped: provider down"),
+  ).toBeDefined();
+});
+
+it("says so when a run is already going", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL) => {
+      const url = urlOf(input);
+      if (url === "/api/runs")
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ detail: "A run is already in progress" }),
+            { status: 409 },
+          ),
+        );
+      let body: unknown = baseDetail;
+      if (url === "/api/requests") body = queue;
+      if (url === "/api/agent/instructions") body = instructions;
+      if (url === "/api/runs/current") body = null;
+      return Promise.resolve(new Response(JSON.stringify(body)));
+    }),
+  );
+  render(<App />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Initiate processing" }),
+  );
+  expect(await screen.findByText("A run is already in progress")).toBeDefined();
+});
+
+it("shows the policy sections read and requests left for support", async () => {
+  const detail = {
+    ...baseDetail,
+    status: "waiting_for_agent_review",
+    attempts: 2,
+    steps: [
+      {
+        stage: "read_section",
+        message:
+          "Read Shoppie Cancellation Policy, 2. Customer-requested cancellations.",
+        created_at: "2026-11-06T09:00:00+05:30",
+      },
+      {
+        stage: "read_section",
+        message:
+          "Read Shoppie Cancellation Policy, 2. Customer-requested cancellations.",
+        created_at: "2026-11-06T09:00:00+05:30",
+      },
+      {
+        stage: "left_for_support",
+        message: "The agent could not complete its review after two attempts.",
+        created_at: "2026-11-06T09:01:00+05:30",
+      },
+    ],
+  };
+  installFetch(detail, [
+    { ...queue[0], status: "waiting_for_agent_review", attempts: 2 },
+  ]);
+  render(<App />);
+  const queuePanel = await screen.findByLabelText("Support request queue");
+  expect(await within(queuePanel).findByText("Left for support")).toBeDefined();
+  expect(await screen.findByText("POLICY SECTIONS READ")).toBeDefined();
+  expect(
+    screen.getAllByText(
+      "Shoppie Cancellation Policy, 2. Customer-requested cancellations",
+    ),
+  ).toHaveLength(1);
 });
