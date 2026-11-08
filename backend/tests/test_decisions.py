@@ -13,6 +13,18 @@ def decide(client, payout, decision="approve"):
     )
 
 
+def decide_other(client, claim_id, payout):
+    return client.post(
+        f"/api/claims/{claim_id}/decision",
+        json={
+            "decision": "approve",
+            "payout": payout,
+            "reason": "Stubbed.",
+            "policy_reference": "Section 3",
+        },
+    )
+
+
 def pay(client, amount):
     return client.post("/api/claims/CLM-1001/payment", json={"amount": amount})
 
@@ -65,11 +77,16 @@ def test_sign_off_then_pay(client):
         "/api/claims/CLM-1001/sign-off", json={"handler_id": "HND-01"}
     )
     assert sign_off.status_code == 200
-    assert sign_off.json()["status"] == "decided"
+    signed = sign_off.json()
+    assert signed["status"] == "in progress"
+    assert signed["signed_off_by"] == "HND-01"
+    assert signed["signed_off_on"] is not None
+    assert signed["paid_amount"] is None
 
     payment = client.post("/api/claims/CLM-1001/payment", json={"amount": "1200.00"})
     assert payment.status_code == 200
     assert payment.json()["paid_amount"] == "1200.00"
+    assert payment.json()["status"] == "decided"
 
 
 def test_sign_off_when_not_waiting_is_blocked(client):
@@ -108,14 +125,66 @@ def test_a_decided_claim_cannot_be_decided_again(client):
     assert claim["payout"] == "420.00"
 
 
-def test_a_claim_cannot_be_paid_twice(client):
+def test_the_same_payment_twice_is_done_once(client):
     decide(client, "420.00")
-    assert pay(client, "420.00").status_code == 200
+    first = pay(client, "420.00").json()
 
-    response = pay(client, "420.00")
+    second = pay(client, "420.00")
+
+    assert second.status_code == 200
+    assert second.json()["paid_on"] == first["paid_on"]
+
+
+def test_a_different_payment_on_a_paid_claim_is_refused(client):
+    decide(client, "420.00")
+    pay(client, "420.00")
+
+    response = pay(client, "421.00")
 
     assert response.status_code == 409
     assert "already been paid" in response.json()["detail"]
+
+
+def test_the_same_decision_twice_is_done_once(client):
+    first = decide(client, "420.00").json()
+
+    second = decide(client, "420.00")
+
+    assert second.status_code == 200
+    assert second.json()["decided_on"] == first["decided_on"]
+
+
+def test_a_signed_off_claim_cannot_be_decided_differently(client):
+    decide(client, "1200.00")
+    client.post("/api/claims/CLM-1001/sign-off", json={"handler_id": "HND-01"})
+
+    assert decide(client, "1100.00").status_code == 409
+    assert decide(client, "0.00", decision="decline").status_code == 409
+
+
+def test_the_same_sign_off_twice_is_done_once(client):
+    decide(client, "1200.00")
+    body = {"handler_id": "HND-01"}
+    first = client.post("/api/claims/CLM-1001/sign-off", json=body).json()
+
+    second = client.post("/api/claims/CLM-1001/sign-off", json=body)
+
+    assert second.status_code == 200
+    assert second.json()["signed_off_on"] == first["signed_off_on"]
+
+
+def test_unfinished_claims_are_stopped_or_ready_to_pay(client):
+    client.post("/api/claims/CLM-1001/steps", json={"text": "started"})
+    decide_other(client, "CLM-1002", "420.00")
+    decide_other(client, "CLM-1003", "1200.00")
+    decide_other(client, "CLM-1004", "1200.00")
+    client.post("/api/claims/CLM-1004/sign-off", json={"handler_id": "HND-01"})
+    decide_other(client, "CLM-1005", "300.00")
+    client.post("/api/claims/CLM-1005/payment", json={"amount": "300.00"})
+
+    claims = client.get("/api/unfinished-claims").json()
+
+    assert claims == ["CLM-1001", "CLM-1002", "CLM-1004"]
 
 
 def test_payment_must_equal_the_approved_payout(client):
@@ -152,3 +221,22 @@ def test_record_step_moves_claim_in_progress_and_lists_in_order(client):
         "Read the claim and policy",
         "Read the policy wording",
     ]
+
+
+def test_a_sign_off_tells_the_agent_once_after_it_is_saved(client, agent_stub):
+    decide(client, "1200.00")
+
+    client.post("/api/claims/CLM-1001/sign-off", json={"handler_id": "HND-01"})
+
+    assert agent_stub.calls == ["/api/claims/CLM-1001/resume"]
+
+
+def test_the_sign_off_stands_when_the_agent_is_unreachable(client):
+    decide(client, "1200.00")
+
+    response = client.post(
+        "/api/claims/CLM-1001/sign-off", json={"handler_id": "HND-01"}
+    )
+
+    assert response.status_code == 200
+    assert client.get("/api/claims/CLM-1001").json()["signed_off_by"] == "HND-01"

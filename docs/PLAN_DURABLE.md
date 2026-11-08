@@ -128,13 +128,13 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `uv run pytest backend -q` passes, including:
-  - [ ] a $1,200 approval -> `waiting for sign-off` -> `pay_claim` is 409 -> `sign_off_claim` -> status `in progress`, with the handler and time recorded, and no payment -> `pay_claim` -> `decided`, paid.
-  - [ ] the same decision twice returns the claim, one row, one `decided_on`; a different decision is 409, even on an `in progress` signed-off claim.
-  - [ ] the same payment twice returns the claim with one `paid_on`; a payment of a different amount is 409.
-  - [ ] a sign-off with the agent unreachable (the notifier pointed at a closed port) still returns 200 and the sign-off stands.
-  - [ ] a sign-off calls the notifier once, after the commit, with the claim id.
-  - [ ] `list_unfinished_claims` lists an `in progress` claim and a signed-off unpaid claim, and not a `waiting for sign-off` or a paid one.
+- [x] `uv run pytest backend -q` passes, including:
+  - [x] a $1,200 approval -> `waiting for sign-off` -> `pay_claim` is 409 -> `sign_off_claim` -> status `in progress`, with the handler and time recorded, and no payment -> `pay_claim` -> `decided`, paid.
+  - [x] the same decision twice returns the claim, one row, one `decided_on`; a different decision is 409, even on an `in progress` signed-off claim.
+  - [x] the same payment twice returns the claim with one `paid_on`; a payment of a different amount is 409.
+  - [x] a sign-off with the agent unreachable (the notifier pointed at a closed port) still returns 200 and the sign-off stands.
+  - [x] a sign-off calls the notifier once, after the commit, with the claim id.
+  - [x] `list_unfinished_claims` lists an `in progress` claim and a signed-off unpaid claim, and not a `waiting for sign-off` or a paid one.
 - [ ] `npm run check` is green. The e2e tests that used "Release payment" are updated in Phase 8, so until then the pre-commit hook runs the unit checks and `npm run e2e` waits for Phase 8. I'll say so in the commit message.
 
 ## Phase 6: The claim agent as a LangGraph graph

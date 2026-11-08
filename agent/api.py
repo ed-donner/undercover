@@ -111,15 +111,26 @@ def decide_claim(
     payout: Amount,
     reason: str,
     policy_reference: str,
-) -> None:
-    """Record the decision on a claim."""
+) -> dict[str, Any]:
+    """Record the decision on a claim, and return the claim."""
     body = {
         "decision": decision,
         "payout": str(payout),
         "reason": reason,
         "policy_reference": policy_reference,
     }
-    _call("POST", f"/api/claims/{claim_id}/decision", json=body)
+    return _call("POST", f"/api/claims/{claim_id}/decision", json=body)
+
+
+def pay_claim(claim_id: str, amount: Amount) -> dict[str, Any]:
+    """Pay a claim its approved payout, and return the claim."""
+    body = {"amount": str(amount)}
+    return _call("POST", f"/api/claims/{claim_id}/payment", json=body)
+
+
+def list_unfinished_claims() -> list[str]:
+    """List the claims the agent must carry on with."""
+    return _call("GET", "/api/unfinished-claims")
 
 
 def calculate_payout(

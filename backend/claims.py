@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import insert, or_, select, update
+from sqlalchemy import and_, insert, or_, select, update
 
 from backend import data, db, money, payouts
 from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
@@ -65,7 +65,10 @@ def decide(
     reason: str,
     policy_reference: str,
 ) -> dict[str, Any]:
-    """Record a claim's one decision; an approval over the limit needs a sign-off."""
+    """Record a claim's one decision; an approval over the limit needs a sign-off.
+
+    Repeating the decision already recorded is done, not an error.
+    """
     get_row(claim_id)
     over_limit = decision == "approve" and payouts.needs_sign_off(payout)
     with db.connection() as conn:
@@ -73,7 +76,7 @@ def decide(
             update(db.claims)
             .where(
                 db.claims.c.claim_id == claim_id,
-                db.claims.c.status.in_(["waiting", "in progress"]),
+                db.claims.c.decision.is_(None),
             )
             .values(
                 status="waiting for sign-off" if over_limit else "decided",
@@ -85,9 +88,10 @@ def decide(
                 over_approval_limit=int(over_limit),
             )
         )
-    if decided.rowcount == 0:
+    row = get_row(claim_id)
+    if decided.rowcount == 0 and (row["decision"], row["payout"]) != (decision, payout):
         raise Conflict("Claim has already been decided")
-    return get_row(claim_id)
+    return row
 
 
 def record_step(claim_id: str, text: str) -> None:
@@ -119,8 +123,11 @@ def list_steps(claim_id: str) -> list[dict[str, Any]]:
 
 
 def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
-    """Have a handler sign off an over-limit approval."""
-    if get_row(claim_id)["status"] != "waiting for sign-off":
+    """Have a handler sign off an over-limit approval; the agent then pays it."""
+    row = get_row(claim_id)
+    if row["signed_off_by"] == handler_id:
+        return row
+    if row["status"] != "waiting for sign-off":
         raise Conflict("Claim is not waiting for sign-off")
     handler = data.handler(handler_id)
     if handler is None or not handler["can_approve_over_limit"]:
@@ -129,7 +136,9 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
         conn.execute(
             update(db.claims)
             .where(db.claims.c.claim_id == claim_id)
-            .values(status="decided", signed_off_by=handler_id, signed_off_on=db.now())
+            .values(
+                status="in progress", signed_off_by=handler_id, signed_off_on=db.now()
+            )
         )
     return get_row(claim_id)
 
@@ -145,8 +154,13 @@ def _why_not_payable(row: dict[str, Any], amount: Decimal) -> str:
 
 
 def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
-    """Pay an approved claim its payout, once, after any required sign-off."""
+    """Pay an approved claim its payout, once, after any required sign-off.
+
+    Repeating a payment already made is done, not an error.
+    """
     row = get_row(claim_id)
+    if row["paid_amount"] == amount:
+        return row
     cents = money.to_cents(amount)
     with db.connection() as conn:
         paid = conn.execute(
@@ -161,11 +175,30 @@ def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
                     db.claims.c.signed_off_by.is_not(None),
                 ),
             )
-            .values(paid_cents=cents, paid_on=db.now())
+            .values(status="decided", paid_cents=cents, paid_on=db.now())
         )
     if paid.rowcount == 0:
         raise Conflict(_why_not_payable(row, amount))
     return get_row(claim_id)
+
+
+def list_unfinished() -> list[str]:
+    """List the claims the agent must carry on with: stopped, or ready to pay."""
+    payable = and_(
+        db.claims.c.decision == "approve",
+        db.claims.c.paid_cents.is_(None),
+        or_(
+            db.claims.c.over_approval_limit == 0,
+            db.claims.c.signed_off_by.is_not(None),
+        ),
+    )
+    with db.connection() as conn:
+        rows = conn.execute(
+            select(db.claims.c.claim_id)
+            .where(or_(db.claims.c.status == "in progress", payable))
+            .order_by(db.claims.c.claim_id)
+        )
+        return [claim_id for (claim_id,) in rows]
 
 
 def start_work(claim_id: str) -> dict[str, Any]:

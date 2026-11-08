@@ -2,11 +2,11 @@
 
 from typing import Any, Literal
 
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend import agent_process, claims, data, payouts, runs
+from backend import agent_process, agent_service, claims, data, payouts, runs
 from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.money import Amount
@@ -120,6 +120,12 @@ def list_handlers() -> list[dict[str, Any]]:
     return [h for h in data.HANDLERS if h["can_approve_over_limit"]]
 
 
+@app.get("/api/unfinished-claims", operation_id="list_unfinished_claims")
+def list_unfinished_claims() -> list[str]:
+    """List the claims the agent must carry on with: stopped, or ready to pay."""
+    return claims.list_unfinished()
+
+
 @app.post("/api/claims/{claim_id}/decision", operation_id="decide_claim")
 def decide_claim(claim_id: str, decision: Decision) -> dict[str, Any]:
     """Record a decision on a claim, approve, decline or refer."""
@@ -140,9 +146,13 @@ def list_claim_steps(claim_id: str) -> list[dict[str, Any]]:
 
 
 @app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
-def sign_off_claim(claim_id: str, sign_off: SignOff) -> dict[str, Any]:
+def sign_off_claim(
+    claim_id: str, sign_off: SignOff, background: BackgroundTasks
+) -> dict[str, Any]:
     """Have a handler sign off an over-limit approved claim's payout."""
-    return claims.sign_off(claim_id, sign_off.handler_id)
+    signed = claims.sign_off(claim_id, sign_off.handler_id)
+    background.add_task(agent_service.notify_sign_off, claim_id)
+    return signed
 
 
 @app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
