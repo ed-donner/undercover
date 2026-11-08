@@ -60,7 +60,7 @@ def apply_context_overrides(
             "A food-safety concern requires prompt support review. " + result.rationale
         )
         result.next_action = (
-            "Escalate to a support agent promptly; do not consume or return the item. "
+            "Cancel the item and initiate a refund; do not consume or return the item. "
             + result.next_action
         )
         result.policy_citations = unique_citations(
@@ -71,7 +71,8 @@ def apply_context_overrides(
         result.outcome = "request_information"
         result.rationale = (
             "The customer identifies a specific item but asks to cancel the whole "
-            "order. A support agent should confirm the intended scope."
+            "order. The order should be cancelled only if the customer confirms "
+            "which item or order they want cancelled. "
         )
         result.next_action = (
             "Ask the customer to confirm which item or order they want cancelled."
