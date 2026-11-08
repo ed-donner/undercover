@@ -41,6 +41,12 @@ test("the queue shows a claim's status as it moves through the four states", asy
     data: { handler_id: "HND-01" },
   });
   await page.goto("/");
+  await expect(row()).toContainText("in progress");
+
+  await request.post(`/api/claims/${claimId}/payment`, {
+    data: { amount: "1250.00" },
+  });
+  await page.goto("/");
   await expect(row()).toContainText("decided");
 });
 

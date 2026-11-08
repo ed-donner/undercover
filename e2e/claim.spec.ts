@@ -34,7 +34,7 @@ test("the instructions page shows the agent's instructions", async ({
   await expect(page.getByText("calling decide_claim once")).toBeVisible();
 });
 
-test("an over-limit approval blocks payment until a handler signs off", async ({
+test("a sign-off reaches the agent, and the claim shows as paid once it pays", async ({
   page,
   request,
 }) => {
@@ -50,19 +50,22 @@ test("an over-limit approval blocks payment until a handler signs off", async ({
 
   await page.goto(`/claims/${claimId}`);
 
-  await expect(
-    page.getByRole("button", { name: "Release payment" }),
-  ).toHaveCount(0);
-  const signOff = page.getByRole("button", {
-    name: "Sign off as Dana Whitfield",
+  await expect(page.getByRole("button", { name: /Release/ })).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Sign off as Dana Whitfield" })
+    .click();
+
+  await expect(page.getByText("Payment in progress.")).toBeVisible();
+  const calls = await request.get("http://127.0.0.1:8003/calls");
+  const paths = (await calls.json()) as string[];
+  expect(paths.filter((path) => path.includes(claimId))).toEqual([
+    `/api/claims/${claimId}/resume`,
+  ]);
+
+  await request.post(`/api/claims/${claimId}/payment`, {
+    data: { amount: "1200.00" },
   });
-  await expect(signOff).toBeVisible();
-
-  await signOff.click();
-
-  const release = page.getByRole("button", { name: "Release payment" });
-  await expect(release).toBeVisible();
-  await release.click();
 
   await expect(page.getByText("Paid $1,200.00.")).toBeVisible();
+  await expect(page.getByText(/Signed off by Dana Whitfield on/)).toBeVisible();
 });

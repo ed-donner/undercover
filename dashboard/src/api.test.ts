@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { fetchClaim, fetchClaims, fetchCurrentRun, payClaim } from "./api";
+import { fetchClaim, fetchClaims, fetchCurrentRun } from "./api";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -35,16 +35,4 @@ it("reads wire amounts as whole cents", async () => {
   const [claim] = await fetchClaims();
 
   expect(claim.amount_claimed).toBe(123450);
-});
-
-it("pays with a wire amount built from whole cents", async () => {
-  let sent: unknown;
-  vi.stubGlobal("fetch", (path: string, init: RequestInit) => {
-    sent = init.body;
-    return Promise.resolve(new Response(path));
-  });
-
-  await payClaim("CLM-1001", 120005);
-
-  expect(sent).toBe('{"amount":"1200.05"}');
 });

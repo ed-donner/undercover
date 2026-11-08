@@ -39,7 +39,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["**/*.js", "scripts/*.mjs"],
+    files: ["**/*.js", "scripts/*.mjs", "e2e/*.mjs"],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: globals.node },
   },

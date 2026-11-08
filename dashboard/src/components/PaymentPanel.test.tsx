@@ -88,32 +88,43 @@ it("lets a handler sign off an over-limit claim", async () => {
   expect(calls).toContain("/api/claims/CLM-1003/sign-off");
 });
 
-it("releases payment on a decided, unpaid approval", () => {
-  const onUpdated = vi.fn();
+it("shows a signed-off claim as awaiting payment", async () => {
   vi.stubGlobal(
     "fetch",
-    vi.fn().mockResolvedValue(new Response(JSON.stringify({}))),
+    vi.fn().mockResolvedValue(new Response(JSON.stringify(handlers))),
   );
 
-  const claim = makeClaim({ status: "decided", paid_amount: null });
-  render(<PaymentPanel claim={claim} onUpdated={onUpdated} />);
+  const claim = makeClaim({
+    status: "in progress",
+    signed_off_by: "HND-01",
+    signed_off_on: "2026-06-03T14:30:00+00:00",
+  });
+  render(<PaymentPanel claim={claim} onUpdated={() => undefined} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "Release payment" }));
-
-  expect(fetch).toHaveBeenCalledWith(
-    "/api/claims/CLM-1003/payment",
-    expect.objectContaining({ method: "POST" }),
-  );
+  expect(
+    await screen.findByText(/Signed off by Dana Whitfield on/),
+  ).toBeDefined();
+  expect(screen.getByText("Payment in progress.")).toBeDefined();
+  expect(screen.queryByRole("button")).toBeNull();
 });
 
-it("shows the paid amount once a claim has been paid", () => {
+it("shows the paid amount once a claim has been paid", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(new Response(JSON.stringify(handlers))),
+  );
   const claim = makeClaim({
     status: "decided",
     paid_amount: 120000,
     paid_on: "2026-06-03T00:00:00+00:00",
+    signed_off_by: "HND-01",
+    signed_off_on: "2026-06-02T09:00:00+00:00",
   });
 
   render(<PaymentPanel claim={claim} onUpdated={() => undefined} />);
 
   expect(screen.getByText("Paid $1,200.00.")).toBeDefined();
+  expect(
+    await screen.findByText(/Signed off by Dana Whitfield on/),
+  ).toBeDefined();
 });

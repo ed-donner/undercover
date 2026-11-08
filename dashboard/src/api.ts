@@ -1,4 +1,4 @@
-import { parseCents, toWireAmount } from "./money";
+import { parseCents } from "./money";
 import type { Claim, ClaimSummary, Handler, Item, Run, Step } from "./types";
 
 type WireSummary = Omit<ClaimSummary, "amount_claimed"> & {
@@ -83,6 +83,3 @@ export const runAgent = (claimId: string) => post(`/api/claims/${claimId}/run`);
 
 export const signOffClaim = (claimId: string, handlerId: string) =>
   post(`/api/claims/${claimId}/sign-off`, { handler_id: handlerId });
-
-export const payClaim = (claimId: string, cents: number) =>
-  post(`/api/claims/${claimId}/payment`, { amount: toWireAmount(cents) });

@@ -135,7 +135,7 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
   - [x] a sign-off with the agent unreachable (the notifier pointed at a closed port) still returns 200 and the sign-off stands.
   - [x] a sign-off calls the notifier once, after the commit, with the claim id.
   - [x] `list_unfinished_claims` lists an `in progress` claim and a signed-off unpaid claim, and not a `waiting for sign-off` or a paid one.
-- [ ] `npm run check` is green. The e2e tests that used "Release payment" are updated in Phase 8, so until then the pre-commit hook runs the unit checks and `npm run e2e` waits for Phase 8. I'll say so in the commit message.
+- [x] `npm run check` is green. The e2e tests that used "Release payment" are updated in Phase 8, so until then the pre-commit hook runs the unit checks and `npm run e2e` waits for Phase 8. I'll say so in the commit message.
 
 ## Phase 6: The claim agent as a LangGraph graph
 
@@ -189,10 +189,10 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `npx vitest run --root dashboard --coverage` passes at 80% or above, with a test for the page after a sign-off (in progress, then paid with the handler and time).
-- [ ] `npm run e2e` passes: an over-limit claim shows `waiting for sign-off`; signing off shows the sign-off was received by the stand-in on 8003, once; no test reaches port 8002.
-- [ ] The e2e run touches no Supabase, Langfuse or OpenRouter (with `.env` moved out of the way).
-- [ ] `npm run check` is green with `.env` moved out of the way.
+- [x] `npx vitest run --root dashboard --coverage` passes at 80% or above, with a test for the page after a sign-off (in progress, then paid with the handler and time).
+- [x] `npm run e2e` passes: an over-limit claim shows `waiting for sign-off`; signing off shows the sign-off was received by the stand-in on 8003, once; no test reaches port 8002.
+- [x] The e2e run touches no Supabase, Langfuse or OpenRouter (with `.env` moved out of the way).
+- [x] `npm run check` is green with `.env` moved out of the way.
 
 ## Phase 9: Documents, the live runs and the final review
 
