@@ -19,6 +19,10 @@ Our goal is to handle claims straight through, as accurately as our handlers do.
 
 Someone starts the agent from the command line, for one run that works every waiting claim, in whatever order it chooses, or a trial run capped at a number of claims, or one named claim. The agent plans the run as a to-do list, which the team can watch. A claim shows as in progress while the agent works on it, and the run ends with a short summary for the handlers.
 
+When the agent approves a payout over $1,000, it stops and waits for a handler, keeping everything it has worked out. As soon as a handler signs off on the dashboard, the agent picks the claim up from where it stopped and pays it. Between the sign-off and the payment the claim shows as in progress, and the payment records who signed off and when. If the agent isn't running when a handler signs off, it picks the claim up the next time it runs. A handler can only sign off for now; rejecting a held payout comes later.
+
+If the agent is stopped partway through a claim, by a crash, a restart or Ctrl-C, it carries on with that claim from where it got to the next time it runs, and that doesn't count as a new attempt. A claim that fails with an error goes back in the queue and starts afresh. A run that was stopped is finished by the next run. No claim is ever decided or paid twice.
+
 ## What the team needs to see
 
 - The queue, with where each claim stands: waiting, in progress, waiting for sign-off or decided.
@@ -42,5 +46,4 @@ Everything is in `data/`, described in `data/README.md`: the claims queue, the p
 - No sign-in. Everyone who uses the screens sees everything.
 - No real payments.
 - No messages to customers.
-
-- Signing off from the screens. In the pilot, a claim over $1,000 that the agent approves stays waiting for sign-off, and its payment stays blocked. A handler signs it off outside the system for now.
+- Rejecting a held payout. A handler can only sign off.

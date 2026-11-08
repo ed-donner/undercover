@@ -204,14 +204,14 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria (the live run, with the real model; reseed first and cap the run at five claims)**
 
-- [ ] `npm run seed`, then `npm run dev`, then `uv run -m agent --cap 5` on the default model works five claims. A claim over the limit waits for a sign-off.
-- [ ] Through the Playwright MCP server, I sign off the held claim on the dashboard and it shows as paid within five seconds, with the handler and the time.
-- [ ] I kill a run (`Ctrl-C`) after a claim's first steps. The next `uv run -m agent` carries on with the same thread: the database shows the same `thread`, the run item's attempts unchanged and one decision.
-- [ ] I stop the agent's service, sign off a held claim (it succeeds), then run `uv run -m agent`: the claim is paid.
-- [ ] Through the Supabase MCP server, `SELECT count(*) FROM pg_stat_activity WHERE usename = 'postgres'` (the brief's user) is 12 or fewer during the run.
-- [ ] Through Langfuse's API, the held claim's session has traces from before and after the sign-off.
-- [ ] `npm run check` is green with `.env` moved out of the way, with a test for each behavior the brief lists (the payout operation; the pause; a sign-off resuming and paying once; a claim stopped partway; a claim that fails; a repeated decision or payment).
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/PROCESS.md` and `docs/STATUS.md` describe the product as it now is.
+- [x] `npm run seed`, then `npm run dev`, then `uv run -m agent --cap 5` on the default model works five claims. A claim over the limit waits for a sign-off.
+- [x] Through the Playwright MCP server, I sign off the held claim on the dashboard and it shows as paid within five seconds, with the handler and the time.
+- [x] I kill a run (`Ctrl-C`) after a claim's first steps. The next `uv run -m agent` carries on with the same thread: the database shows the same `thread`, the run item's attempts unchanged and one decision.
+- [x] I stop the agent's service, sign off a held claim (it succeeds), then run `uv run -m agent`: the claim is paid.
+- [ ] Through the Supabase MCP server, `pg_stat_activity` for user `postgres` is 12 or fewer. NOT MET: it read 11 to 16 after runs, because the session pooler keeps released connections; our processes peaked at 9 (backend 4, agent service 2, a run 2, plus one).
+- [x] Through Langfuse's API, the held claim's session has traces from before and after the sign-off.
+- [x] `npm run check` is green with `.env` moved out of the way, with a test for each behavior the brief lists (the payout operation; the pause; a sign-off resuming and paying once; a claim stopped partway; a claim that fails; a repeated decision or payment).
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/PROCESS.md` and `docs/STATUS.md` describe the product as it now is.
 
 ## Things I'd like you to check
 

@@ -6,6 +6,7 @@ database as the backend, in the `undercover` schema.
 
 import os
 from functools import lru_cache
+from threading import Lock
 
 from langgraph.checkpoint.postgres import PostgresSaver
 from psycopg.rows import dict_row
@@ -15,12 +16,24 @@ SCHEMA = "undercover"
 CONNECTIONS_PER_PROCESS = 2
 
 
-@lru_cache
+_creating = Lock()
+
+
 def saver() -> PostgresSaver:
-    """Return this process's checkpointer, with its tables ready."""
+    """Return this process's checkpointer, made once even when claims race for it.
+
+    Claims are worked in parallel threads, and each racing thread would
+    otherwise open a pool of its own, using up the database's connections.
+    """
+    with _creating:
+        return _make_saver()
+
+
+@lru_cache
+def _make_saver() -> PostgresSaver:
     pool = ConnectionPool(
         os.environ["DATABASE_URL"],
-        min_size=1,
+        min_size=CONNECTIONS_PER_PROCESS,
         max_size=CONNECTIONS_PER_PROCESS,
         kwargs={
             "autocommit": True,

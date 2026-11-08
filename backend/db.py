@@ -96,8 +96,8 @@ def make_engine(url: str) -> Engine:
         return create_engine(url)
     return create_engine(
         url,
-        pool_size=CONNECTIONS_PER_PROCESS // 2,
-        max_overflow=CONNECTIONS_PER_PROCESS // 2,
+        pool_size=CONNECTIONS_PER_PROCESS,
+        max_overflow=0,
         connect_args={"options": f"-c search_path={SCHEMA}"},
     )
 

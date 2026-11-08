@@ -51,22 +51,6 @@ def test_backend_never_imports_the_agent():
             assert not any(n.split(".")[0] == "agent" for n in names), path.name
 
 
-def _imports(path):
-    names = []
-    for node in ast.walk(ast.parse(path.read_text())):
-        if isinstance(node, ast.Import):
-            names += [a.name for a in node.names]
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            names.append(node.module)
-    return {n.split(".")[0] for n in names}
-
-
-def test_only_tracing_imports_langfuse():
-    for path in AGENT_MODULES:
-        if path.name != "tracing.py":
-            assert "langfuse" not in _imports(path), path.name
-
-
 def _imported_modules(path):
     modules = set()
     for node in ast.walk(ast.parse(path.read_text())):
@@ -75,6 +59,14 @@ def _imported_modules(path):
         elif isinstance(node, ast.ImportFrom) and node.module:
             modules.add(node.module)
     return modules
+
+
+def test_only_tracing_imports_langfuse():
+    for path in AGENT_MODULES:
+        if path.name != "tracing.py":
+            assert "langfuse" not in {
+                m.split(".")[0] for m in _imported_modules(path)
+            }, path.name
 
 
 def test_only_checkpoint_talks_to_postgres():
