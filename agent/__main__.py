@@ -1,8 +1,8 @@
 """Start the UnderCover Agent from the command line.
 
-uv run python -m agent.cli              # work every waiting claim
-uv run python -m agent.cli --cap 5      # work up to 5 waiting claims
-uv run python -m agent.cli --claim CLM-1001   # work one named claim
+uv run -m agent              # work every waiting claim
+uv run -m agent --cap 5      # work up to 5 waiting claims
+uv run -m agent --claim CLM-1001   # work one named claim
 """
 
 import argparse

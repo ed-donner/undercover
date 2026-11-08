@@ -1,7 +1,9 @@
 import pytest
+from langchain_core.messages import AIMessage
 
 from agent import agents, api
 from agent.claim_nodes import MAX_MODEL_CALLS, ModelCallLimit
+from agent.tests.conftest import StubModel
 
 CLAIM = "CLM-1001"
 
@@ -85,3 +87,35 @@ def test_a_model_that_never_stops_fails_the_claim(backend, script, saver):
 
     with pytest.raises(ModelCallLimit):
         agents.decide_claim(CLAIM, script(*steps), saver)
+
+
+class Stopped(BaseException):
+    """Stands for a crash, a kill or Ctrl-C, which no `except Exception` catches."""
+
+
+def stops_after_reading_the_claim():
+    """A stub model that reads the claim, then is stopped."""
+    call = AIMessage(
+        content="", tool_calls=[{"name": "get_claim", "args": {}, "id": "1"}]
+    )
+    yield call
+    raise Stopped
+
+
+def test_a_stopped_claim_carries_on_from_its_last_step(backend, script, saver):
+    with pytest.raises(Stopped):
+        agents.decide_claim(
+            CLAIM, StubModel(messages=stops_after_reading_the_claim()), saver
+        )
+
+    assert api.get_claim(CLAIM)["status"] == "in progress"
+    assert api.list_unfinished_claims() == [CLAIM]
+    agents.decide_claim(CLAIM, script(decision(), "Done."), saver)
+
+    claim = api.get_claim(CLAIM)
+    assert (claim["thread"], claim["paid_amount"]) == (1, "420.00")
+    steps = [s["text"] for s in backend.get(f"/api/claims/{CLAIM}/steps").json()]
+    assert steps.count("Decided: approve for $420.00") == 1
+    assert (
+        steps.count("Read the claim, its policy and the customer's claim history") == 1
+    )

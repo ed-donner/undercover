@@ -7,7 +7,7 @@
   },
   "scripts": {
     "prepare": "lefthook install && playwright install chromium",
-    "dev": "concurrently -k -n backend,dashboard npm:dev:backend npm:dev:dashboard",
+    "dev": "concurrently -k -n backend,agent,dashboard npm:dev:backend npm:dev:agent npm:dev:dashboard",
     "dev:backend": "node --env-file-if-exists=.env scripts/run-with-env.mjs uv run -m uvicorn backend.main:app --reload --reload-dir backend",
     "dev:dashboard": "vite dashboard",
     "format": "uv run ruff format && prettier --write -u dashboard e2e scripts *.config.*",
@@ -15,7 +15,8 @@
     "check:python": "uv run ruff format --check && uv run ruff check && pyright && uv run pytest -q",
     "check:ts": "prettier --check -u dashboard e2e scripts *.config.* && eslint dashboard e2e scripts *.config.* && tsc && vitest run --root dashboard --coverage",
     "e2e": "playwright test",
-    "seed": "node --env-file-if-exists=.env scripts/run-with-env.mjs uv run -m backend.seed"
+    "seed": "node --env-file-if-exists=.env scripts/run-with-env.mjs uv run -m backend.seed",
+    "dev:agent": "node --env-file-if-exists=.env scripts/run-with-env.mjs uv run -m uvicorn agent.service:app --port 8002"
   },
   "dependencies": {
     "react": "^19.3.0",

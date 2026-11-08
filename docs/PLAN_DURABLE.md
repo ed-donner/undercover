@@ -170,14 +170,14 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, including:
-  - [ ] a claim stopped partway (the stub raises `KeyboardInterrupt` after the first tool call), then a new graph on the same checkpointer: it carries on from the last step, the run item's attempts are unchanged, the thread is the same and there is one decision.
-  - [ ] a claim that fails with an error is requeued, starts on thread 2 and is decided there; the run item's attempts become 2.
-  - [ ] a stopped queue run: the next `run_queue` finishes that run's items and finishes the run, and doesn't start a second run.
-  - [ ] a signed-off claim whose agent was away is paid by `carry_on()`.
-  - [ ] the service: `POST /api/claims/CLM-1003/resume` returns 202, and the claim ends paid (the test client, a stub model).
-- [ ] `uv run -m agent --help` works. `npm run dev` starts three processes and `GET http://127.0.0.1:8002/api/health` answers.
-- [ ] `npm run check:python` is green.
+- [x] `uv run pytest agent -q` passes, including:
+  - [x] a claim stopped partway (the stub raises `KeyboardInterrupt` after the first tool call), then a new graph on the same checkpointer: it carries on from the last step, the run item's attempts are unchanged, the thread is the same and there is one decision.
+  - [x] a claim that fails with an error is requeued, starts on thread 2 and is decided there; the run item's attempts become 2.
+  - [x] a stopped queue run: the next `run_queue` finishes that run's items and finishes the run, and doesn't start a second run.
+  - [x] a signed-off claim whose agent was away is paid by `carry_on()`.
+  - [x] the service: `POST /api/claims/CLM-1003/resume` returns 202, and the claim ends paid (the test client, a stub model).
+- [x] `uv run -m agent --help` works. `npm run dev` starts three processes and `GET http://127.0.0.1:8002/api/health` answers.
+- [x] `npm run check:python` is green.
 
 ## Phase 8: The dashboard and the end-to-end tests
 

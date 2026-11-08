@@ -216,7 +216,8 @@ def start_work(claim_id: str) -> dict[str, Any]:
 
 def requeue(claim_id: str) -> dict[str, Any]:
     """Put a stuck claim back in the queue as waiting, to start afresh."""
-    if get_row(claim_id)["status"] not in ("waiting", "in progress"):
+    row = get_row(claim_id)
+    if row["status"] not in ("waiting", "in progress") or row["decision"]:
         raise Conflict("Claim is already decided")
     with db.connection() as conn:
         conn.execute(

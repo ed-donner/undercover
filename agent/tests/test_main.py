@@ -1,6 +1,6 @@
 import pytest
 
-from agent import cli
+from agent import __main__ as cli
 
 
 @pytest.fixture

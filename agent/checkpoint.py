@@ -20,6 +20,7 @@ def saver() -> PostgresSaver:
     """Return this process's checkpointer, with its tables ready."""
     pool = ConnectionPool(
         os.environ["DATABASE_URL"],
+        min_size=1,
         max_size=CONNECTIONS_PER_PROCESS,
         kwargs={
             "autocommit": True,

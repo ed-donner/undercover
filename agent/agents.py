@@ -45,10 +45,32 @@ def decide_claim(
     return result["messages"][-1].text
 
 
+def carry_on(
+    llm: BaseChatModel | None = None, checkpointer: BaseCheckpointSaver | None = None
+) -> None:
+    """Carry on with claims stopped or signed off while the agent was away.
+
+    Claims on an unfinished run are left to that run, which keeps their attempts.
+    """
+    run = api.get_unfinished_run()
+    on_the_run = {item["claim_id"] for item in run["items"]} if run else set()
+    for claim_id in api.list_unfinished_claims():
+        if claim_id not in on_the_run:
+            decide_claim(claim_id, llm, checkpointer)
+
+
 def run_queue(cap: int | None = None, llm: BaseChatModel | None = None) -> str:
-    """Work the waiting claims (the first `cap` of them, if capped) as one run."""
-    waiting = [c["claim_id"] for c in api.list_claims() if c["status"] == "waiting"]
-    run_id = api.start_run(waiting[:cap])
+    """Work the waiting claims (the first `cap` of them, if capped) as one run.
+
+    An unfinished run is finished first, and it keeps its own list of claims.
+    """
+    carry_on()
+    run = api.get_unfinished_run()
+    if run:
+        run_id = run["run_id"]
+    else:
+        waiting = [c["claim_id"] for c in api.list_claims() if c["status"] == "waiting"]
+        run_id = api.start_run(waiting[:cap])
     reply = run_agent(
         AgentSpec(api.queue_instructions(), QUEUE_TOOLS),
         RunContext(run_id, decide_claim),

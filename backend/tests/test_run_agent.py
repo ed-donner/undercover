@@ -28,6 +28,4 @@ def test_start_launches_the_agent_cli_for_the_claim(monkeypatch):
 
     agent_process.start("CLM-1001")
 
-    assert launched == [
-        (["-m", "agent.cli", "--claim", "CLM-1001"], agent_process.ROOT)
-    ]
+    assert launched == [(["-m", "agent", "--claim", "CLM-1001"], agent_process.ROOT)]

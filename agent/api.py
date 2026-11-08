@@ -168,6 +168,16 @@ def get_current_run() -> dict[str, Any]:
     return _call("GET", "/api/runs/current")
 
 
+def get_unfinished_run() -> dict[str, Any] | None:
+    """Return the most recently started run, unless it has finished or there is none."""
+    response = client.get("/api/runs/current")
+    if response.status_code == HTTPStatus.NOT_FOUND:
+        return None
+    response.raise_for_status()
+    run = response.json()
+    return None if run["finished_on"] else run
+
+
 def update_run_item(
     run_id: int, claim_id: str, status: RunItemStatus, note: str
 ) -> None:

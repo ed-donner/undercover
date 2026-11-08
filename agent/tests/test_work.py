@@ -66,3 +66,32 @@ def test_does_not_retry_a_claim_already_decided(backend, run_id):
     assert len(attempts) == 1
     assert "decided" in outcome.lower()
     assert item(backend)["status"] == "done"
+
+
+def test_a_stopped_claim_carries_on_without_a_new_attempt(backend, run_id):
+    api.update_run_item(run_id, "CLM-1001", "in progress", "")
+    api.record_step("CLM-1001", "started")
+
+    def decide(claim_id):
+        api.decide_claim(claim_id, **DECISION)
+        return "Approved for $100.00."
+
+    work.work_claim(run_id, "CLM-1001", decide)
+
+    assert item(backend)["attempts"] == 1
+    assert item(backend)["status"] == "done"
+
+
+def test_a_claim_that_failed_starts_afresh_on_a_new_thread(backend, run_id):
+    def decide(claim_id):
+        api.record_step(claim_id, "started")
+        if api.get_claim(claim_id)["thread"] == 1:
+            raise RuntimeError("boom")
+        api.decide_claim(claim_id, **DECISION)
+        return "Approved for $100.00."
+
+    work.work_claim(run_id, "CLM-1001", decide)
+
+    assert api.get_claim("CLM-1001")["thread"] == 2
+    assert item(backend)["attempts"] == 2
+    assert item(backend)["status"] == "done"
