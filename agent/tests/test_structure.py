@@ -62,3 +62,28 @@ def test_only_tracing_imports_langfuse():
     for path in AGENT_MODULES:
         if path.name != "tracing.py":
             assert "langfuse" not in _imports(path), path.name
+
+
+def _imported_modules(path):
+    modules = set()
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.Import):
+            modules.update(a.name for a in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            modules.add(node.module)
+    return modules
+
+
+def test_only_checkpoint_talks_to_postgres():
+    for path in AGENT_MODULES:
+        if path.name == "checkpoint.py":
+            continue
+        for module in _imported_modules(path):
+            assert not module.startswith(("psycopg", "langgraph.checkpoint.postgres"))
+
+
+def test_the_agent_applies_no_approval_limit():
+    for path in AGENT_MODULES:
+        text = path.read_text()
+        assert "APPROVAL_LIMIT" not in text, path.name
+        assert "1000" not in text, path.name

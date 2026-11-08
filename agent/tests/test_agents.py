@@ -3,7 +3,7 @@ from decimal import Decimal
 from agent import agents, api
 
 
-def test_decide_claim_reads_then_decides(backend, script):
+def test_decide_claim_reads_then_decides(backend, script, saver):
     llm = script(
         ("get_claim", {}),
         ("list_sections", {"document": "policy_wording"}),
@@ -22,7 +22,9 @@ def test_decide_claim_reads_then_decides(backend, script):
         "Approved the claim for $420.00.",
     )
 
-    assert agents.decide_claim("CLM-1001", llm) == "Approved the claim for $420.00."
+    assert (
+        agents.decide_claim("CLM-1001", llm, saver) == "Approved the claim for $420.00."
+    )
 
     claim = api.get_claim("CLM-1001")
     assert claim["status"] == "decided"
@@ -33,7 +35,9 @@ def test_decide_claim_reads_then_decides(backend, script):
         "Read policy wording section: 3. Trip Delay",
         "Read claims manual section: 9. Repeat claims",
         "Decided: approve for $420.00",
+        "Paid $420.00",
     ]
+    assert claim["paid_amount"] == "420.00"
 
 
 def test_run_queue_works_only_the_capped_claims(monkeypatch, backend, script):
@@ -84,7 +88,7 @@ def test_finish_run_is_refused_while_a_claim_is_outstanding(monkeypatch, script)
     assert run["items"][0]["attempts"] == 1
 
 
-def test_payout_comes_from_the_payout_tool(backend, script):
+def test_payout_comes_from_the_payout_tool(backend, script, saver):
     line = {"description": "Hotel", "amount": "900.00", "kind": "hotel", "nights": 2}
     llm = script(
         ("get_claim", {}),
@@ -109,7 +113,7 @@ def test_payout_comes_from_the_payout_tool(backend, script):
         "Approved.",
     )
 
-    agents.decide_claim("CLM-1001", llm)
+    agents.decide_claim("CLM-1001", llm, saver)
 
     assert api.get_claim("CLM-1001")["payout"] == "700.00"
     assert (

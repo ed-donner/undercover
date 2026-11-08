@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
+from langgraph.checkpoint.memory import InMemorySaver
 
 from agent import api
 from backend.main import app
@@ -40,3 +41,9 @@ def script():
         return StubModel(messages=iter(replies))
 
     return build
+
+
+@pytest.fixture
+def saver():
+    """Saved progress in memory; reuse it across two runs to stand for a restart."""
+    return InMemorySaver()

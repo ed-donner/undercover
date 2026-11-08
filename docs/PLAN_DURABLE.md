@@ -139,7 +139,7 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 ## Phase 6: The claim agent as a LangGraph graph
 
-- `agent/claim_graph.py`: the state (`ClaimState`: messages, claim_id, decision, payout, needs_sign_off, model_calls), the edges and `build_graph(checkpointer)`. This module only wires the graph.
+- `agent/claim_state.py`: `ClaimState` (messages, decision, payout, needs_sign_off, model_calls) and the state a claim starts with. `agent/claim_graph.py`: the edges and `build_graph(checkpointer, model, instructions)`. This module only wires the graph.
 - `agent/claim_nodes.py`: the nodes (`agent`, `settle`, `approval`, `pay`). Each is short and calls the backend through `api.py`.
 - `agent/tools.py`: `CLAIM_TOOLS` gains `calculate_payout` (Phase 1). `decide_claim` stays, and now uses the repeat-safe backend.
 - `agent/checkpoint.py`: the one module that touches Postgres. It makes the pool (at most 2 connections, with the lab's settings `autocommit=True`, `prepare_threshold=0`, `row_factory=dict_row` and `search_path=undercover`), runs `setup()` once, and gives the `PostgresSaver`.
@@ -149,16 +149,16 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes, on a stub model and an in-memory checkpointer, including:
-  - [ ] under the limit: the claim ends `decided`, paid, with the steps in order.
-  - [ ] over the limit: the run returns with the graph paused (`state.next == ("approval",)`), the claim `waiting for sign-off`, nothing paid. After `sign_off_claim`, resuming the thread pays it once and the claim is `decided` with the handler recorded. Resuming it a second time pays nothing more.
-  - [ ] the agent trying `decide_claim` twice: the second is a repeat, not a second decision.
-  - [ ] a decline and a referral end without a payment.
-  - [ ] a refusal from the backend (a payout of 0 on an approval) reaches the model as a tool message, and the model corrects it.
-  - [ ] a model that keeps calling tools stops with an error on the 31st model call.
-- [ ] `agent/claim_graph.py` has the lab's graph picture: `build_graph(...).get_graph().draw_mermaid()` shows the five nodes (checked by eye, not a test).
-- [ ] `test_structure.py` gains: only `checkpoint.py` imports `psycopg` or `langgraph.checkpoint`, and `grep -n "1000\|APPROVAL_LIMIT" agent` returns nothing (the graph applies no limit).
-- [ ] `npm run check:python` is green.
+- [x] `uv run pytest agent -q` passes, on a stub model and an in-memory checkpointer, including:
+  - [x] under the limit: the claim ends `decided`, paid, with the steps in order.
+  - [x] over the limit: the run returns with the graph paused (`state.next == ("approval",)`), the claim `waiting for sign-off`, nothing paid. After `sign_off_claim`, resuming the thread pays it once and the claim is `decided` with the handler recorded. Resuming it a second time pays nothing more.
+  - [x] the agent trying `decide_claim` twice: the second is a repeat, not a second decision.
+  - [x] a decline and a referral end without a payment.
+  - [x] a refusal from the backend (a payout of 0 on an approval) reaches the model as a tool message, and the model corrects it.
+  - [x] a model that keeps calling tools stops with an error on the 31st model call.
+- [x] `agent/claim_graph.py` has the lab's graph picture: `build_graph(...).get_graph().draw_mermaid()` shows the five nodes (checked by eye, not a test).
+- [x] `test_structure.py` gains: only `checkpoint.py` imports `psycopg` or `langgraph.checkpoint`, and `grep -n "1000\|APPROVAL_LIMIT" agent` returns nothing (the graph applies no limit).
+- [x] `npm run check:python` is green.
 
 ## Phase 7: Work that survives a restart, and the agent's service
 

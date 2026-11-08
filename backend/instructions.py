@@ -16,7 +16,8 @@ When you approve, work the payout out with calculate_payout and record the \
 payout it returns. Record your decision by calling decide_claim once, with \
 the payout (0 if you decline or refer), a two or three sentence explanation, \
 and the section of the policy wording it rests on. You may approve a payout \
-over $1,000; a handler signs off on the payment separately.
+over $1,000. You do not pay claims: the payment follows your decision, and \
+one over $1,000 waits for a handler's sign-off.
 """
 
 QUEUE_INSTRUCTIONS = """You are the UnderCover Agent, running the claims queue \
