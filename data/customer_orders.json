@@ -15,7 +15,7 @@
       "Check order status, fulfillment state, item type, and policy eligibility before proposing an action.",
       "Do not claim an action succeeded unless the corresponding action result is present.",
       "Ask for missing information when the request cannot be safely evaluated.",
-      "For food safety concerns, advise the customer not to consume the product and escalate promptly.",
+      "For product safety concerns, stop use and escalate promptly.",
       "Treat policy windows as sample policy rules; applicable customer rights may supersede them."
     ],
     "policy_reference_files": [
@@ -65,6 +65,9 @@
           "order_id": "ORD-2026-10001",
           "placed_at": "2026-11-06T08:10:00+05:30",
           "fulfillment_status": "confirmed",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-06T08:12:00+05:30", "location": "Pune fulfillment center", "details": "Payment confirmed; picking has not started."}
+          ],
           "payment_status": "paid",
           "payment_method": "upi",
           "delivery_window": {
@@ -75,10 +78,10 @@
           "items": [
             {
               "item_id": "ITM-10001-1",
-              "sku": "FR-PROD-044",
-              "name": "Seasonal fruit box",
-              "category": "fresh_produce",
-              "perishable": true,
+              "sku": "NP-OUT-044",
+              "name": "Compact folding umbrella",
+              "category": "outdoor_goods",
+              "perishable": false,
               "quantity": 1,
               "unit_price": 349,
               "line_total": 349,
@@ -86,8 +89,8 @@
             },
             {
               "item_id": "ITM-10001-2",
-              "sku": "NP-KIT-012",
-              "name": "Reusable produce bags, set of 3",
+              "sku": "NP-ORG-012",
+              "name": "Reusable organizer pouches, set of 3",
               "category": "home_goods",
               "perishable": false,
               "quantity": 1,
@@ -105,12 +108,12 @@
               "type": "cancellation",
               "created_at": "2026-11-06T08:35:00+05:30",
               "status": "eligible_pending_customer_confirmation",
-              "customer_message": "I ordered the wrong fruit box. Please cancel the whole order.",
+              "customer_message": "I ordered the wrong folding umbrella. Please cancel the whole order.",
               "intent_summary": "Customer requests cancellation of the entire order.",
               "requested_scope": "whole_order",
               "reason_code": "ordered_by_mistake",
               "evidence": [
-                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7001-1", "description": "Synthetic follow-up: customer confirms they want the entire order cancelled, including both the fruit box and produce bags."}
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7001-1", "description": "Synthetic follow-up: customer confirms they want the entire order cancelled, including the umbrella and organizer pouches."}
               ],
               "policy_checks": [
                 {
@@ -148,6 +151,21 @@
           "order_id": "ORD-2026-10002",
           "placed_at": "2026-11-04T10:15:00+05:30",
           "fulfillment_status": "delivered",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-04T10:17:00+05:30", "location": "Bengaluru fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-11-05T08:20:00+05:30", "location": "Bengaluru delivery hub", "details": "Package handed to carrier."},
+            {"status": "delivered", "occurred_at": "2026-11-05T13:20:00+05:30", "location": "Bengaluru", "details": "Delivered to the order address."}
+          ],
+          "shipment": {
+            "carrier": "SwiftShip",
+            "tracking_number": "SHP-2026-10002",
+            "estimated_delivery": "2026-11-05T20:00:00+05:30",
+            "last_location": "Bengaluru",
+            "events": [
+              {"status": "dispatched", "occurred_at": "2026-11-05T08:20:00+05:30", "location": "Bengaluru delivery hub", "details": "Package handed to carrier."},
+              {"status": "delivered", "occurred_at": "2026-11-05T13:20:00+05:30", "location": "Bengaluru", "details": "Delivered to the order address."}
+            ]
+          },
           "delivered_at": "2026-11-05T13:20:00+05:30",
           "payment_status": "paid",
           "payment_method": "card",
@@ -155,14 +173,13 @@
           "items": [
             {
               "item_id": "ITM-10002-1",
-              "sku": "FR-DAI-008",
-              "name": "Chilled yogurt, 500 g",
-              "category": "dairy",
-              "perishable": true,
+              "sku": "NP-HOM-008",
+              "name": "Ceramic travel mug, 450 ml",
+              "category": "home_goods",
+              "perishable": false,
               "quantity": 2,
               "unit_price": 90,
               "line_total": 180,
-              "use_by": "2026-11-09",
               "returnable_for_change_of_mind": false
             }
           ],
@@ -175,20 +192,22 @@
               "type": "return_or_refund",
               "created_at": "2026-11-05T14:05:00+05:30",
               "status": "escalated",
-              "customer_message": "The yogurt was warm when it arrived and smells sour. I haven't eaten it. I want a refund.",
-              "intent_summary": "Customer reports potentially unsafe chilled dairy and requests a refund.",
+              "customer_message": "One of the two travel mugs arrived with a cracked handle. The other one is fine. I want a refund for the cracked mug.",
+              "intent_summary": "Customer reports one of two mugs arrived damaged and requests a refund for that mug.",
               "requested_scope": "item:ITM-10002-1",
-              "reason_code": "perishable_temperature_or_spoilage_concern",
+              "reason_code": "item_arrived_damaged",
               "evidence": [
-                {"type": "photo", "reference": "synthetic://evidence/EV-7002-1", "description": "Yogurt containers and delivery bag"}
+                {"type": "photo", "reference": "synthetic://evidence/EV-7002-1", "description": "Synthetic customer photo record: one ceramic travel mug with a visible crack in the handle; the second mug and shipping carton are also shown."},
+                {"type": "packing_record", "reference": "synthetic://evidence/EV-7002-2", "description": "Synthetic warehouse pack scan: two ceramic travel mugs packed in one carton with standard padding; no damage noted at packing."},
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7002-3", "description": "Synthetic follow-up: customer confirms the cracked mug is unused, has kept it with its packaging for pickup, and prefers a refund of ₹90 for one mug over a replacement."}
               ],
               "policy_checks": [
-                {"rule": "Report perishable issue within 24 hours", "result": "pass", "observed_value": "44 minutes after delivery"},
-                {"rule": "Stop consuming potentially unsafe product", "result": "pass", "observed_value": "Customer says item was not eaten"}
+                {"rule": "Report non-perishable damage within 7 calendar days", "result": "pass", "observed_value": "45 minutes after delivery"},
+                {"rule": "Affected item identified", "result": "pass", "observed_value": "One of two mugs; the other arrived intact"}
               ],
-              "required_action": "Advise the customer not to consume the item and route the food safety report for priority review. A refund may be offered after verification.",
-              "permitted_actions": ["provide_safety_guidance", "escalate_food_safety_case", "request_replacement_or_refund_review"],
-              "prohibited_actions": ["ask_customer_to_consume_item", "require_return_by_regular_post", "promise_refund_before_approval"],
+              "required_action": "Route a refund of one mug (₹90) for review with the photo evidence; pickup is free for a damaged item. Do not promise a resolution before approval.",
+              "permitted_actions": ["review_damage_evidence", "offer_refund_review_for_affected_item", "arrange_free_pickup_after_approval"],
+              "prohibited_actions": ["promise_refund_before_approval", "resolve_both_mugs_when_only_one_is_affected"],
               "action_result": {
                 "type": "escalation_created",
                 "reference": "CASE-9002",
@@ -219,6 +238,21 @@
           "order_id": "ORD-2026-10003",
           "placed_at": "2026-11-01T18:30:00+05:30",
           "fulfillment_status": "delivered",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-01T18:32:00+05:30", "location": "Mumbai fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-11-02T08:10:00+05:30", "location": "Mumbai delivery hub", "details": "Package handed to carrier."},
+            {"status": "delivered", "occurred_at": "2026-11-02T12:00:00+05:30", "location": "Mumbai", "details": "Delivered to the order address."}
+          ],
+          "shipment": {
+            "carrier": "SwiftShip",
+            "tracking_number": "SHP-2026-10003",
+            "estimated_delivery": "2026-11-02T20:00:00+05:30",
+            "last_location": "Mumbai",
+            "events": [
+              {"status": "dispatched", "occurred_at": "2026-11-02T08:10:00+05:30", "location": "Mumbai delivery hub", "details": "Package handed to carrier."},
+              {"status": "delivered", "occurred_at": "2026-11-02T12:00:00+05:30", "location": "Mumbai", "details": "Delivered to the order address."}
+            ]
+          },
           "delivered_at": "2026-11-02T12:00:00+05:30",
           "payment_status": "paid",
           "payment_method": "cash_on_delivery",
@@ -253,7 +287,7 @@
                 {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7003-1", "description": "Synthetic follow-up: customer confirms the jar set is unused, in its original packaging, and accepts the disclosed ₹75 sample pickup fee."}
               ],
               "policy_checks": [
-                {"rule": "Non-perishable return requested within 7 calendar days", "result": "pass", "observed_value": "4 days after delivery"},
+                {"rule": "Non-perishable return requested within 7 calendar days", "result": "pass", "observed_value": "3 days and 21 hours after delivery"},
                 {"rule": "Item unused and in original packaging", "result": "customer_reported_pass", "observed_value": "Customer reports unused and boxed"},
                 {"rule": "Return pickup fee may apply", "result": "disclose_before_confirmation", "observed_value": "₹75 sample pickup fee"}
               ],
@@ -286,6 +320,10 @@
           "order_id": "ORD-2026-10004",
           "placed_at": "2026-11-06T07:00:00+05:30",
           "fulfillment_status": "being_packed",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-06T07:02:00+05:30", "location": "Chennai fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "being_packed", "occurred_at": "2026-11-06T07:15:00+05:30", "location": "Chennai fulfillment center", "details": "Leafy greens picked and temperature-controlled packing started."}
+          ],
           "payment_status": "paid",
           "payment_method": "upi",
           "shipping_address_id": "ADDR-1004-A",
@@ -348,9 +386,24 @@
       "orders": [
         {
           "order_id": "ORD-2026-10005",
-          "placed_at": "2026-10-29T11:40:00+05:30",
+          "placed_at": "2026-10-28T11:40:00+05:30",
           "fulfillment_status": "delivered",
-          "delivered_at": "2026-10-30T16:45:00+05:30",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-10-28T11:42:00+05:30", "location": "Kolkata fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-10-29T09:30:00+05:30", "location": "Kolkata delivery hub", "details": "Package handed to carrier."},
+            {"status": "delivered", "occurred_at": "2026-10-29T16:45:00+05:30", "location": "Kolkata", "details": "Delivered to the order address."}
+          ],
+          "shipment": {
+            "carrier": "SwiftShip",
+            "tracking_number": "SHP-2026-10005",
+            "estimated_delivery": "2026-10-29T20:00:00+05:30",
+            "last_location": "Kolkata",
+            "events": [
+              {"status": "dispatched", "occurred_at": "2026-10-29T09:30:00+05:30", "location": "Kolkata delivery hub", "details": "Package handed to carrier."},
+              {"status": "delivered", "occurred_at": "2026-10-29T16:45:00+05:30", "location": "Kolkata", "details": "Delivered to the order address."}
+            ]
+          },
+          "delivered_at": "2026-10-29T16:45:00+05:30",
           "payment_status": "paid",
           "payment_method": "card",
           "shipping_address_id": "ADDR-1005-A",
@@ -381,7 +434,7 @@
               "requested_scope": "item:ITM-10005-1",
               "reason_code": "change_of_mind",
               "evidence": [
-                {"type": "delivery_record", "reference": "synthetic://evidence/EV-7005-1", "description": "Synthetic delivery scan: order delivered 2026-10-30 at 4:45 p.m. IST. The return request was received 2026-11-06 at 10:00 a.m. IST, 7 days and 17 hours later."}
+                {"type": "delivery_record", "reference": "synthetic://evidence/EV-7005-1", "description": "Synthetic delivery scan: order delivered 2026-10-29 at 4:45 p.m. IST. The return request was received 2026-11-06 at 10:00 a.m. IST, 7 days and 17 hours later."}
               ],
               "policy_checks": [
                 {"rule": "Non-perishable return requested within 7 calendar days", "result": "fail", "observed_value": "7 days and 17 hours after delivery"}
@@ -415,6 +468,21 @@
           "order_id": "ORD-2026-10006",
           "placed_at": "2026-11-03T09:00:00+05:30",
           "fulfillment_status": "delivered",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-03T09:02:00+05:30", "location": "Hyderabad fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-11-04T08:45:00+05:30", "location": "Hyderabad delivery hub", "details": "Package handed to carrier."},
+            {"status": "delivered", "occurred_at": "2026-11-04T15:10:00+05:30", "location": "Hyderabad", "details": "Delivered to the order address; no package damage recorded."}
+          ],
+          "shipment": {
+            "carrier": "SwiftShip",
+            "tracking_number": "SHP-2026-10006",
+            "estimated_delivery": "2026-11-04T20:00:00+05:30",
+            "last_location": "Hyderabad",
+            "events": [
+              {"status": "dispatched", "occurred_at": "2026-11-04T08:45:00+05:30", "location": "Hyderabad delivery hub", "details": "Package handed to carrier."},
+              {"status": "delivered", "occurred_at": "2026-11-04T15:10:00+05:30", "location": "Hyderabad", "details": "Delivered to the order address; no package damage recorded."}
+            ]
+          },
           "delivered_at": "2026-11-04T15:10:00+05:30",
           "payment_status": "paid",
           "payment_method": "net_banking",
@@ -447,7 +515,8 @@
               "requested_scope": "item:ITM-10006-1",
               "reason_code": "suspected_defect",
               "evidence": [
-                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7006-1", "description": "Synthetic follow-up: customer tried the supplied charger and another compatible outlet; the lamp still does not power on. Customer reports no visible damage and provided a photo of the lamp and label."}
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7006-1", "description": "Synthetic follow-up: customer tried the supplied charger and another compatible outlet; the lamp still does not power on. Customer reports no visible damage and provided a photo of the lamp and label."},
+                {"type": "photo", "reference": "synthetic://evidence/EV-7006-2", "description": "Synthetic customer photo record: the lamp, its charger, and the product label showing SKU NP-ELC-022; no visible damage. The photo cannot show whether the lamp powers on."}
               ],
               "policy_checks": [
                 {"rule": "Issue reported within 7 calendar days", "result": "pass", "observed_value": "1 day and 4 hours after delivery"},
@@ -482,6 +551,11 @@
           "order_id": "ORD-2026-10007",
           "placed_at": "2026-11-02T14:20:00+05:30",
           "fulfillment_status": "delivered",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-02T14:22:00+05:30", "location": "Jaipur fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-11-03T08:05:00+05:30", "location": "Jaipur delivery hub", "details": "Package handed to carrier."},
+            {"status": "delivered", "occurred_at": "2026-11-03T11:30:00+05:30", "location": "Jaipur", "details": "Delivered to the order address."}
+          ],
           "delivered_at": "2026-11-03T11:30:00+05:30",
           "payment_status": "paid",
           "payment_method": "upi",
@@ -525,10 +599,11 @@
               "requested_scope": "item:ITM-10007-1",
               "reason_code": "missing_item",
               "evidence": [
-                {"type": "photo", "reference": "synthetic://evidence/EV-7007-1", "description": "Delivered bag and item contents"}
+                {"type": "photo", "reference": "synthetic://evidence/EV-7007-1", "description": "Synthetic customer photo record: the delivered bag with the roasted chickpeas and the invoice listing both items; no bread loaf is visible."},
+                {"type": "packing_record", "reference": "synthetic://evidence/EV-7007-2", "description": "Synthetic warehouse pack scan: roasted chickpeas scanned into the bag; no scan recorded for the wholegrain bread loaf."}
               ],
               "policy_checks": [
-                {"rule": "Report non-perishable issue within 48 hours or other applicable window", "result": "pass", "observed_value": "45 minutes after delivery"},
+                {"rule": "Report perishable issue within 24 hours of delivery", "result": "pass", "observed_value": "45 minutes after delivery"},
                 {"rule": "Item-level resolution", "result": "pass", "observed_value": "Only bread marked missing"}
               ],
               "required_action": "Resolve the missing item without cancelling or refunding unaffected items.",
@@ -566,6 +641,19 @@
           "order_id": "ORD-2026-10008",
           "placed_at": "2026-11-06T08:45:00+05:30",
           "fulfillment_status": "dispatched",
+          "fulfillment_events": [
+            {"status": "confirmed", "occurred_at": "2026-11-06T08:47:00+05:30", "location": "Kochi fulfillment center", "details": "Order confirmed and queued for picking."},
+            {"status": "dispatched", "occurred_at": "2026-11-06T09:40:00+05:30", "location": "Kochi delivery hub", "details": "Package handed to carrier."}
+          ],
+          "shipment": {
+            "carrier": "SwiftShip",
+            "tracking_number": "SHP-2026-10008",
+            "estimated_delivery": "2026-11-06T18:00:00+05:30",
+            "last_location": "Kochi delivery hub",
+            "events": [
+              {"status": "dispatched", "occurred_at": "2026-11-06T09:40:00+05:30", "location": "Kochi delivery hub", "details": "Package handed to carrier."}
+            ]
+          },
           "payment_status": "paid",
           "payment_method": "wallet",
           "shipping_address_id": "ADDR-1008-A",

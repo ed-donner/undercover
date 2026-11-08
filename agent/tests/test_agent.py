@@ -6,6 +6,8 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from agent import main
+from agent.models import Recommendation
+from agent.safety import apply_context_overrides
 from backend.main import app
 from backend.store import Store
 
@@ -121,12 +123,12 @@ def test_run_rejects_recommendation_without_fetching_context(tmp_path, monkeypat
         {
             "request_id": "REQ-7002",
             "expected_outcome": "approve",
-            "priority": True,
-            "required_text": "do not consume or return the item",
+            "priority": False,
+            "required_text": "",
         },
     ],
 )
-def test_context_overrides_hold_ambiguous_and_food_safety_requests(
+def test_context_overrides_hold_ambiguous_requests_and_pass_damage_reports(
     tmp_path, monkeypatch, scenario: SafetyScenario
 ):
     monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "safety.sqlite3"))
@@ -142,6 +144,31 @@ def test_context_overrides_hold_ambiguous_and_food_safety_requests(
     assert result["outcome"] == scenario["expected_outcome"]
     assert result["priority_human_review"] is scenario["priority"]
     assert scenario["required_text"] in next_action.casefold()
+
+
+def test_food_safety_report_is_held_for_priority_review():
+    context = {
+        "request": {
+            "type": "return_or_refund",
+            "customer_message": "The yogurt was warm when it arrived and smells sour.",
+            "requested_scope": "item:ITM-1",
+            "evidence": [],
+        },
+        "order": {"items": [{"name": "Chilled yogurt, 500 g"}]},
+    }
+    recommendation = Recommendation(
+        outcome="approve",
+        rationale="Reported within the window.",
+        policy_citations=[],
+        next_action="Review the refund.",
+        priority_human_review=False,
+    )
+
+    result = apply_context_overrides(context, recommendation)
+
+    assert result.priority_human_review is True
+    assert "do not consume or return the item" in result.next_action.casefold()
+    assert "Returns Policy: Food safety or allergy concern" in result.policy_citations
 
 
 def test_run_rejects_unsupported_action_claim(tmp_path, monkeypatch):

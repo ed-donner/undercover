@@ -22,16 +22,41 @@ def test_seed_is_idempotent(tmp_path):
     assert len(store.list_requests()) == 8
 
 
-def test_seed_refreshes_evidence_in_existing_request_records(tmp_path):
+def test_seed_refreshes_request_and_order_records_in_an_existing_database(tmp_path):
     store = Store(tmp_path / "evidence.sqlite3")
     store.initialize()
+    with store.connect() as connection:
+        connection.execute(
+            "UPDATE support_requests SET request_json = ?, order_json = ? "
+            "WHERE request_id = 'REQ-7002'",
+            (
+                '{"customer_message": "stale", "evidence": []}',
+                '{"items": []}',
+            ),
+        )
+    connection.close()
+    store.initialize()
 
-    request = store.get_request("REQ-7001")
+    request = store.get_request("REQ-7002")
 
     assert request is not None
-    evidence = request["request"]["evidence"][0]
-    assert evidence["reference"] == "synthetic://evidence/EV-7001-1"
-    assert "confirms they want the entire order" in evidence["description"]
+    assert "cracked handle" in request["request"]["customer_message"]
+    references = [item["reference"] for item in request["request"]["evidence"]]
+    assert "synthetic://evidence/EV-7002-3" in references
+    assert request["order"]["items"][0]["name"] == "Ceramic travel mug, 450 ml"
+    assert request["order"]["shipment"]["tracking_number"] == "SHP-2026-10002"
+
+
+def test_every_request_has_evidence_and_a_fulfillment_timeline(tmp_path):
+    store = Store(tmp_path / "timeline.sqlite3")
+    store.initialize()
+
+    for summary in store.list_requests():
+        request = store.get_request(summary["request_id"])
+        assert request is not None
+        assert request["request"]["evidence"]
+        events = request["order"]["fulfillment_events"]
+        assert events[-1]["status"] == request["order"]["fulfillment_status"]
 
 
 def test_final_runtime_queue_has_no_reference_decision_route(tmp_path, monkeypatch):

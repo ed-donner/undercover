@@ -93,17 +93,14 @@ class Store:
                                 else None,
                             ),
                         )
-                        existing = connection.execute(
-                            "SELECT request_json FROM support_requests "
-                            "WHERE request_id = ?",
-                            (request["request_id"],),
-                        ).fetchone()
-                        stored_request = json.loads(existing["request_json"])
-                        stored_request["evidence"] = request["evidence"]
                         connection.execute(
-                            "UPDATE support_requests SET request_json = ? "
-                            "WHERE request_id = ?",
-                            (json.dumps(stored_request), request["request_id"]),
+                            "UPDATE support_requests SET request_json = ?, "
+                            "order_json = ? WHERE request_id = ?",
+                            (
+                                json.dumps(safe_request),
+                                json.dumps(safe_order),
+                                request["request_id"],
+                            ),
                         )
 
     @staticmethod
@@ -125,6 +122,8 @@ class Store:
             "order_id": order["order_id"],
             "placed_at": order["placed_at"],
             "fulfillment_status": order["fulfillment_status"],
+            "fulfillment_events": order["fulfillment_events"],
+            "shipment": order.get("shipment"),
             "payment_status": order["payment_status"],
             "payment_method": order["payment_method"],
             "delivery_window": order.get("delivery_window"),
