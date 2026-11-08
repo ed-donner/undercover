@@ -223,25 +223,36 @@ def test_support_review_decides_without_running_an_order_action(client):
     assert duplicate.status_code == 409
 
 
-def test_background_run_works_up_to_its_cap(store, monkeypatch):
+def test_background_run_works_up_to_its_cap_and_retries_a_failure(store, monkeypatch):
     calls = []
 
-    def fake_agent(request_id, thread_id):
+    def fake_work(request_id):
         calls.append(request_id)
-        if request_id == "REQ-7002":
-            raise RuntimeError("provider error")
-        return RECOMMENDATION
+        store.start_request(request_id)
+        if request_id == "REQ-7002" and calls.count("REQ-7002") == 1:
+            store.fail_request(request_id)
+            return {"request_id": request_id, "status": "waiting", "line": "failed"}
+        store.save_recommendation(request_id, RECOMMENDATION)
+        return {"request_id": request_id, "status": "done", "line": "done"}
 
-    monkeypatch.setattr(main, "run_agent", fake_agent)
+    monkeypatch.setattr(main, "work_request", fake_work)
     run_id = store.create_run(2)
     assert run_id is not None
     main.run_in_background(store, run_id, 2)
 
     statuses = {item["request_id"]: item["status"] for item in store.list_requests()}
     run = store.current_run()
-    assert len(calls) == 2
-    assert statuses[calls[0]] == "waiting_for_agent_review"
-    assert statuses["REQ-7002"] == "waiting"
-    assert list(statuses.values()).count("waiting") == 7
+    assert calls == ["REQ-7007", "REQ-7002", "REQ-7002"]
+    assert statuses["REQ-7002"] == "waiting_for_agent_review"
+    assert list(statuses.values()).count("waiting") == 6
     assert run is not None
     assert run["status"] == "finished"
+    assert {todo["status"] for todo in run["todos"]} == {"done"}
+
+
+def test_instructions_cover_the_queue_and_a_request(client):
+    instructions = client.get("/api/agent/instructions").json()
+    assert set(instructions) == {"queue", "request"}
+    assert "running the support queue" in instructions["queue"]
+    assert instructions["request"].startswith("You are the Shoppie Agent")
+    assert "data/evals" not in instructions["request"]

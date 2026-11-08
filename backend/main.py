@@ -9,12 +9,18 @@ from typing import Any, Literal
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from agent.instructions import SYSTEM_PROMPT
-from agent.main import run as run_agent
+from agent.instructions import QUEUE_INSTRUCTIONS, REQUEST_INSTRUCTIONS
+from agent.main import work_request
 from agent.models import Recommendation
-from backend.policies import policy_for_request_type
+from backend.policies import list_policies, read_section
 from backend.store import AGENT_STAGES, Store, TodoStatus
 
+TODO_FOR_WORK: dict[str, TodoStatus] = {
+    "done": "done",
+    "waiting": "to_do",
+    "left_for_support": "left_for_support",
+    "skipped": "done",
+}
 DEFAULT_DATABASE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "shoppie.sqlite3"
 )
@@ -91,24 +97,18 @@ def require_request(store: Store, request_id: str) -> dict[str, Any]:
 
 def run_in_background(store: Store, run_id: str, cap: int) -> None:
     """Work waiting requests in order up to the run's cap."""
-    worked = 0
-    for waiting in store.list_waiting():
-        if worked == cap:
-            break
-        request_id = waiting["request_id"]
-        attempt = store.start_request(request_id)
-        if attempt is None:
-            continue
-        worked += 1
+    worked: set[str] = set()
+    while waiting := [
+        item["request_id"]
+        for item in store.list_waiting()
+        if item["request_id"] in worked or len(worked) < cap
+    ]:
+        request_id = waiting[0]
+        worked.add(request_id)
         store.update_todo(run_id, request_id, "in_progress")
-        try:
-            recommendation = run_agent(request_id, f"request-{request_id}-{attempt}")
-            store.save_recommendation(request_id, recommendation)
-            store.update_todo(run_id, request_id, "done")
-        except Exception:
-            store.fail_request(request_id)
-            store.update_todo(run_id, request_id, "to_do")
-    store.finish_run(run_id, "finished", f"Worked {worked} requests.")
+        result = work_request(request_id)
+        store.update_todo(run_id, request_id, TODO_FOR_WORK[result["status"]])
+    store.finish_run(run_id, "finished", f"Worked {len(worked)} requests.")
 
 
 @app.get("/api/health", operation_id="health")
@@ -137,21 +137,39 @@ def get_request(request_id: str, request: Request) -> dict[str, Any]:
 
 @app.get("/api/requests/{request_id}/context", operation_id="get_request_context")
 def get_request_context(request_id: str, request: Request) -> dict[str, Any]:
-    """Return the request context and policy available to the agent."""
-    result = require_request(store_of(request), request_id)
-    try:
-        result["policy"] = policy_for_request_type(result["request"]["type"])
-    except KeyError as error:
-        raise HTTPException(
-            status_code=422, detail="Unsupported request type"
-        ) from error
+    """Return the request, customer and order context available to the agent."""
+    return require_request(store_of(request), request_id)
+
+
+@app.get("/api/policies", operation_id="list_policy_sections")
+def list_policy_sections() -> list[dict[str, object]]:
+    """List Shoppie's policies and the sections in each."""
+    return list_policies()
+
+
+@app.get(
+    "/api/requests/{request_id}/policies/{policy}/sections/{section}",
+    operation_id="read_policy_section",
+)
+def read_policy_section(
+    request_id: str, policy: str, section: str, request: Request
+) -> dict[str, str]:
+    """Return one policy section and record on the request that the agent read it."""
+    store = store_of(request)
+    require_request(store, request_id)
+    result = read_section(policy, section)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Policy section not found")
+    message = f"Read {result['name']}, {result['title']}."
+    if not store.add_step(request_id, "read_section", message):
+        raise HTTPException(status_code=409, detail="Request is not in progress")
     return result
 
 
 @app.get("/api/agent/instructions", operation_id="get_agent_instructions")
 def get_agent_instructions() -> dict[str, str]:
-    """Return the current read-only Shoppie Agent instructions."""
-    return {"instructions": SYSTEM_PROMPT}
+    """Return the read-only instructions for running the queue and working a request."""
+    return {"queue": QUEUE_INSTRUCTIONS, "request": REQUEST_INSTRUCTIONS}
 
 
 @app.post("/api/requests/{request_id}/steps", operation_id="add_request_step")

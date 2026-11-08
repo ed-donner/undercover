@@ -42,26 +42,26 @@ The context operation stops including the whole policy. Two new operations let t
 - `GET /api/policies` (`list_policy_sections`) returns each policy's name and its section headings, parsed from the `##` and `###` headings in `docs/*-policy.md`.
 - `GET /api/requests/{request_id}/policies/{policy}/sections/{section}` (`read_policy_section`) returns one section's text and records a `read_section` step on the request, for example "Read Cancellation Policy, 2. Customer-requested cancellations". This is the only way the agent reads policy text, so the request page lists exactly what it read.
 
-`backend/policies.py` becomes a small section parser. `policy_for_request_type` goes.
+`backend/policies.py` becomes a small section parser: a section's id is its heading in lower case with dashes, such as `2-customer-requested-cancellations`, and a `##` section includes its `###` subsections. `policy_for_request_type` goes. Phases 2 and 3 are committed together, because the request agent depends on the context it loses here.
 
-- [ ] Parser tests: each of the three policies yields the headings in its file. An unknown policy or section returns 404.
-- [ ] An API test reads one section for `REQ-7001` and the request's steps then include that section's name.
-- [ ] An API test confirms `GET /api/requests/{id}/context` no longer contains policy text.
-- [ ] A test confirms `read_policy_section` on a request that isn't in progress is refused with 409 and records no step.
-- [ ] `npm run check:python` passes with 80% coverage.
+- [x] Parser tests: each of the three policies yields the headings in its file. An unknown policy or section returns 404.
+- [x] An API test reads one section for `REQ-7001` and the request's steps then include that section's name.
+- [x] An API test confirms `GET /api/requests/{id}/context` no longer contains policy text.
+- [x] A test confirms `read_policy_section` on a request that isn't in progress is refused with 409 and records no step.
+- [x] `npm run check:python` passes with 80% coverage.
 
 ## Phase 3: The request agent as a subagent
 
-Refactor `agent/main.py` so that `run_request(request_id, thread_id, llm)` is the request agent: its tools are `get_request_context`, `list_policy_sections`, `read_policy_section` and `record_progress`, and its output is the same structured `Recommendation`, with the existing safety checks in `agent/safety.py`. It gets `ModelRetryMiddleware` and `ToolRetryMiddleware` for timeouts and provider errors. `work_request(request_id, attempt)` wraps it: it starts the request in the backend, calls `run_request` on the thread `request-<id>-attempt-<n>`, saves the recommendation or records the failure, and returns one line, such as `REQ-7003: request_information (needs the customer to confirm scope)` or `REQ-7005: failed, back in the queue (attempt 1 of 2)`.
+Refactor `agent/main.py` so that `run_request(request_id, thread_id, llm)` is the request agent: its tools are `get_request_context`, `list_policy_sections`, `read_policy_section` and `record_progress`, and its output is the same structured `Recommendation`, with the existing safety checks in `agent/safety.py`. It gets `ModelRetryMiddleware` and `ToolRetryMiddleware` for timeouts and provider errors. `work_request(request_id)` wraps it: it starts the request in the backend, calls `run_request` on the thread `request-<id>-attempt-<n>`, saves the recommendation or records the failure, and returns one line, such as `REQ-7003: request_information (needs the customer to confirm scope)` or `REQ-7005: failed, back in the queue (attempt 1 of 2)`.
 
 The default model becomes `deepseek/deepseek-v4.1-flash` with low reasoning effort. `MODEL_NAME` still overrides it and runs with no reasoning effort set. The request agent's instructions move to `agent/instructions.py` as `REQUEST_INSTRUCTIONS`, rewritten from the policies to tell the agent to look up only the sections it needs. They're never written from `data/evals/`.
 
-- [ ] Stub-model tests: the request agent lists sections, reads at least one and returns each outcome (approve, decline, request information), with citations that match sections it read.
-- [ ] A stub-model test: a model error on the first try that succeeds on retry gives one recommendation, through `ModelRetryMiddleware`.
-- [ ] `work_request` tests: a success returns the one-line report and stores the recommendation. A failure returns the request to waiting. A second failure leaves it for support. No test calls a live model.
-- [ ] The existing safety tests still pass: the food-safety flag, ambiguous cancellation scope, and the check that the agent never claims an action happened.
-- [ ] A test confirms the default model is `deepseek/deepseek-v4.1-flash` with low reasoning effort, and that `MODEL_NAME` overrides it with none.
-- [ ] `npm run check:python` passes with 80% coverage.
+- [x] Stub-model tests: the request agent lists sections, reads at least one and returns each outcome (approve, decline, request information), with citations that match sections it read.
+- [x] A stub-model test: a model error on the first try that succeeds on retry gives one recommendation, through `ModelRetryMiddleware`.
+- [x] `work_request` tests: a success returns the one-line report and stores the recommendation. A failure returns the request to waiting. A second failure leaves it for support. No test calls a live model.
+- [x] The existing safety tests still pass: the food-safety flag, ambiguous cancellation scope, and the check that the agent never claims an action happened.
+- [x] A test confirms the default model is `deepseek/deepseek-v4.1-flash` with low reasoning effort, and that `MODEL_NAME` overrides it with none.
+- [x] `npm run check:python` passes with 80% coverage.
 
 ## Phase 4: The queue agent
 

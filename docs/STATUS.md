@@ -14,3 +14,4 @@ The backend, Shoppie Agent workflow, and support dashboard are implemented. The 
 ## Harness build (in progress, `docs/PLAN_HARNESS.md`)
 
 - Phase 1: runs with a cap and a to-do list, attempt counting (a failed request goes back to the queue once, then is left for support), one recommendation and one review per request, recovery at startup, and `npm run seed`. The dashboard's Initiate processing button is rewired in Phase 5.
+- Phases 2 and 3: the request agent is a subagent with a clean thread per attempt. It looks up policy sections (`GET /api/policies`, `read_policy_section`), and each section it reads is recorded on the request. It retries model and network errors with LangChain's retry middleware and reports back in one line. The default model is DeepSeek V4.1 Flash.
