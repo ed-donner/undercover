@@ -12,14 +12,15 @@ We want an AI agent, the Shoppie Agent, to help agents work through the support 
 
 - read the customer's request, order details and relevant history
 - look up the sections of the shopping, cancellation and returns policies the request needs, rather than reading whole policies
+- work out the eligible refund amount from Shoppie's policy rules when a refund is in play
 - recommend whether to approve, decline or ask for more information
 - explain the recommendation and cite the policy sections it relied on
 
 ## Working the queue
 
-One run works the whole queue. A support agent starts the agent once, with a cap on how many requests the run may work, and the agent plans the run as a to-do list, chooses the order, works each waiting request up to the cap, and finishes with a short summary. Each request is worked by a fresh helper from a clean start. One named request can also be worked on its own.
+One run works the whole queue. A support agent starts the agent once, with a cap on how many requests the run may work, and the agent plans the run as a to-do list, chooses the order, works each waiting request up to the cap, and finishes with a short summary. Each request attempt runs on its own checkpointed thread and pauses once its recommendation is ready for support review. When a support agent signs off on a held request with their name, the paused request thread resumes and completes the request. One named request can also be worked on its own.
 
-A long run will meet timeouts and errors. One bad request never stops the run or stays stuck in progress: a request that fails before it has a recommendation goes back in the queue and is tried again, and one that fails twice is left for a support agent. No request gets two recommendations or two reviews. Before it finishes, the agent checks it has not missed a waiting request within its cap.
+A long run will meet timeouts, errors and process restarts. If a run or service stops partway through an attempt, the next run resumes that request from its last saved checkpoint on the same attempt rather than starting over. A request whose attempt fails before it has a recommendation goes back in the queue and is tried again on a fresh attempt, and one that fails twice is left for a support agent. No request gets two recommendations or two reviews. Before it finishes, the agent checks it has not missed a waiting request within its cap.
 
 The agent supports the support team; agents remain responsible for processing requests and confirming decisions.
 

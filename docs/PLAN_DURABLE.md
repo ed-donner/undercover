@@ -112,9 +112,9 @@ Start the local Docker Postgres container, set `DATABASE_URL=postgresql://postgr
 - Check `pg_stat_activity` in the local Postgres container (`usename = 'postgres'`) and the request's session traces in Langfuse (when Langfuse keys are configured).
 - Update `docs/SPEC.md` (working the queue), `docs/TECH_STACK.md`, `docs/PROCESS.md`, and `docs/STATUS.md`.
 
-- [ ] With `.env` moved aside, `npm run check` passes Python, TypeScript, and Playwright checks offline.
-- [ ] After starting the local Docker Postgres container and running `npm run seed`, a live run capped at 5 requests works 5 requests; signing off on a held request in the browser via Playwright completes it within 5 seconds with the reviewer and timestamp shown.
-- [ ] A live run stopped after a request's first steps resumes the same thread on the next run with `attempts` unchanged and one recommendation.
-- [ ] During the live run, querying `pg_stat_activity` (`usename = 'postgres'`) in the local Postgres container shows no more than 12 connections.
-- [ ] When Langfuse keys are configured, the signed-off request's session contains traces from both before and after the sign-off.
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/PROCESS.md`, and `docs/STATUS.md` describe the product as built, and `git diff --check` passes.
+- [x] With `.env` moved aside, `npm run check` passes Python, TypeScript, and Playwright checks offline.
+- [x] After starting the local Docker Postgres container and running `npm run seed`, a live run capped at 5 requests works 5 requests; signing off on a held request in the browser via Playwright completes it within 5 seconds with the reviewer and timestamp shown.
+- [x] A live run stopped after a request's first steps resumes the same thread on the next run with `attempts` unchanged and one recommendation.
+- [x] During the live run, querying `pg_stat_activity` (`usename = 'postgres'`) in the local Postgres container shows no more than 12 connections.
+- [x] When Langfuse keys are configured, the signed-off request's session contains traces from both before and after the sign-off.
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/PROCESS.md`, and `docs/STATUS.md` describe the product as built, and `git diff --check` passes.

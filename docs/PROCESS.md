@@ -1,6 +1,6 @@
 # Process
 
-`uv sync` and `npm install` at the repo root install everything, including a git pre-commit hook. `npm run dev` starts the backend and the dashboard.
+`uv sync` and `npm install` at the repo root install everything, including a git pre-commit hook. `npm run dev` starts the backend, the agent service (port 8002), and the dashboard. When `DATABASE_URL` is set in `.env` (for example, pointing to the local `shoppie-postgres` Docker container on `127.0.0.1:5432`), `npm run seed` and `npm run dev` use the `undercover` schema in Postgres; automated tests in `npm run check` run offline on SQLite and `InMemorySaver`.
 
 `npm run check` runs every check:
 
