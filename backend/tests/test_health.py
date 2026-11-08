@@ -111,4 +111,5 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         "/api/requests/{request_id}/recommendation",
         "/api/requests/{request_id}/failure",
         "/api/requests/{request_id}/review",
+        "/api/requests/{request_id}/complete",
     }

@@ -60,11 +60,11 @@ Replace `create_agent` in `agent/main.py` with a synchronous hand-written `State
   - `complete`: calls `POST /api/requests/{request_id}/complete` (`operation_id="complete_request"`) to record the final confirmed resolution step (with who signed off and when) and transition the request from `in_progress` to `decided`.
 - Compile the graph with `PostgresSaver` (connected with `autocommit=True, prepare_threshold=0, row_factory=dict_row, options="-c search_path=undercover"`) when `DATABASE_URL` is set, or an in-memory/SQLite checkpointer when `DATABASE_URL` is unset, and run every `.invoke(...)` with `durability="sync"`.
 
-- [ ] Stub-model tests verify the graph runs `agent -> tools -> decide -> approval`, saves the recommendation, moves the request to `waiting_for_agent_review`, and pauses at `interrupt()` with `state.next == ("approval",)`.
-- [ ] Stub-model tests verify resuming the paused thread with `Command(resume={"outcome": "approve", "notes": "...", "reviewed_by": "Priya Nair", "reviewed_at": "..."})` runs `complete`, transitions the request to `decided`, and records who signed off and when.
-- [ ] Stub-model tests verify that a second resume or duplicate `complete` call does not record a second decision or duplicate step.
-- [ ] Stub-model tests verify tool refusal messages are returned to the model and a runaway loop stops after 30 model calls.
-- [ ] `npm run check:python` passes with at least 80% coverage.
+- [x] Stub-model tests verify the graph runs `agent -> tools -> decide -> approval`, saves the recommendation, moves the request to `waiting_for_agent_review`, and pauses at `interrupt()` with `state.next == ("approval",)`.
+- [x] Stub-model tests verify resuming the paused thread with `Command(resume={"outcome": "approve", "notes": "...", "reviewed_by": "Priya Nair", "reviewed_at": "..."})` runs `complete`, transitions the request to `decided`, and records who signed off and when.
+- [x] Stub-model tests verify that a second resume or duplicate `complete` call does not record a second decision or duplicate step.
+- [x] Stub-model tests verify tool refusal messages are returned to the model and a runaway loop stops after 30 model calls.
+- [x] `npm run check:python` passes with at least 80% coverage.
 
 ## Phase 4: Crash recovery, sign-off resume, and the agent service
 

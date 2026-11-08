@@ -51,6 +51,15 @@ class ReviewInput(BaseModel):
     notes: str
 
 
+class CompletionInput(BaseModel):
+    """A confirmed review used by the agent to complete a request."""
+
+    outcome: Literal["approve", "decline", "request_information"]
+    notes: str
+    reviewed_by: str
+    reviewed_at: str
+
+
 class RunInput(BaseModel):
     """The most requests a run may work."""
 
@@ -248,6 +257,19 @@ def review_request(
     if not store.record_review(request_id, saved_review):
         raise HTTPException(status_code=409, detail="Request was already reviewed")
     return {"request_id": request_id, "status": "decided", "review": saved_review}
+
+
+@app.post("/api/requests/{request_id}/complete", operation_id="complete_request")
+def complete_request(
+    request_id: str, completion: CompletionInput, request: Request
+) -> dict[str, Any]:
+    """Record the confirmed resolution and complete a reviewed support request."""
+    store = store_of(request)
+    require_request(store, request_id)
+    payload = completion.model_dump()
+    if not store.complete_request(request_id, payload):
+        raise HTTPException(status_code=409, detail="Request cannot be completed")
+    return {"request_id": request_id, "status": "decided", "review": payload}
 
 
 @app.post("/api/runs", operation_id="start_run")

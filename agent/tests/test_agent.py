@@ -42,6 +42,7 @@ def test_request_agent_reads_sections_and_returns_a_recommendation(store, outcom
         "reading_request",
         "read_section",
         "checking_policy",
+        "preparing_recommendation",
     ]
 
 
@@ -237,3 +238,46 @@ def test_trace_context_attaches_langfuse_session_only_when_keys_are_set(monkeypa
         "langfuse_session_id": "request-REQ-7002-attempt-1"
     }
     assert sessions == ["request-REQ-7002-attempt-1"]
+
+
+def test_graph_pauses_at_approval_and_resumes_to_complete_once(store):
+    assert store.start_request("REQ-7008") == 1
+    thread_id = "request-REQ-7008-attempt-1"
+    recommendation = main.run_request("REQ-7008", thread_id, scripted_model())
+    graph = main.build_request_graph("REQ-7008", scripted_model())
+    _, config = main.trace_context("REQ-7008", thread_id)
+    paused = graph.get_state(config)
+    held = store.get_request("REQ-7008")
+
+    assert recommendation["outcome"] == "approve"
+    assert paused.next == ("approval",)
+    assert paused.interrupts[0].value["request_id"] == "REQ-7008"
+    assert held["status"] == "waiting_for_agent_review"
+
+    review = {
+        "outcome": "approve",
+        "notes": "Confirmed pre-dispatch cancellation.",
+        "reviewed_by": "Priya Nair",
+        "reviewed_at": "2026-03-02T14:25:00+00:00",
+    }
+    main.resume_request_thread("REQ-7008", thread_id, review, scripted_model())
+    decided = store.get_request("REQ-7008")
+
+    assert decided["status"] == "decided"
+    assert decided["review"] == review
+    assert decided["steps"][-1]["stage"] == "completed"
+    assert "Priya Nair" in decided["steps"][-1]["message"]
+
+    main.resume_request_thread("REQ-7008", thread_id, review, scripted_model())
+    after_repeat = store.get_request("REQ-7008")
+    completed_steps = [
+        step for step in after_repeat["steps"] if step["stage"] == "completed"
+    ]
+    assert len(completed_steps) == 1
+
+
+def test_runaway_loop_stops_after_30_model_calls(store):
+    assert store.start_request("REQ-7008") == 1
+    endless = StubModel(messages=iter(call("list_policy_sections") for _ in range(35)))
+    with pytest.raises(RuntimeError, match="exceeded 30 model calls"):
+        main.run_request("REQ-7008", "thread-runaway", endless)

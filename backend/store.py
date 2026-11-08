@@ -512,9 +512,7 @@ class Store:
                 return False
             existing = self.decode(row["review_json"])
             if existing is not None:
-                return existing.get("outcome") == review.get(
-                    "outcome"
-                ) and existing.get("notes") == review.get("notes")
+                return self._reviews_match(existing, review)
             if row["queue_status"] != "waiting_for_agent_review":
                 return False
             connection.execute(
@@ -526,6 +524,58 @@ class Store:
                 )
             )
         return True
+
+    def complete_request(self, request_id: str, review: dict[str, Any]) -> bool:
+        """Record the confirmed resolution once and mark the request decided."""
+        with self.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(
+                        support_requests.c.queue_status,
+                        support_requests.c.review_json,
+                    ).where(support_requests.c.request_id == request_id)
+                )
+                .mappings()
+                .first()
+            )
+            if row is None:
+                return False
+            existing = self.decode(row["review_json"])
+            if row["queue_status"] == "decided":
+                return existing is not None and self._reviews_match(existing, review)
+            if row["queue_status"] not in {"in_progress", "waiting_for_agent_review"}:
+                return False
+            if existing is not None and not self._reviews_match(existing, review):
+                return False
+            connection.execute(
+                update(support_requests)
+                .where(support_requests.c.request_id == request_id)
+                .values(
+                    review_json=json.dumps(review),
+                    queue_status="decided",
+                )
+            )
+            self._insert_step(
+                connection,
+                request_id,
+                "completed",
+                f"Confirmed {review['outcome']} after review by "
+                f"{review['reviewed_by']}.",
+            )
+        return True
+
+    @staticmethod
+    def _reviews_match(existing: dict[str, Any], review: dict[str, Any]) -> bool:
+        same_reviewer = (
+            "reviewed_by" not in existing
+            or "reviewed_by" not in review
+            or existing.get("reviewed_by") == review.get("reviewed_by")
+        )
+        return (
+            existing.get("outcome") == review.get("outcome")
+            and existing.get("notes") == review.get("notes")
+            and same_reviewer
+        )
 
     def create_run(self, cap: int) -> str | None:
         """Start a run record unless another run is still running."""
