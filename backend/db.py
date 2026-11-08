@@ -19,11 +19,14 @@ from sqlalchemy import (
     func,
     insert,
     select,
+    text,
 )
 
 from backend.data import CLAIMS
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "undercover.db"
+SCHEMA = "undercover"
+CONNECTIONS_PER_PROCESS = 4
 
 metadata = MetaData()
 
@@ -81,13 +84,31 @@ def db_path() -> Path:
 
 def database_url() -> str:
     """Return the database to use: Supabase if DATABASE_URL is set, else SQLite."""
+    url = os.environ.get("DATABASE_URL")
+    if url:
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
     return f"sqlite:///{db_path()}"
+
+
+def make_engine(url: str) -> Engine:
+    """Make an engine; Postgres keeps our tables in their own schema."""
+    if url.startswith("sqlite"):
+        return create_engine(url)
+    return create_engine(
+        url,
+        pool_size=CONNECTIONS_PER_PROCESS // 2,
+        max_overflow=CONNECTIONS_PER_PROCESS // 2,
+        connect_args={"options": f"-c search_path={SCHEMA}"},
+    )
 
 
 @lru_cache
 def engine(url: str) -> Engine:
     """Make the engine for a database, creating and seeding its tables once."""
-    made = create_engine(url)
+    made = make_engine(url)
+    if not url.startswith("sqlite"):
+        with made.begin() as conn:
+            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
     metadata.create_all(made)
     with made.begin() as conn:
         if conn.execute(select(func.count()).select_from(claims)).scalar_one() == 0:

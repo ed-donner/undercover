@@ -109,12 +109,12 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `uv run pytest -q` passes with no network and `.env` moved out of the way.
-- [ ] Through the Supabase MCP server, `list_tables` shows the four tables in the `undercover` schema and none in `public`.
-- [ ] `npm run seed`, then `GET /api/claims` returns 25 claims, all `waiting`. Run it twice to show reseeding works on a database that already has data.
-- [ ] Restart the backend and the claims keep their state (Postgres persists it).
-- [ ] The Supabase MCP server's `get_advisors` reports nothing new that this change caused. If it reports tables without row level security, I'll tell you rather than change it, since the backend is the only client.
-- [ ] `npm run check` is green with `.env` moved out of the way.
+- [x] `uv run pytest -q` passes with no network and `.env` moved out of the way.
+- [x] Through the Supabase MCP server, `list_tables` shows the four tables in the `undercover` schema and none in `public`.
+- [x] `npm run seed`, then `GET /api/claims` returns 25 claims, all `waiting`. Run it twice to show reseeding works on a database that already has data.
+- [x] Restart the backend and the claims keep their state (Postgres persists it).
+- [x] The Supabase MCP server's `get_advisors` reports nothing new that this change caused. If it reports tables without row level security, I'll tell you rather than change it, since the backend is the only client.
+- [x] `npm run check` is green with `.env` moved out of the way.
 
 ## Phase 5: The backend's rules for sign-off, decision and payment
 
