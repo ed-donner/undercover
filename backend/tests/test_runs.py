@@ -86,6 +86,12 @@ def test_requeue_claim(client):
     assert response.json()["status"] == "waiting"
 
 
+def test_requeue_starts_a_new_thread(client):
+    assert client.get("/api/claims/CLM-1001").json()["thread"] == 1
+    client.post("/api/claims/CLM-1001/requeue")
+    assert client.get("/api/claims/CLM-1001").json()["thread"] == 2
+
+
 def test_requeue_decided_claim_is_blocked(client):
     client.post(
         "/api/claims/CLM-1001/decision",

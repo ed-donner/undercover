@@ -1,3 +1,5 @@
+from sqlalchemy import func, select
+
 from backend import db
 
 
@@ -71,11 +73,11 @@ def test_list_handlers(client):
 
 def test_seeding_is_idempotent(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
-    db.connect().close()
-    conn = db.connect()
-    count = conn.execute("SELECT COUNT(*) FROM claims").fetchone()[0]
-    conn.close()
-    assert count == 25
+    for _ in range(2):
+        with db.connection() as conn:
+            count = conn.execute(select(func.count()).select_from(db.claims))
+            assert count.scalar_one() == 25
+        db.engine.cache_clear()
 
 
 def test_money_is_a_two_decimal_string_everywhere(client):

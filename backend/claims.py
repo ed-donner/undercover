@@ -3,6 +3,8 @@
 from decimal import Decimal
 from typing import Any
 
+from sqlalchemy import insert, or_, select, update
+
 from backend import data, db, money, payouts
 from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
 from backend.errors import Conflict, NotFound
@@ -12,11 +14,11 @@ def get_row(claim_id: str) -> dict[str, Any]:
     """Return a claim's mutable state, or raise NotFound."""
     with db.connection() as conn:
         row = conn.execute(
-            "SELECT * FROM claims WHERE claim_id = ?", (claim_id,)
-        ).fetchone()
+            select(db.claims).where(db.claims.c.claim_id == claim_id)
+        ).one_or_none()
     if row is None:
         raise NotFound(f"No claim {claim_id}")
-    return _with_dollars(dict(row))
+    return _with_dollars(dict(row._mapping))
 
 
 def _with_dollars(row: dict[str, Any]) -> dict[str, Any]:
@@ -30,10 +32,8 @@ def _with_dollars(row: dict[str, Any]) -> dict[str, Any]:
 def list_summaries() -> list[dict[str, Any]]:
     """List every claim in the queue, oldest submitted first."""
     with db.connection() as conn:
-        statuses = {
-            row["claim_id"]: row["status"]
-            for row in conn.execute("SELECT claim_id, status FROM claims")
-        }
+        rows = conn.execute(select(db.claims.c.claim_id, db.claims.c.status))
+        statuses = {claim_id: status for claim_id, status in rows}
     return [
         {
             "claim_id": claim_id,
@@ -70,20 +70,20 @@ def decide(
     over_limit = decision == "approve" and payouts.needs_sign_off(payout)
     with db.connection() as conn:
         decided = conn.execute(
-            """UPDATE claims SET status = ?, decision = ?, payout_cents = ?,
-               reason = ?, policy_reference = ?, decided_on = ?,
-               over_approval_limit = ?
-               WHERE claim_id = ? AND status IN ('waiting', 'in progress')""",
-            (
-                "waiting for sign-off" if over_limit else "decided",
-                decision,
-                money.to_cents(payout),
-                reason,
-                policy_reference,
-                db.now(),
-                int(over_limit),
-                claim_id,
-            ),
+            update(db.claims)
+            .where(
+                db.claims.c.claim_id == claim_id,
+                db.claims.c.status.in_(["waiting", "in progress"]),
+            )
+            .values(
+                status="waiting for sign-off" if over_limit else "decided",
+                decision=decision,
+                payout_cents=money.to_cents(payout),
+                reason=reason,
+                policy_reference=policy_reference,
+                decided_on=db.now(),
+                over_approval_limit=int(over_limit),
+            )
         )
     if decided.rowcount == 0:
         raise Conflict("Claim has already been decided")
@@ -95,13 +95,14 @@ def record_step(claim_id: str, text: str) -> None:
     get_row(claim_id)
     with db.connection() as conn:
         conn.execute(
-            "INSERT INTO claim_steps (claim_id, recorded_on, text) VALUES (?, ?, ?)",
-            (claim_id, db.now(), text),
+            insert(db.claim_steps).values(
+                claim_id=claim_id, recorded_on=db.now(), text=text
+            )
         )
         conn.execute(
-            "UPDATE claims SET status = 'in progress' "
-            "WHERE claim_id = ? AND status = 'waiting'",
-            (claim_id,),
+            update(db.claims)
+            .where(db.claims.c.claim_id == claim_id, db.claims.c.status == "waiting")
+            .values(status="in progress")
         )
 
 
@@ -110,10 +111,11 @@ def list_steps(claim_id: str) -> list[dict[str, Any]]:
     get_row(claim_id)
     with db.connection() as conn:
         rows = conn.execute(
-            "SELECT recorded_on, text FROM claim_steps WHERE claim_id = ? ORDER BY id",
-            (claim_id,),
-        ).fetchall()
-    return [dict(row) for row in rows]
+            select(db.claim_steps.c.recorded_on, db.claim_steps.c.text)
+            .where(db.claim_steps.c.claim_id == claim_id)
+            .order_by(db.claim_steps.c.id)
+        )
+        return [dict(row._mapping) for row in rows]
 
 
 def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
@@ -125,9 +127,9 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
         raise Conflict("This handler cannot sign off this claim")
     with db.connection() as conn:
         conn.execute(
-            "UPDATE claims SET status = 'decided', signed_off_by = ?, "
-            "signed_off_on = ? WHERE claim_id = ?",
-            (handler_id, db.now(), claim_id),
+            update(db.claims)
+            .where(db.claims.c.claim_id == claim_id)
+            .values(status="decided", signed_off_by=handler_id, signed_off_on=db.now())
         )
     return get_row(claim_id)
 
@@ -145,13 +147,21 @@ def _why_not_payable(row: dict[str, Any], amount: Decimal) -> str:
 def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
     """Pay an approved claim its payout, once, after any required sign-off."""
     row = get_row(claim_id)
+    cents = money.to_cents(amount)
     with db.connection() as conn:
         paid = conn.execute(
-            """UPDATE claims SET paid_cents = ?, paid_on = ?
-               WHERE claim_id = ? AND decision = 'approve'
-               AND paid_cents IS NULL AND payout_cents = ?
-               AND (over_approval_limit = 0 OR signed_off_by IS NOT NULL)""",
-            (money.to_cents(amount), db.now(), claim_id, money.to_cents(amount)),
+            update(db.claims)
+            .where(
+                db.claims.c.claim_id == claim_id,
+                db.claims.c.decision == "approve",
+                db.claims.c.paid_cents.is_(None),
+                db.claims.c.payout_cents == cents,
+                or_(
+                    db.claims.c.over_approval_limit == 0,
+                    db.claims.c.signed_off_by.is_not(None),
+                ),
+            )
+            .values(paid_cents=cents, paid_on=db.now())
         )
     if paid.rowcount == 0:
         raise Conflict(_why_not_payable(row, amount))
@@ -164,17 +174,21 @@ def start_work(claim_id: str) -> dict[str, Any]:
         raise Conflict("Claim is not waiting")
     with db.connection() as conn:
         conn.execute(
-            "UPDATE claims SET status = 'in progress' WHERE claim_id = ?", (claim_id,)
+            update(db.claims)
+            .where(db.claims.c.claim_id == claim_id)
+            .values(status="in progress")
         )
     return get_row(claim_id)
 
 
 def requeue(claim_id: str) -> dict[str, Any]:
-    """Put a stuck claim back in the queue as waiting."""
+    """Put a stuck claim back in the queue as waiting, to start afresh."""
     if get_row(claim_id)["status"] not in ("waiting", "in progress"):
         raise Conflict("Claim is already decided")
     with db.connection() as conn:
         conn.execute(
-            "UPDATE claims SET status = 'waiting' WHERE claim_id = ?", (claim_id,)
+            update(db.claims)
+            .where(db.claims.c.claim_id == claim_id)
+            .values(status="waiting", thread=db.claims.c.thread + 1)
         )
     return get_row(claim_id)

@@ -96,10 +96,10 @@ Moves every query to Core while the tests still pass, so Phase 4 changes the dat
 
 **Success criteria**
 
-- [ ] `uv run pytest -q` passes at the same coverage, with the existing tests unchanged (no behavior change).
-- [ ] `grep -rn "sqlite3" backend` returns only `db.py`'s SQLite URL, and `grep -rn "execute(\"" backend` returns nothing.
-- [ ] A new test: `requeue_claim` adds 1 to a claim's `thread`, and `get_claim` shows it.
-- [ ] `npm run check` is green.
+- [x] `uv run pytest -q` passes at the same coverage, with the existing tests unchanged (no behavior change).
+- [x] `grep -rn "sqlite3" backend` returns only `db.py`'s SQLite URL, and `grep -rn "execute(\"" backend` returns nothing.
+- [x] A new test: `requeue_claim` adds 1 to a claim's `thread`, and `get_claim` shows it.
+- [x] `npm run check` is green.
 
 ## Phase 4: Our records on Supabase
 

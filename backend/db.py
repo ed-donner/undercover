@@ -1,55 +1,77 @@
-"""Claim status: the only mutable state, kept in SQLite."""
+"""The database: table definitions and one way to connect, on SQLite or Postgres."""
 
 import os
-import sqlite3
 from collections.abc import Iterator
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
+
+from sqlalchemy import (
+    Column,
+    Connection,
+    Engine,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    create_engine,
+    func,
+    insert,
+    select,
+)
 
 from backend.data import CLAIMS
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "undercover.db"
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS claims (
-    claim_id TEXT PRIMARY KEY,
-    status TEXT NOT NULL,
-    decision TEXT,
-    payout_cents INTEGER,
-    reason TEXT,
-    policy_reference TEXT,
-    decided_on TEXT,
-    over_approval_limit INTEGER,
-    signed_off_by TEXT,
-    signed_off_on TEXT,
-    paid_cents INTEGER,
-    paid_on TEXT
-);
+metadata = MetaData()
 
-CREATE TABLE IF NOT EXISTS claim_steps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    claim_id TEXT NOT NULL,
-    recorded_on TEXT NOT NULL,
-    text TEXT NOT NULL
-);
+claims = Table(
+    "claims",
+    metadata,
+    Column("claim_id", String, primary_key=True),
+    Column("status", String, nullable=False),
+    Column("thread", Integer, nullable=False, server_default="1"),
+    Column("decision", String),
+    Column("payout_cents", Integer),
+    Column("reason", String),
+    Column("policy_reference", String),
+    Column("decided_on", String),
+    Column("over_approval_limit", Integer),
+    Column("signed_off_by", String),
+    Column("signed_off_on", String),
+    Column("paid_cents", Integer),
+    Column("paid_on", String),
+)
 
-CREATE TABLE IF NOT EXISTS runs (
-    run_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    started_on TEXT NOT NULL,
-    finished_on TEXT,
-    summary TEXT
-);
+claim_steps = Table(
+    "claim_steps",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("claim_id", String, nullable=False),
+    Column("recorded_on", String, nullable=False),
+    Column("text", String, nullable=False),
+)
 
-CREATE TABLE IF NOT EXISTS run_items (
-    run_id INTEGER NOT NULL,
-    claim_id TEXT NOT NULL,
-    status TEXT NOT NULL,
-    attempts INTEGER NOT NULL DEFAULT 0,
-    note TEXT,
-    PRIMARY KEY (run_id, claim_id)
-);
-"""
+runs = Table(
+    "runs",
+    metadata,
+    Column("run_id", Integer, primary_key=True, autoincrement=True),
+    Column("started_on", String, nullable=False),
+    Column("finished_on", String),
+    Column("summary", String),
+)
+
+run_items = Table(
+    "run_items",
+    metadata,
+    Column("run_id", Integer, primary_key=True),
+    Column("claim_id", String, primary_key=True),
+    Column("status", String, nullable=False),
+    Column("attempts", Integer, nullable=False, server_default="0"),
+    Column("note", String),
+)
 
 
 def db_path() -> Path:
@@ -57,25 +79,29 @@ def db_path() -> Path:
     return Path(os.environ.get("DATABASE_PATH", DEFAULT_DB_PATH))
 
 
-def connect() -> sqlite3.Connection:
-    """Open a connection to the claim database, creating and seeding it if needed."""
-    conn = sqlite3.connect(db_path())
-    conn.row_factory = sqlite3.Row
-    conn.executescript(SCHEMA)
-    seeded = conn.execute("SELECT COUNT(*) FROM claims").fetchone()[0]
-    if seeded == 0:
-        conn.executemany(
-            "INSERT INTO claims (claim_id, status) VALUES (?, 'waiting')",
-            [(claim_id,) for claim_id in CLAIMS],
-        )
-        conn.commit()
-    return conn
+def database_url() -> str:
+    """Return the database to use: Supabase if DATABASE_URL is set, else SQLite."""
+    return f"sqlite:///{db_path()}"
+
+
+@lru_cache
+def engine(url: str) -> Engine:
+    """Make the engine for a database, creating and seeding its tables once."""
+    made = create_engine(url)
+    metadata.create_all(made)
+    with made.begin() as conn:
+        if conn.execute(select(func.count()).select_from(claims)).scalar_one() == 0:
+            conn.execute(
+                insert(claims),
+                [{"claim_id": claim_id, "status": "waiting"} for claim_id in CLAIMS],
+            )
+    return made
 
 
 @contextmanager
-def connection() -> Iterator[sqlite3.Connection]:
+def connection() -> Iterator[Connection]:
     """Open a connection that commits on success, rolls back on error, and closes."""
-    with closing(connect()) as conn, conn:
+    with engine(database_url()).begin() as conn:
         yield conn
 
 
