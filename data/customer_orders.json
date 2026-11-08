@@ -109,7 +109,9 @@
               "intent_summary": "Customer requests cancellation of the entire order.",
               "requested_scope": "whole_order",
               "reason_code": "ordered_by_mistake",
-              "evidence": [],
+              "evidence": [
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7001-1", "description": "Synthetic follow-up: customer confirms they want the entire order cancelled, including both the fruit box and produce bags."}
+              ],
               "policy_checks": [
                 {
                   "rule": "Cancellation allowed before packing begins",
@@ -247,7 +249,9 @@
               "intent_summary": "Customer requests a change-of-mind return for an unused non-perishable item.",
               "requested_scope": "item:ITM-10003-1",
               "reason_code": "change_of_mind",
-              "evidence": [],
+              "evidence": [
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7003-1", "description": "Synthetic follow-up: customer confirms the jar set is unused, in its original packaging, and accepts the disclosed ₹75 sample pickup fee."}
+              ],
               "policy_checks": [
                 {"rule": "Non-perishable return requested within 7 calendar days", "result": "pass", "observed_value": "4 days after delivery"},
                 {"rule": "Item unused and in original packaging", "result": "customer_reported_pass", "observed_value": "Customer reports unused and boxed"},
@@ -311,7 +315,9 @@
               "intent_summary": "Customer appears to request item-level cancellation, but the order contains one item and fulfillment has started.",
               "requested_scope": "unclear_item_or_whole_order",
               "reason_code": "unspecified",
-              "evidence": [],
+              "evidence": [
+                {"type": "fulfillment_record", "reference": "synthetic://evidence/EV-7004-1", "description": "Synthetic operations update: fulfillment confirms the order is being packed and cannot be stopped before dispatch; no cancellation or refund has been completed."}
+              ],
               "policy_checks": [
                 {"rule": "Cancellation allowed before packing begins", "result": "fail_or_requires_review", "observed_value": "being_packed"}
               ],
@@ -374,7 +380,9 @@
               "intent_summary": "Customer requests a change-of-mind return 7 days after delivery.",
               "requested_scope": "item:ITM-10005-1",
               "reason_code": "change_of_mind",
-              "evidence": [],
+              "evidence": [
+                {"type": "delivery_record", "reference": "synthetic://evidence/EV-7005-1", "description": "Synthetic delivery scan: order delivered 2026-10-30 at 4:45 p.m. IST. The return request was received 2026-11-06 at 10:00 a.m. IST, 7 days and 17 hours later."}
+              ],
               "policy_checks": [
                 {"rule": "Non-perishable return requested within 7 calendar days", "result": "fail", "observed_value": "7 days and 17 hours after delivery"}
               ],
@@ -438,7 +446,9 @@
               "intent_summary": "Customer reports a possible defect and requests replacement.",
               "requested_scope": "item:ITM-10006-1",
               "reason_code": "suspected_defect",
-              "evidence": [],
+              "evidence": [
+                {"type": "customer_follow_up", "reference": "synthetic://evidence/EV-7006-1", "description": "Synthetic follow-up: customer tried the supplied charger and another compatible outlet; the lamp still does not power on. Customer reports no visible damage and provided a photo of the lamp and label."}
+              ],
               "policy_checks": [
                 {"rule": "Issue reported within 7 calendar days", "result": "pass", "observed_value": "1 day and 4 hours after delivery"},
                 {"rule": "Return or replacement inspection may be needed", "result": "pending_information", "observed_value": null}
@@ -585,7 +595,9 @@
               "intent_summary": "Customer requests cancellation after dispatch due to availability for delivery.",
               "requested_scope": "whole_order",
               "reason_code": "delivery_unavailable",
-              "evidence": [],
+              "evidence": [
+                {"type": "carrier_record", "reference": "synthetic://evidence/EV-7008-1", "description": "Synthetic carrier update: order is dispatched and a delivery hold is unavailable; one redelivery can be requested. No redelivery request, cancellation, or refund has been completed."}
+              ],
               "policy_checks": [
                 {"rule": "Customer cancellation before dispatch", "result": "fail", "observed_value": "dispatched"}
               ],

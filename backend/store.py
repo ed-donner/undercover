@@ -93,6 +93,18 @@ class Store:
                                 else None,
                             ),
                         )
+                        existing = connection.execute(
+                            "SELECT request_json FROM support_requests "
+                            "WHERE request_id = ?",
+                            (request["request_id"],),
+                        ).fetchone()
+                        stored_request = json.loads(existing["request_json"])
+                        stored_request["evidence"] = request["evidence"]
+                        connection.execute(
+                            "UPDATE support_requests SET request_json = ? "
+                            "WHERE request_id = ?",
+                            (json.dumps(stored_request), request["request_id"]),
+                        )
 
     @staticmethod
     def safe_request(request: dict[str, Any]) -> dict[str, Any]:

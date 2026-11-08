@@ -22,6 +22,18 @@ def test_seed_is_idempotent(tmp_path):
     assert len(store.list_requests()) == 8
 
 
+def test_seed_refreshes_evidence_in_existing_request_records(tmp_path):
+    store = Store(tmp_path / "evidence.sqlite3")
+    store.initialize()
+
+    request = store.get_request("REQ-7001")
+
+    assert request is not None
+    evidence = request["request"]["evidence"][0]
+    assert evidence["reference"] == "synthetic://evidence/EV-7001-1"
+    assert "confirms they want the entire order" in evidence["description"]
+
+
 def test_final_runtime_queue_has_no_reference_decision_route(tmp_path, monkeypatch):
     monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "runtime.sqlite3"))
     with TestClient(app) as client:
