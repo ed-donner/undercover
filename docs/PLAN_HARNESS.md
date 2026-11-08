@@ -65,24 +65,24 @@ The default model becomes `deepseek/deepseek-v4.1-flash` with low reasoning effo
 
 ## Phase 4: The queue agent
 
-Add `agent/queue.py`, the queue agent: `create_agent` with the tools `list_waiting_requests`, `write_todos` (which stores the run's to-do list through the backend), `work_request` and `finish_run` (which stores the summary). Its instructions, `QUEUE_INSTRUCTIONS`, tell it to plan the run as a to-do list, choose an order, hand each request to `work_request`, keep the list up to date, and finish with a short summary for support agents.
+Add `agent/queue.py`, the queue agent: `create_agent` with the tools `list_waiting_requests`, `write_todos` (which stores the run's to-do list through the backend) and `work_request`. Its final message is the run's summary, which the backend stores. `work_request` also ticks the request's to-do item itself (in progress, then done, left for support, or back to do), so the list on the dashboard is right even if the model forgets to update it. Its instructions, `QUEUE_INSTRUCTIONS`, tell it to plan the run as a to-do list, choose an order, hand each request to `work_request`, keep the list up to date, and finish with a short summary for support agents.
 
 Code enforces the rules:
 
-- `work_request` refuses once the run has worked `cap` requests.
+- `work_request` refuses a new request once the run has worked `cap` requests, and refuses a request that isn't waiting without using up the cap. A retry of a request already in the run doesn't count again.
 - An `after_agent` middleware checks `list_waiting_requests` against what's left of the cap. If the run missed a request, it sends the agent back with a message naming the request. If the run is still short after three returns, the run is marked failed.
 - An exception from one request never escapes `work_request`, so one bad request can't stop the run.
 
 The backend's `start_run` runs the queue agent in the background. `uv run -m agent --cap 5` starts a capped run from the terminal, and `uv run -m agent REQ-7001` works one named request with the request agent alone. `GET /api/agent/instructions` returns both sets of instructions.
 
-- [ ] Stub-model tests: a run capped at 2 of 8 works exactly 2 requests and leaves 6 waiting. A third `work_request` call is refused.
-- [ ] A stub-model test: a request that raises does not stop the run, and the next request is worked.
-- [ ] A stub-model test: a request that fails once goes back to waiting, is worked again in the same run, and gets one recommendation.
-- [ ] A stub-model test: a request that fails twice is left for support, its to-do item shows `left_for_support`, and the run still finishes.
-- [ ] A stub-model test: a queue agent that tries to finish with a waiting request within its cap is sent back and works it.
-- [ ] A stub-model test: the to-do list is stored and updated as items are worked.
-- [ ] An API test: `GET /api/agent/instructions` returns the queue and request instructions, with no edit operation.
-- [ ] `npm run check:python` passes with 80% coverage.
+- [x] Stub-model tests: a run capped at 2 of 8 works exactly 2 requests and leaves 6 waiting. A third `work_request` call is refused.
+- [x] A stub-model test: a request that raises does not stop the run, and the next request is worked.
+- [x] A stub-model test: a request that fails once goes back to waiting, is worked again in the same run, and gets one recommendation.
+- [x] A stub-model test: a request that fails twice is left for support, its to-do item shows `left_for_support`, and the run still finishes.
+- [x] A stub-model test: a queue agent that tries to finish with a waiting request within its cap is sent back and works it.
+- [x] A stub-model test: the to-do list is stored and updated as items are worked.
+- [x] An API test: `GET /api/agent/instructions` returns the queue and request instructions, with no edit operation.
+- [x] `npm run check:python` passes with 80% coverage.
 
 ## Phase 5: The dashboard
 

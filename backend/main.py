@@ -10,17 +10,11 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from agent.instructions import QUEUE_INSTRUCTIONS, REQUEST_INSTRUCTIONS
-from agent.main import work_request
 from agent.models import Recommendation
+from agent.queue import run_queue
 from backend.policies import list_policies, read_section
 from backend.store import AGENT_STAGES, Store, TodoStatus
 
-TODO_FOR_WORK: dict[str, TodoStatus] = {
-    "done": "done",
-    "waiting": "to_do",
-    "left_for_support": "left_for_support",
-    "skipped": "done",
-}
 DEFAULT_DATABASE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "shoppie.sqlite3"
 )
@@ -96,19 +90,13 @@ def require_request(store: Store, request_id: str) -> dict[str, Any]:
 
 
 def run_in_background(store: Store, run_id: str, cap: int) -> None:
-    """Work waiting requests in order up to the run's cap."""
-    worked: set[str] = set()
-    while waiting := [
-        item["request_id"]
-        for item in store.list_waiting()
-        if item["request_id"] in worked or len(worked) < cap
-    ]:
-        request_id = waiting[0]
-        worked.add(request_id)
-        store.update_todo(run_id, request_id, "in_progress")
-        result = work_request(request_id)
-        store.update_todo(run_id, request_id, TODO_FOR_WORK[result["status"]])
-    store.finish_run(run_id, "finished", f"Worked {len(worked)} requests.")
+    """Run the queue agent and store its summary, or mark the run failed."""
+    try:
+        summary = run_queue(run_id, cap)
+    except Exception as error:
+        store.finish_run(run_id, "failed", f"The run stopped: {error}")
+        return
+    store.finish_run(run_id, "finished", summary)
 
 
 @app.get("/api/health", operation_id="health")

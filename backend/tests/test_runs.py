@@ -223,31 +223,29 @@ def test_support_review_decides_without_running_an_order_action(client):
     assert duplicate.status_code == 409
 
 
-def test_background_run_works_up_to_its_cap_and_retries_a_failure(store, monkeypatch):
-    calls = []
-
-    def fake_work(request_id):
-        calls.append(request_id)
-        store.start_request(request_id)
-        if request_id == "REQ-7002" and calls.count("REQ-7002") == 1:
-            store.fail_request(request_id)
-            return {"request_id": request_id, "status": "waiting", "line": "failed"}
-        store.save_recommendation(request_id, RECOMMENDATION)
-        return {"request_id": request_id, "status": "done", "line": "done"}
-
-    monkeypatch.setattr(main, "work_request", fake_work)
+def test_background_run_stores_the_queue_agent_summary(store, monkeypatch):
+    monkeypatch.setattr(main, "run_queue", lambda run_id, cap: f"Worked {cap}.")
     run_id = store.create_run(2)
     assert run_id is not None
     main.run_in_background(store, run_id, 2)
-
-    statuses = {item["request_id"]: item["status"] for item in store.list_requests()}
     run = store.current_run()
-    assert calls == ["REQ-7007", "REQ-7002", "REQ-7002"]
-    assert statuses["REQ-7002"] == "waiting_for_agent_review"
-    assert list(statuses.values()).count("waiting") == 6
     assert run is not None
     assert run["status"] == "finished"
-    assert {todo["status"] for todo in run["todos"]} == {"done"}
+    assert run["summary"] == "Worked 2."
+
+
+def test_background_run_is_marked_failed_when_the_queue_agent_stops(store, monkeypatch):
+    def stop(run_id, cap):
+        raise RuntimeError("provider down")
+
+    monkeypatch.setattr(main, "run_queue", stop)
+    run_id = store.create_run(2)
+    assert run_id is not None
+    main.run_in_background(store, run_id, 2)
+    run = store.current_run()
+    assert run is not None
+    assert run["status"] == "failed"
+    assert run["summary"] == "The run stopped: provider down"
 
 
 def test_instructions_cover_the_queue_and_a_request(client):
