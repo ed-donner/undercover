@@ -97,9 +97,9 @@ Update the React dashboard (`dashboard/src/`) and Playwright end-to-end suite (`
 - Show who signed off (`reviewed_by`) and when (`reviewed_at`) in `ReviewRecord`, and display the `in_progress` state between sign-off and agent completion while polling continues until the request reaches `decided`.
 - Update `e2e/dashboard.spec.ts` and `playwright.config.ts` so the end-to-end suite runs a stand-in agent service on port `8003` (`UNDERCOVER_AGENT=http://127.0.0.1:8003`) and verifies that signing off on the dashboard reaches the stand-in service on port 8003 without touching port 8002.
 
-- [ ] Vitest tests (`dashboard/src/App.test.tsx`) verify the `Reviewed by` field, submitting a sign-off, polling while `in_progress` after sign-off, and displaying the reviewer's name and time once `decided`.
-- [ ] Playwright tests (`e2e/dashboard.spec.ts`) verify that signing off on a held request on the dashboard sends the review to the backend, which calls the stand-in agent service on port 8003, and that the UI updates to show the completed review.
-- [ ] `npm run check` passes with `.env` moved out of the way (no Postgres container, Langfuse, or OpenRouter needed).
+- [x] Vitest tests (`dashboard/src/App.test.tsx`) verify the `Reviewed by` field, submitting a sign-off, polling while `in_progress` after sign-off, and displaying the reviewer's name and time once `decided`.
+- [x] Playwright tests (`e2e/dashboard.spec.ts`) verify that signing off on a held request on the dashboard sends the review to the backend, which calls the stand-in agent service on port 8003, and that the UI updates to show the completed review.
+- [x] `npm run check` passes with `.env` moved out of the way (no Postgres container, Langfuse, or OpenRouter needed).
 
 ## Phase 6: Local Docker Postgres container, live verification, and documentation
 

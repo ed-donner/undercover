@@ -1,3 +1,5 @@
+import { createServer } from "node:http";
+import type { Server } from "node:http";
 import { expect, test } from "@playwright/test";
 
 const detail = {
@@ -169,4 +171,92 @@ test("support agent starts a capped run, watches the to-do list and sees the rec
       "The request needs clarification before it can be processed.",
     ),
   ).toBeVisible();
+});
+
+function listenStandInAgent(resumedPaths: string[]): Promise<Server> {
+  const server = createServer((req, res) => {
+    const path = req.url ?? "";
+    resumedPaths.push(path);
+    const match = /^\/requests\/([^/]+)\/resume$/.exec(path);
+    if (!match) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok" }));
+      return;
+    }
+    const requestId = match[1];
+    void (async () => {
+      const detailRes = await fetch(
+        `http://127.0.0.1:8000/api/requests/${requestId}`,
+      );
+      const record = (await detailRes.json()) as {
+        review: {
+          outcome: string;
+          notes: string;
+          reviewed_by: string;
+          reviewed_at: string;
+        };
+      };
+      await fetch(`http://127.0.0.1:8000/api/requests/${requestId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record.review),
+      });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ request_id: requestId, status: "decided" }));
+    })();
+  });
+  return new Promise((resolve) => {
+    server.listen(8003, "127.0.0.1", () => {
+      resolve(server);
+    });
+  });
+}
+
+test("support agent signs off on a held request and the stand-in agent on port 8003 completes it", async ({
+  page,
+  request,
+}) => {
+  const resumedPaths: string[] = [];
+  const standIn = await listenStandInAgent(resumedPaths);
+  try {
+    await request.post("http://127.0.0.1:8000/api/requests/REQ-7008/start");
+    await request.post(
+      "http://127.0.0.1:8000/api/requests/REQ-7008/recommendation",
+      {
+        data: {
+          outcome: "approve",
+          rationale: "Order has not been dispatched and is within the window.",
+          policy_citations: [
+            "Shoppie Cancellation Policy: 2. Customer-requested cancellations",
+          ],
+          next_action: "Confirm cancellation before dispatch.",
+          priority_human_review: false,
+        },
+      },
+    );
+
+    await page.goto("/");
+    await page.getByRole("button", { name: /REQ-7008/ }).click();
+    await expect(page.getByText("Your review is required")).toBeVisible();
+
+    await page.getByLabel("Reviewed by").fill("Priya Nair");
+    await page.getByLabel(/Notes/).fill("Confirmed pre-dispatch cancellation.");
+    await page.getByRole("button", { name: "Record support review" }).click();
+
+    await expect(page.getByText("Review complete")).toBeVisible();
+    await expect(page.getByText(/Reviewed by Priya Nair/)).toBeVisible();
+    await expect(
+      page.getByText("Confirmed pre-dispatch cancellation."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Confirmed approve after review by Priya Nair."),
+    ).toBeVisible();
+    expect(resumedPaths).toContain("/requests/REQ-7008/resume");
+  } finally {
+    await new Promise<void>((resolve) => {
+      standIn.close(() => {
+        resolve();
+      });
+    });
+  }
 });

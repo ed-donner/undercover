@@ -104,6 +104,7 @@ export function App() {
 
   const active =
     run?.status === "running" ||
+    detail?.status === "in_progress" ||
     queue.some((item) => item.status === "in_progress");
 
   useEffect(() => {
@@ -164,11 +165,12 @@ export function App() {
     );
   }
 
-  function recordReview(outcome: Outcome, notes: string) {
+  function recordReview(outcome: Outcome, notes: string, reviewedBy: string) {
     if (!selectedId) return;
     void post(`/api/requests/${selectedId}/review`, "Review recorded.", {
       outcome,
       notes,
+      reviewed_by: reviewedBy,
     });
   }
 

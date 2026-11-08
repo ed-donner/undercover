@@ -23,18 +23,14 @@ const outcomeLabels: Record<Outcome, string> = {
   decline: "Decline",
   request_information: "Request information",
 };
-const decisionLabels: Record<Outcome, string> = {
-  approve: "Approve",
-  decline: "Decline",
-  request_information: "Needs info",
-};
+const decisionLabels = { ...outcomeLabels, request_information: "Needs info" };
 const todoLabels: Record<TodoStatus, string> = {
   to_do: "To do",
   in_progress: "In progress",
   done: "Done",
   left_for_support: "Left for support",
 };
-const runLabels: Record<Run["status"], string> = {
+const runLabels = {
   running: "Running",
   finished: "Finished",
   failed: "Stopped",
@@ -44,16 +40,15 @@ const reviewedLabels: Record<Outcome, string> = {
   decline: "Declined",
   request_information: "Info requested",
 };
-
-function leftForSupport(item: {
-  status: QueueStatus;
-  recommendation: Recommendation | null;
-}) {
-  return item.status === "waiting_for_agent_review" && !item.recommendation;
-}
+const actionHeadings: Record<QueueStatus, string> = {
+  waiting: "Waiting to be processed",
+  in_progress: "The agent is reviewing this request",
+  waiting_for_agent_review: "Your review is required",
+  decided: "Review complete",
+};
 
 export function QueueBadge({ item }: Readonly<{ item: QueueItem }>) {
-  if (leftForSupport(item))
+  if (item.status === "waiting_for_agent_review" && !item.recommendation)
     return (
       <span className="status-badge todo-left_for_support">
         <i />
@@ -82,21 +77,19 @@ export function StatusBadge({ status }: Readonly<{ status: QueueStatus }>) {
   );
 }
 
-interface QueuePanelProps {
-  items: QueueItem[];
-  selectedId: string | null;
-  state: "loading" | "ready" | "error";
-  onSelect: (id: string) => void;
-  onRefresh: () => void;
-}
-
 export function QueuePanel({
   items,
   selectedId,
   state,
   onSelect,
   onRefresh,
-}: Readonly<QueuePanelProps>) {
+}: Readonly<{
+  items: QueueItem[];
+  selectedId: string | null;
+  state: "loading" | "ready" | "error";
+  onSelect: (id: string) => void;
+  onRefresh: () => void;
+}>) {
   return (
     <aside className="queue-panel panel" aria-label="Support request queue">
       <div className="panel-heading queue-heading">
@@ -152,10 +145,7 @@ export function QueuePanel({
 export function RequestOverview({
   detail,
   orderId,
-}: Readonly<{
-  detail: RequestDetail;
-  orderId: string;
-}>) {
+}: Readonly<{ detail: RequestDetail; orderId: string }>) {
   return (
     <article className="panel request-panel">
       <div className="detail-title-row">
@@ -263,9 +253,7 @@ export function OrderCard({ detail }: Readonly<{ detail: RequestDetail }>) {
 
 export function RecommendationCard({
   recommendation,
-}: Readonly<{
-  recommendation: Recommendation;
-}>) {
+}: Readonly<{ recommendation: Recommendation }>) {
   return (
     <article className="panel recommendation-panel">
       <div className="panel-heading">
@@ -348,42 +336,43 @@ export function ProgressCard({ detail }: Readonly<{ detail: RequestDetail }>) {
   );
 }
 
-interface ActionPanelProps {
-  detail: RequestDetail;
-  busy: boolean;
-  onReview: (outcome: Outcome, notes: string) => void;
-}
-
 export function ActionPanel({
   detail,
   busy,
   onReview,
-}: Readonly<ActionPanelProps>) {
+}: Readonly<{
+  detail: RequestDetail;
+  busy: boolean;
+  onReview: (outcome: Outcome, notes: string, reviewedBy: string) => void;
+}>) {
   const [outcome, setOutcome] = useState<Outcome>("approve");
   const [notes, setNotes] = useState("");
-
-  function submitReview(event: SyntheticEvent<HTMLFormElement>) {
+  const [reviewedBy, setReviewedBy] = useState("");
+  const onSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onReview(outcome, notes);
-  }
-
+    onReview(outcome, notes, reviewedBy.trim());
+  };
   return (
     <div className="action-panel panel">
       <div className="action-copy">
-        <strong>{actionHeading(detail.status)}</strong>
+        <strong>
+          {detail.status === "in_progress" && detail.review
+            ? "The agent is completing this reviewed request"
+            : actionHeadings[detail.status]}
+        </strong>
         <p>
           Recommendations support your decision. No customer or order action is
           performed here.
         </p>
       </div>
       {detail.status === "waiting_for_agent_review" && (
-        <form className="review-form" onSubmit={submitReview}>
+        <form className="review-form" onSubmit={onSubmit}>
           <label>
             Reviewed outcome
             <select
               value={outcome}
-              onChange={(event) => {
-                setOutcome(event.target.value as Outcome);
+              onChange={(e) => {
+                setOutcome(e.target.value as Outcome);
               }}
             >
               {Object.entries(outcomeLabels).map(([value, label]) => (
@@ -394,32 +383,38 @@ export function ActionPanel({
             </select>
           </label>
           <label>
+            Reviewed by
+            <input
+              type="text"
+              required
+              value={reviewedBy}
+              onChange={(e) => {
+                setReviewedBy(e.target.value);
+              }}
+              placeholder="Your name"
+            />
+          </label>
+          <label>
             Notes <span className="optional">(optional)</span>
             <textarea
               value={notes}
-              onChange={(event) => {
-                setNotes(event.target.value);
+              onChange={(e) => {
+                setNotes(e.target.value);
               }}
               rows={2}
             />
           </label>
-          <button className="secondary-button" disabled={busy} type="submit">
+          <button
+            className="secondary-button"
+            disabled={busy || !reviewedBy.trim()}
+            type="submit"
+          >
             Record support review
           </button>
         </form>
       )}
     </div>
   );
-}
-
-function actionHeading(status: QueueStatus) {
-  const headings: Record<QueueStatus, string> = {
-    waiting: "Waiting to be processed",
-    in_progress: "The agent is reviewing this request",
-    waiting_for_agent_review: "Your review is required",
-    decided: "Review complete",
-  };
-  return headings[status];
 }
 
 export function InstructionsPanel({
@@ -501,12 +496,15 @@ export function RunPanel({ run }: Readonly<{ run: Run | null }>) {
 
 export function ReviewRecord({ detail }: Readonly<{ detail: RequestDetail }>) {
   if (!detail.review) return null;
+  const { outcome, notes, reviewed_by, reviewed_at } = detail.review;
   return (
     <article className="panel review-record">
       <p className="eyebrow">SUPPORT REVIEW RECORDED</p>
-      <h2>{outcomeLabels[detail.review.outcome]}</h2>
-      <p>{detail.review.notes || "No review notes added."}</p>
-      <small>{formatDate(detail.review.reviewed_at)} IST</small>
+      <h2>{outcomeLabels[outcome]}</h2>
+      <p>{notes || "No review notes added."}</p>
+      <small>
+        Reviewed by {reviewed_by} · {formatDate(reviewed_at)} IST
+      </small>
     </article>
   );
 }

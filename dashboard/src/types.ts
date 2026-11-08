@@ -17,6 +17,7 @@ export interface QueueItem {
 export interface Review {
   outcome: Outcome;
   notes: string;
+  reviewed_by: string;
   reviewed_at: string;
 }
 

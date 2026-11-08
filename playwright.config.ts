@@ -10,6 +10,10 @@ export default defineConfig({
       command: "uv run -m uvicorn backend.main:app --port 8000",
       url: "http://127.0.0.1:8000/api/health",
       reuseExistingServer: true,
+      env: {
+        UNDERCOVER_AGENT: "http://127.0.0.1:8003",
+        SHOPPIE_DATABASE_PATH: "data/e2e.sqlite3",
+      },
     },
     {
       command: "npx vite dashboard --port 5173 --strictPort",

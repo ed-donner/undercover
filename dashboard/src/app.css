@@ -657,7 +657,7 @@ button:disabled {
 .review-form {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   align-items: end;
   gap: 12px;
   padding-top: 13px;
@@ -671,6 +671,7 @@ button:disabled {
   font-weight: 600;
 }
 .review-form select,
+.review-form input,
 .review-form textarea {
   width: 100%;
   border: 0;
@@ -986,6 +987,9 @@ footer {
     padding: 16px;
   }
   .todo-list {
+    grid-template-columns: 1fr;
+  }
+  .review-form {
     grid-template-columns: 1fr;
   }
 }

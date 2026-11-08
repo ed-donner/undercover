@@ -294,10 +294,7 @@ def build_request_graph(
     checkpointer: BaseCheckpointSaver[Any] | None = None,
 ) -> Any:
     """Build and compile the synchronous StateGraph for one support request."""
-    active_model = llm or model()
     tools = make_request_tools(request_id)
-    model_with_tools = active_model.bind_tools(tools)
-    decider = active_model.with_structured_output(Recommendation)
     system_message = SystemMessage(REQUEST_INSTRUCTIONS)
 
     def agent(state: RequestState) -> dict[str, Any]:
@@ -307,6 +304,7 @@ def build_request_graph(
             raise RuntimeError(
                 f"Request {state['request_id']} exceeded {MAX_MODEL_CALLS} model calls"
             )
+        model_with_tools = (llm or model()).bind_tools(tools)
         reply = call_with_retry(
             model_with_tools.invoke, [system_message, *state["messages"]]
         )
@@ -317,6 +315,7 @@ def build_request_graph(
         context = extract_request_context(state["messages"])
         if context is None:
             raise ValueError("The agent did not retrieve request context")
+        decider = (llm or model()).with_structured_output(Recommendation)
         structured = call_with_retry(
             decider.invoke,
             [

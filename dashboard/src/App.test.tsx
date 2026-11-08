@@ -215,6 +215,7 @@ it("starts a capped run and shows the to-do list and decisions", async () => {
   vi.stubGlobal("fetch", fetchMock);
   render(<App />);
   expect(screen.queryByRole("button", { name: /Ask agent/ })).toBeNull();
+  expect(await screen.findByRole("button", { name: /REQ-7001/ })).toBeDefined();
   const capInput = await screen.findByLabelText("Requests to work");
   expect(capInput).toHaveProperty("value", "2");
   fireEvent.change(capInput, { target: { value: "9" } });
@@ -261,6 +262,7 @@ it("shows reviewed outcomes and failed runs in the queue", async () => {
       review: {
         outcome: "request_information",
         notes: "",
+        reviewed_by: "Priya Nair",
         reviewed_at: "2026-11-06T09:00:00+05:30",
       },
     },
@@ -278,7 +280,7 @@ it("shows reviewed outcomes and failed runs in the queue", async () => {
   );
 });
 
-it("records a support reviewed outcome without a customer action", async () => {
+it("records a support reviewed outcome and polls until completion", async () => {
   const reviewDetail = {
     ...baseDetail,
     status: "waiting_for_agent_review",
@@ -290,14 +292,19 @@ it("records a support reviewed outcome without a customer action", async () => {
       priority_human_review: false,
     },
   };
-  const reviewed = {
+  const completing = {
     ...reviewDetail,
-    status: "decided",
+    status: "in_progress",
     review: {
-      outcome: "approve",
+      outcome: "decline",
       notes: "Reviewed.",
+      reviewed_by: "Priya Nair",
       reviewed_at: "2026-11-06T09:00:00+05:30",
     },
+  };
+  const reviewed = {
+    ...completing,
+    status: "decided",
   };
   let detailCalls = 0;
   const fetchMock = vi.fn((input: RequestInfo | URL) => {
@@ -306,7 +313,13 @@ it("records a support reviewed outcome without a customer action", async () => {
     if (url === "/api/requests")
       return Promise.resolve(
         new Response(
-          JSON.stringify([{ ...queue[0], status: "waiting_for_agent_review" }]),
+          JSON.stringify([
+            {
+              ...queue[0],
+              status:
+                detailCalls === 1 ? "in_progress" : "waiting_for_agent_review",
+            },
+          ]),
         ),
       );
     if (url === "/api/agent/instructions")
@@ -314,14 +327,18 @@ it("records a support reviewed outcome without a customer action", async () => {
     if (url === "/api/runs/current")
       return Promise.resolve(new Response("null"));
     detailCalls += 1;
-    return Promise.resolve(
-      new Response(JSON.stringify(detailCalls === 1 ? reviewDetail : reviewed)),
-    );
+    let body: unknown = reviewed;
+    if (detailCalls === 1) body = reviewDetail;
+    else if (detailCalls === 2) body = completing;
+    return Promise.resolve(new Response(JSON.stringify(body)));
   });
   vi.stubGlobal("fetch", fetchMock);
   render(<App />);
   fireEvent.change(await screen.findByLabelText("Reviewed outcome"), {
     target: { value: "decline" },
+  });
+  fireEvent.change(screen.getByLabelText("Reviewed by"), {
+    target: { value: "Priya Nair" },
   });
   fireEvent.change(screen.getByLabelText(/Notes/), {
     target: { value: "Reviewed." },
@@ -329,12 +346,22 @@ it("records a support reviewed outcome without a customer action", async () => {
   fireEvent.click(
     screen.getByRole("button", { name: "Record support review" }),
   );
-  expect(await screen.findByText("Review complete")).toBeDefined();
+  expect(
+    await screen.findByText("The agent is completing this reviewed request"),
+  ).toBeDefined();
+  expect(screen.getByText(/Reviewed by Priya Nair/)).toBeDefined();
+  expect(
+    await screen.findByText("Review complete", {}, { timeout: 3000 }),
+  ).toBeDefined();
   expect(fetchMock).toHaveBeenCalledWith(
     "/api/requests/REQ-7001/review",
     expect.objectContaining({
       method: "POST",
-      body: JSON.stringify({ outcome: "decline", notes: "Reviewed." }),
+      body: JSON.stringify({
+        outcome: "decline",
+        notes: "Reviewed.",
+        reviewed_by: "Priya Nair",
+      }),
     }),
   );
   expect(
