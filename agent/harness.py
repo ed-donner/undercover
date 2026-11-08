@@ -5,11 +5,13 @@ Nothing here knows about claims. What an agent can do is in `tools.py`.
 
 import os
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
@@ -33,24 +35,35 @@ def model() -> ChatOpenAI:
     )
 
 
+@dataclass
+class AgentSpec:
+    """What an agent is: its instructions and its tools."""
+
+    instructions: str
+    tools: Sequence[BaseTool]
+
+
 def run_agent(
-    instructions: str,
-    tools: Sequence[BaseTool],
+    spec: AgentSpec,
     context: Any,
     task: str,
     llm: BaseChatModel | None = None,
+    config: RunnableConfig | None = None,
 ) -> str:
     """Run an agent on a task until it stops calling tools, and return its reply.
 
-    `context` is handed to every tool through its `ToolRuntime`.
+    `context` is handed to every tool through its `ToolRuntime`; `config` carries
+    the run's callbacks and metadata.
     """
     agent = create_agent(
         llm or model(),
-        tools=tools,
-        system_prompt=instructions,
+        tools=spec.tools,
+        system_prompt=spec.instructions,
         context_schema=type(context),
     )
     result = agent.invoke(
-        {"messages": [{"role": "user", "content": task}]}, context=context
+        {"messages": [{"role": "user", "content": task}]},
+        config=config,
+        context=context,
     )
     return result["messages"][-1].text

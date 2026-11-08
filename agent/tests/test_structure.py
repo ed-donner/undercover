@@ -46,3 +46,19 @@ def test_backend_never_imports_the_agent():
             if isinstance(node, ast.ImportFrom) and node.module:
                 names.append(node.module)
             assert not any(n.split(".")[0] == "agent" for n in names), path.name
+
+
+def _imports(path):
+    names = []
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.Import):
+            names += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.append(node.module)
+    return {n.split(".")[0] for n in names}
+
+
+def test_only_tracing_imports_langfuse():
+    for path in AGENT_MODULES:
+        if path.name != "tracing.py":
+            assert "langfuse" not in _imports(path), path.name

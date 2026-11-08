@@ -81,9 +81,9 @@ Brings in `labs/week2day1_payout.py` first, as the brief asks.
 
 **Success criteria**
 
-- [ ] `uv run pytest agent -q` passes with no `LANGFUSE_*` keys set, and a test shows `tracing.py` returns no callbacks without them.
-- [ ] Run once with the real model on one reseeded claim, `MODEL_NAME=openrouter/free uv run -m agent.cli --claim CLM-1001`, then check through Langfuse's API (`langfuse.api.trace.list(session_id="CLM-1001")`) that the claim's traces are all in one session.
-- [ ] `npm run check` is green with `.env` moved out of the way.
+- [x] `uv run pytest agent -q` passes with no `LANGFUSE_*` keys set, and a test shows `tracing.py` returns no callbacks without them.
+- [x] Run once with the real model on one reseeded claim, `MODEL_NAME=openrouter/free uv run -m agent.cli --claim CLM-1001`, then check through Langfuse's API (`langfuse.api.trace.list(session_id="CLM-1001")`) that the claim's traces are all in one session.
+- [x] `npm run check` is green with `.env` moved out of the way.
 
 ## Phase 3: SQLAlchemy Core on SQLite, nothing else changes
 

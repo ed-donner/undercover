@@ -18,6 +18,8 @@ class StubModel(GenericFakeChatModel):
 def backend(tmp_path, monkeypatch):
     """Point the agent at the backend in-process, on a throwaway database."""
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
+    for name in ("DATABASE_URL", "LANGFUSE_SECRET_KEY", "LANGFUSE_PUBLIC_KEY"):
+        monkeypatch.delenv(name, raising=False)
     client = TestClient(app)
     monkeypatch.setattr(api, "client", client)
     return client
