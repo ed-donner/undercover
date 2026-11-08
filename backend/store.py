@@ -1,14 +1,37 @@
-"""SQLite storage for Shoppie's support requests and agent runs."""
+"""SQLAlchemy Core storage for Shoppie's support requests and agent runs."""
 
 import json
-import sqlite3
-from contextlib import closing
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
+from sqlalchemy import (
+    Column,
+    Engine,
+    ForeignKey,
+    Integer,
+    MetaData,
+    PrimaryKeyConstraint,
+    Table,
+    Text,
+    create_engine,
+    delete,
+    func,
+    insert,
+    select,
+    text,
+    update,
+)
+
 DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "customer_orders.json"
+DEFAULT_DATABASE_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "shoppie.sqlite3"
+)
+SCHEMA = "undercover"
+MAX_POOL_SIZE = 2
+MAX_OVERFLOW = 2
 MAX_ATTEMPTS = 2
 STEP_MESSAGES = {
     "started": "The Shoppie Agent started reviewing this request.",
@@ -18,6 +41,8 @@ STEP_MESSAGES = {
     "preparing_recommendation": (
         "The agent prepared a recommendation for support review."
     ),
+    "signed_off": "A support agent reviewed and signed off on the request.",
+    "completed": "The Shoppie Agent recorded the confirmed resolution.",
     "error": "This attempt failed; the request is back in the queue to be tried again.",
     "left_for_support": (
         "The agent could not complete its review after two attempts; "
@@ -28,130 +53,202 @@ AGENT_STAGES = {"reading_request", "checking_policy"}
 TodoStatus = Literal["to_do", "in_progress", "done", "left_for_support"]
 FailureResult = Literal["waiting", "left_for_support"]
 
+metadata = MetaData()
+
+support_requests = Table(
+    "support_requests",
+    metadata,
+    Column("request_id", Text, primary_key=True),
+    Column("order_id", Text, nullable=False),
+    Column("customer_id", Text, nullable=False),
+    Column("customer_name", Text, nullable=False),
+    Column("request_type", Text, nullable=False),
+    Column("created_at", Text, nullable=False),
+    Column("source_status", Text, nullable=False),
+    Column("queue_status", Text, nullable=False),
+    Column("request_json", Text, nullable=False),
+    Column("order_json", Text, nullable=False),
+    Column("recommendation_json", Text),
+    Column("review_json", Text),
+    Column("attempts", Integer, nullable=False, default=0),
+)
+
+request_steps = Table(
+    "request_steps",
+    metadata,
+    Column("step_id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "request_id",
+        Text,
+        ForeignKey("support_requests.request_id"),
+        nullable=False,
+    ),
+    Column("stage", Text, nullable=False),
+    Column("message", Text, nullable=False),
+    Column("created_at", Text, nullable=False),
+)
+
+runs = Table(
+    "runs",
+    metadata,
+    Column("run_id", Text, primary_key=True),
+    Column("cap", Integer, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("started_at", Text, nullable=False),
+    Column("finished_at", Text),
+    Column("summary", Text),
+)
+
+run_todos = Table(
+    "run_todos",
+    metadata,
+    Column("run_id", Text, ForeignKey("runs.run_id"), nullable=False),
+    Column("position", Integer, nullable=False),
+    Column("request_id", Text, nullable=False),
+    Column("title", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    PrimaryKeyConstraint("run_id", "request_id"),
+)
+
 
 def now() -> str:
     """Return the current UTC time as ISO text."""
     return datetime.now(UTC).isoformat()
 
 
+def sqlalchemy_postgres_url(url: str) -> str:
+    """Convert a standard Postgres URL to SQLAlchemy's psycopg dialect URL."""
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url.removeprefix("postgres://")
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url.removeprefix("postgresql://")
+    return url
+
+
+def build_engine(
+    database_path: Path = DEFAULT_DATABASE_PATH, database_url: str | None = None
+) -> tuple[Engine, bool]:
+    """Create a SQLAlchemy engine for Postgres (with undercover schema) or SQLite."""
+    if database_url:
+        engine = create_engine(
+            sqlalchemy_postgres_url(database_url),
+            pool_size=MAX_POOL_SIZE,
+            max_overflow=MAX_OVERFLOW,
+            connect_args={"options": f"-c search_path={SCHEMA}"},
+        )
+        return engine, True
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    return create_engine(f"sqlite:///{database_path}"), False
+
+
 class Store:
-    """Read and update support requests and agent runs in SQLite."""
+    """Read and update support requests and agent runs in SQLite or Postgres."""
 
-    def __init__(self, database_path: Path) -> None:
-        self.database_path = database_path
-
-    def connect(self) -> sqlite3.Connection:
-        """Open a connection to the request database."""
-        connection = sqlite3.connect(self.database_path)
-        connection.row_factory = sqlite3.Row
-        return connection
+    def __init__(
+        self,
+        database_path: Path | None = None,
+        database_url: str | None = None,
+    ) -> None:
+        if database_url is None and database_path is None:
+            env_path = os.getenv("SHOPPIE_DATABASE_PATH")
+            env_url = os.getenv("DATABASE_URL")
+            if env_url and not env_path:
+                database_url = env_url
+            else:
+                database_path = Path(env_path) if env_path else DEFAULT_DATABASE_PATH
+        self.database_path = database_path or DEFAULT_DATABASE_PATH
+        self.database_url = database_url
+        self.engine, self.is_postgres = build_engine(
+            self.database_path, self.database_url
+        )
 
     def initialize(self) -> None:
         """Create the tables, seed source records once and recover stopped work."""
-        self.database_path.parent.mkdir(parents=True, exist_ok=True)
         source = json.loads(DATA_PATH.read_text(encoding="utf-8"))
-        with closing(self.connect()) as connection, connection:
-            connection.execute(
-                """CREATE TABLE IF NOT EXISTS support_requests (
-                    request_id TEXT PRIMARY KEY,
-                    order_id TEXT NOT NULL,
-                    customer_id TEXT NOT NULL,
-                    customer_name TEXT NOT NULL,
-                    request_type TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    source_status TEXT NOT NULL,
-                    queue_status TEXT NOT NULL,
-                    request_json TEXT NOT NULL,
-                    order_json TEXT NOT NULL,
-                    recommendation_json TEXT,
-                    review_json TEXT,
-                    attempts INTEGER NOT NULL DEFAULT 0
-                )"""
-            )
-            columns = {
-                row["name"]
-                for row in connection.execute("PRAGMA table_info(support_requests)")
-            }
-            if "attempts" not in columns:
-                connection.execute(
-                    "ALTER TABLE support_requests "
-                    "ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0"
-                )
-            connection.execute(
-                """CREATE TABLE IF NOT EXISTS request_steps (
-                    step_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    request_id TEXT NOT NULL REFERENCES support_requests(request_id),
-                    stage TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    created_at TEXT NOT NULL
-                )"""
-            )
-            connection.execute(
-                """CREATE TABLE IF NOT EXISTS runs (
-                    run_id TEXT PRIMARY KEY,
-                    cap INTEGER NOT NULL,
-                    status TEXT NOT NULL,
-                    started_at TEXT NOT NULL,
-                    finished_at TEXT,
-                    summary TEXT
-                )"""
-            )
-            connection.execute(
-                """CREATE TABLE IF NOT EXISTS run_todos (
-                    run_id TEXT NOT NULL REFERENCES runs(run_id),
-                    position INTEGER NOT NULL,
-                    request_id TEXT NOT NULL,
-                    title TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    PRIMARY KEY (run_id, request_id)
-                )"""
-            )
+        if self.is_postgres:
+            with self.engine.begin() as connection:
+                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
+        metadata.create_all(self.engine)
+        with self.engine.begin() as connection:
             for customer in source["customers"]:
                 for order in customer["orders"]:
                     safe_order = self.safe_order(order)
                     for request in order["requests"]:
-                        safe_request = self.safe_request(request)
-                        connection.execute(
-                            """INSERT OR IGNORE INTO support_requests (
-                                request_id, order_id, customer_id, customer_name,
-                                request_type, created_at, source_status, queue_status,
-                                request_json, order_json
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', ?, ?)""",
-                            (
-                                request["request_id"],
-                                order["order_id"],
-                                customer["customer_id"],
-                                customer["name"],
-                                request["type"],
-                                request["created_at"],
-                                request["status"],
-                                json.dumps(safe_request),
-                                json.dumps(safe_order),
-                            ),
-                        )
-                        connection.execute(
-                            "UPDATE support_requests SET request_json = ?, "
-                            "order_json = ? WHERE request_id = ?",
-                            (
-                                json.dumps(safe_request),
-                                json.dumps(safe_order),
-                                request["request_id"],
-                            ),
+                        self._upsert_seed_request(
+                            connection, customer, order, request, safe_order
                         )
             connection.execute(
-                "UPDATE support_requests SET queue_status = 'waiting' "
-                "WHERE queue_status = 'in_progress'"
+                update(support_requests)
+                .where(support_requests.c.queue_status == "in_progress")
+                .values(queue_status="waiting")
             )
             connection.execute(
-                "UPDATE runs SET status = 'failed', finished_at = ?, "
-                "summary = 'The run stopped when the service restarted.' "
-                "WHERE status = 'running'",
-                (now(),),
+                update(runs)
+                .where(runs.c.status == "running")
+                .values(
+                    status="failed",
+                    finished_at=now(),
+                    summary="The run stopped when the service restarted.",
+                )
+            )
+
+    def _upsert_seed_request(
+        self,
+        connection: Any,
+        customer: dict[str, Any],
+        order: dict[str, Any],
+        request: dict[str, Any],
+        safe_order: dict[str, Any],
+    ) -> None:
+        safe_request = self.safe_request(request)
+        existing = connection.execute(
+            select(support_requests.c.request_id).where(
+                support_requests.c.request_id == request["request_id"]
+            )
+        ).first()
+        if existing is None:
+            connection.execute(
+                insert(support_requests).values(
+                    request_id=request["request_id"],
+                    order_id=order["order_id"],
+                    customer_id=customer["customer_id"],
+                    customer_name=customer["name"],
+                    request_type=request["type"],
+                    created_at=request["created_at"],
+                    source_status=request["status"],
+                    queue_status="waiting",
+                    request_json=json.dumps(safe_request),
+                    order_json=json.dumps(safe_order),
+                    attempts=0,
+                )
+            )
+        else:
+            connection.execute(
+                update(support_requests)
+                .where(support_requests.c.request_id == request["request_id"])
+                .values(
+                    request_json=json.dumps(safe_request),
+                    order_json=json.dumps(safe_order),
+                )
             )
 
     def reseed(self) -> None:
-        """Delete the database and rebuild it from the source records."""
-        self.database_path.unlink(missing_ok=True)
+        """Drop and rebuild all tables from the source records."""
+        if self.is_postgres:
+            with self.engine.begin() as connection:
+                connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))
+                for table in (
+                    "checkpoint_writes",
+                    "checkpoint_blobs",
+                    "checkpoints",
+                    "checkpoint_migrations",
+                ):
+                    connection.execute(text(f"DROP TABLE IF EXISTS {table} CASCADE"))
+            metadata.drop_all(self.engine)
+        else:
+            metadata.drop_all(self.engine)
+            self.engine.dispose()
+            self.database_path.unlink(missing_ok=True)
         self.initialize()
 
     @staticmethod
@@ -187,13 +284,20 @@ class Store:
 
     def list_requests(self) -> list[dict[str, Any]]:
         """Return queue summaries ordered by creation time."""
-        with closing(self.connect()) as connection, connection:
-            rows = connection.execute(
-                """SELECT request_id, order_id, customer_id, customer_name,
-                          request_type, created_at, queue_status, recommendation_json,
-                          review_json, attempts
-                   FROM support_requests ORDER BY created_at, request_id"""
-            ).fetchall()
+        query = select(
+            support_requests.c.request_id,
+            support_requests.c.order_id,
+            support_requests.c.customer_id,
+            support_requests.c.customer_name,
+            support_requests.c.request_type,
+            support_requests.c.created_at,
+            support_requests.c.queue_status,
+            support_requests.c.recommendation_json,
+            support_requests.c.review_json,
+            support_requests.c.attempts,
+        ).order_by(support_requests.c.created_at, support_requests.c.request_id)
+        with self.engine.begin() as connection:
+            rows = connection.execute(query).mappings().all()
         return [
             {
                 "request_id": row["request_id"],
@@ -212,11 +316,17 @@ class Store:
 
     def list_waiting(self) -> list[dict[str, str]]:
         """Return the id, type and creation time of each waiting request."""
-        with closing(self.connect()) as connection, connection:
-            rows = connection.execute(
-                """SELECT request_id, request_type, created_at FROM support_requests
-                   WHERE queue_status = 'waiting' ORDER BY created_at, request_id"""
-            ).fetchall()
+        query = (
+            select(
+                support_requests.c.request_id,
+                support_requests.c.request_type,
+                support_requests.c.created_at,
+            )
+            .where(support_requests.c.queue_status == "waiting")
+            .order_by(support_requests.c.created_at, support_requests.c.request_id)
+        )
+        with self.engine.begin() as connection:
+            rows = connection.execute(query).mappings().all()
         return [
             {
                 "request_id": row["request_id"],
@@ -228,17 +338,31 @@ class Store:
 
     def get_request(self, request_id: str) -> dict[str, Any] | None:
         """Return a request, safe customer/order details, and its progress."""
-        with closing(self.connect()) as connection, connection:
-            row = connection.execute(
-                "SELECT * FROM support_requests WHERE request_id = ?", (request_id,)
-            ).fetchone()
+        with self.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(support_requests).where(
+                        support_requests.c.request_id == request_id
+                    )
+                )
+                .mappings()
+                .first()
+            )
             if row is None:
                 return None
-            step_rows = connection.execute(
-                """SELECT stage, message, created_at FROM request_steps
-                   WHERE request_id = ? ORDER BY step_id""",
-                (request_id,),
-            ).fetchall()
+            step_rows = (
+                connection.execute(
+                    select(
+                        request_steps.c.stage,
+                        request_steps.c.message,
+                        request_steps.c.created_at,
+                    )
+                    .where(request_steps.c.request_id == request_id)
+                    .order_by(request_steps.c.step_id)
+                )
+                .mappings()
+                .all()
+            )
         return {
             "request": json.loads(row["request_json"]),
             "customer": {
@@ -255,21 +379,29 @@ class Store:
 
     def start_request(self, request_id: str) -> int | None:
         """Move a waiting request into progress and return its attempt number."""
-        with closing(self.connect()) as connection, connection:
-            cursor = connection.execute(
-                """UPDATE support_requests SET queue_status = 'in_progress'
-                   WHERE request_id = ? AND queue_status = 'waiting'""",
-                (request_id,),
+        with self.engine.begin() as connection:
+            result = connection.execute(
+                update(support_requests)
+                .where(
+                    support_requests.c.request_id == request_id,
+                    support_requests.c.queue_status == "waiting",
+                )
+                .values(queue_status="in_progress")
             )
-            if cursor.rowcount != 1:
+            if result.rowcount != 1:
                 return None
-            attempts = connection.execute(
-                "SELECT attempts FROM support_requests WHERE request_id = ?",
-                (request_id,),
-            ).fetchone()["attempts"]
+            attempts = int(
+                connection.execute(
+                    select(support_requests.c.attempts).where(
+                        support_requests.c.request_id == request_id
+                    )
+                ).scalar_one()
+            )
             if attempts == 0:
                 connection.execute(
-                    "DELETE FROM request_steps WHERE request_id = ?", (request_id,)
+                    delete(request_steps).where(
+                        request_steps.c.request_id == request_id
+                    )
                 )
             attempt = attempts + 1
             self._insert_step(
@@ -282,21 +414,23 @@ class Store:
 
     def is_in_progress(self, request_id: str) -> bool:
         """Report whether the agent is working on a request."""
-        with closing(self.connect()) as connection, connection:
-            row = connection.execute(
-                "SELECT queue_status FROM support_requests WHERE request_id = ?",
-                (request_id,),
-            ).fetchone()
-        return row is not None and row["queue_status"] == "in_progress"
+        with self.engine.begin() as connection:
+            status = connection.execute(
+                select(support_requests.c.queue_status).where(
+                    support_requests.c.request_id == request_id
+                )
+            ).scalar_one_or_none()
+        return status == "in_progress"
 
     def add_step(self, request_id: str, stage: str, message: str = "") -> bool:
         """Record a progress step while a request is running."""
-        with closing(self.connect()) as connection, connection:
+        with self.engine.begin() as connection:
             status = connection.execute(
-                "SELECT queue_status FROM support_requests WHERE request_id = ?",
-                (request_id,),
-            ).fetchone()
-            if status is None or status["queue_status"] != "in_progress":
+                select(support_requests.c.queue_status).where(
+                    support_requests.c.request_id == request_id
+                )
+            ).scalar_one_or_none()
+            if status != "in_progress":
                 return False
             self._insert_step(connection, request_id, stage, message)
         return True
@@ -304,40 +438,57 @@ class Store:
     def save_recommendation(
         self, request_id: str, recommendation: dict[str, Any]
     ) -> bool:
-        """Persist an agent recommendation and await support review."""
-        with closing(self.connect()) as connection, connection:
-            cursor = connection.execute(
-                """UPDATE support_requests SET recommendation_json = ?,
-                       queue_status = 'waiting_for_agent_review'
-                   WHERE request_id = ? AND queue_status = 'in_progress'
-                     AND recommendation_json IS NULL""",
-                (json.dumps(recommendation), request_id),
+        """Persist an agent recommendation once; treat an identical repeat as done."""
+        with self.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(
+                        support_requests.c.queue_status,
+                        support_requests.c.recommendation_json,
+                    ).where(support_requests.c.request_id == request_id)
+                )
+                .mappings()
+                .first()
             )
-            if cursor.rowcount != 1:
+            if row is None:
                 return False
+            existing = self.decode(row["recommendation_json"])
+            if existing is not None:
+                return existing == recommendation
+            if row["queue_status"] != "in_progress":
+                return False
+            connection.execute(
+                update(support_requests)
+                .where(support_requests.c.request_id == request_id)
+                .values(
+                    recommendation_json=json.dumps(recommendation),
+                    queue_status="waiting_for_agent_review",
+                )
+            )
             self._insert_step(connection, request_id, "preparing_recommendation")
         return True
 
     def fail_request(self, request_id: str) -> FailureResult | None:
         """Count a failed attempt: back to the queue once, then left for support."""
-        with closing(self.connect()) as connection, connection:
-            row = connection.execute(
-                """SELECT attempts FROM support_requests
-                   WHERE request_id = ? AND queue_status = 'in_progress'""",
-                (request_id,),
-            ).fetchone()
-            if row is None:
+        with self.engine.begin() as connection:
+            attempts = connection.execute(
+                select(support_requests.c.attempts).where(
+                    support_requests.c.request_id == request_id,
+                    support_requests.c.queue_status == "in_progress",
+                )
+            ).scalar_one_or_none()
+            if attempts is None:
                 return None
-            attempts = row["attempts"] + 1
-            exhausted = attempts >= MAX_ATTEMPTS
+            next_attempts = int(attempts) + 1
+            exhausted = next_attempts >= MAX_ATTEMPTS
             connection.execute(
-                "UPDATE support_requests SET attempts = ?, queue_status = ?, "
-                "recommendation_json = NULL WHERE request_id = ?",
-                (
-                    attempts,
-                    "waiting_for_agent_review" if exhausted else "waiting",
-                    request_id,
-                ),
+                update(support_requests)
+                .where(support_requests.c.request_id == request_id)
+                .values(
+                    attempts=next_attempts,
+                    queue_status="waiting_for_agent_review" if exhausted else "waiting",
+                    recommendation_json=None,
+                )
             )
             self._insert_step(
                 connection, request_id, "left_for_support" if exhausted else "error"
@@ -345,103 +496,154 @@ class Store:
         return "left_for_support" if exhausted else "waiting"
 
     def record_review(self, request_id: str, review: dict[str, Any]) -> bool:
-        """Store a support-agent decision without executing an order action."""
-        with closing(self.connect()) as connection, connection:
-            cursor = connection.execute(
-                """UPDATE support_requests SET
-                       review_json = ?, queue_status = 'decided'
-                   WHERE request_id = ?
-                     AND queue_status = 'waiting_for_agent_review'
-                     AND review_json IS NULL""",
-                (json.dumps(review), request_id),
+        """Store a support-agent decision once; treat an identical repeat as done."""
+        with self.engine.begin() as connection:
+            row = (
+                connection.execute(
+                    select(
+                        support_requests.c.queue_status,
+                        support_requests.c.review_json,
+                    ).where(support_requests.c.request_id == request_id)
+                )
+                .mappings()
+                .first()
             )
-        return cursor.rowcount == 1
+            if row is None:
+                return False
+            existing = self.decode(row["review_json"])
+            if existing is not None:
+                return existing.get("outcome") == review.get(
+                    "outcome"
+                ) and existing.get("notes") == review.get("notes")
+            if row["queue_status"] != "waiting_for_agent_review":
+                return False
+            connection.execute(
+                update(support_requests)
+                .where(support_requests.c.request_id == request_id)
+                .values(
+                    review_json=json.dumps(review),
+                    queue_status="decided",
+                )
+            )
+        return True
 
     def create_run(self, cap: int) -> str | None:
         """Start a run record unless another run is still running."""
         run_id = f"RUN-{uuid4().hex[:8].upper()}"
-        with closing(self.connect()) as connection, connection:
+        with self.engine.begin() as connection:
             running = connection.execute(
-                "SELECT 1 FROM runs WHERE status = 'running'"
-            ).fetchone()
+                select(runs.c.run_id).where(runs.c.status == "running")
+            ).first()
             if running:
                 return None
             connection.execute(
-                "INSERT INTO runs (run_id, cap, status, started_at) "
-                "VALUES (?, ?, 'running', ?)",
-                (run_id, cap, now()),
+                insert(runs).values(
+                    run_id=run_id, cap=cap, status="running", started_at=now()
+                )
             )
         return run_id
 
     def finish_run(self, run_id: str, status: str, summary: str) -> None:
         """Close a run with its summary."""
-        with closing(self.connect()) as connection, connection:
+        with self.engine.begin() as connection:
             connection.execute(
-                "UPDATE runs SET status = ?, summary = ?, finished_at = ? "
-                "WHERE run_id = ?",
-                (status, summary, now(), run_id),
+                update(runs)
+                .where(runs.c.run_id == run_id)
+                .values(status=status, summary=summary, finished_at=now())
             )
 
     def is_running(self, run_id: str) -> bool:
         """Report whether a run is still running."""
-        with closing(self.connect()) as connection, connection:
-            row = connection.execute(
-                "SELECT status FROM runs WHERE run_id = ?", (run_id,)
-            ).fetchone()
-        return row is not None and row["status"] == "running"
+        with self.engine.begin() as connection:
+            status = connection.execute(
+                select(runs.c.status).where(runs.c.run_id == run_id)
+            ).scalar_one_or_none()
+        return status == "running"
 
     def current_run(self) -> dict[str, Any] | None:
         """Return the latest run with its to-do list."""
-        with closing(self.connect()) as connection, connection:
-            run = connection.execute(
-                "SELECT * FROM runs ORDER BY started_at DESC LIMIT 1"
-            ).fetchone()
+        with self.engine.begin() as connection:
+            run = (
+                connection.execute(
+                    select(runs).order_by(runs.c.started_at.desc()).limit(1)
+                )
+                .mappings()
+                .first()
+            )
             if run is None:
                 return None
-            todos = connection.execute(
-                """SELECT request_id, title, status FROM run_todos
-                   WHERE run_id = ? ORDER BY position""",
-                (run["run_id"],),
-            ).fetchall()
+            todos = (
+                connection.execute(
+                    select(
+                        run_todos.c.request_id,
+                        run_todos.c.title,
+                        run_todos.c.status,
+                    )
+                    .where(run_todos.c.run_id == run["run_id"])
+                    .order_by(run_todos.c.position)
+                )
+                .mappings()
+                .all()
+            )
         return {**dict(run), "todos": [dict(todo) for todo in todos]}
 
     def write_todos(self, run_id: str, todos: list[dict[str, str]]) -> None:
         """Replace a run's to-do list."""
-        with closing(self.connect()) as connection, connection:
-            connection.execute("DELETE FROM run_todos WHERE run_id = ?", (run_id,))
-            connection.executemany(
-                """INSERT INTO run_todos (run_id, position, request_id, title, status)
-                   VALUES (?, ?, ?, ?, ?)""",
-                [
-                    (run_id, index, todo["request_id"], todo["title"], todo["status"])
-                    for index, todo in enumerate(todos)
-                ],
-            )
+        with self.engine.begin() as connection:
+            connection.execute(delete(run_todos).where(run_todos.c.run_id == run_id))
+            if todos:
+                connection.execute(
+                    insert(run_todos),
+                    [
+                        {
+                            "run_id": run_id,
+                            "position": index,
+                            "request_id": todo["request_id"],
+                            "title": todo["title"],
+                            "status": todo["status"],
+                        }
+                        for index, todo in enumerate(todos)
+                    ],
+                )
 
     def update_todo(self, run_id: str, request_id: str, status: TodoStatus) -> None:
         """Set one to-do item's status, adding the item if the plan missed it."""
-        with closing(self.connect()) as connection, connection:
-            cursor = connection.execute(
-                "UPDATE run_todos SET status = ? WHERE run_id = ? AND request_id = ?",
-                (status, run_id, request_id),
+        with self.engine.begin() as connection:
+            result = connection.execute(
+                update(run_todos)
+                .where(
+                    run_todos.c.run_id == run_id,
+                    run_todos.c.request_id == request_id,
+                )
+                .values(status=status)
             )
-            if cursor.rowcount == 0:
+            if result.rowcount == 0:
+                max_pos = connection.execute(
+                    select(func.coalesce(func.max(run_todos.c.position), -1)).where(
+                        run_todos.c.run_id == run_id
+                    )
+                ).scalar_one()
                 connection.execute(
-                    """INSERT INTO run_todos
-                           (run_id, position, request_id, title, status)
-                       SELECT ?, COALESCE(MAX(position), -1) + 1, ?, ?, ?
-                       FROM run_todos WHERE run_id = ?""",
-                    (run_id, request_id, f"Work {request_id}", status, run_id),
+                    insert(run_todos).values(
+                        run_id=run_id,
+                        position=int(max_pos) + 1,
+                        request_id=request_id,
+                        title=f"Work {request_id}",
+                        status=status,
+                    )
                 )
 
     @staticmethod
     def _insert_step(
-        connection: sqlite3.Connection, request_id: str, stage: str, message: str = ""
+        connection: Any, request_id: str, stage: str, message: str = ""
     ) -> None:
         connection.execute(
-            """INSERT INTO request_steps (request_id, stage, message, created_at)
-               VALUES (?, ?, ?, ?)""",
-            (request_id, stage, message or STEP_MESSAGES[stage], now()),
+            insert(request_steps).values(
+                request_id=request_id,
+                stage=stage,
+                message=message or STEP_MESSAGES[stage],
+                created_at=now(),
+            )
         )
 
     @staticmethod

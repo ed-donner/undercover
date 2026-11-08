@@ -28,8 +28,8 @@ def database_path() -> Path:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize SQLite and seed the Shoppie queue."""
-    store = Store(database_path())
+    """Initialize the database and seed the Shoppie queue."""
+    store = Store()
     store.initialize()
     app.state.store = store
     yield
@@ -237,12 +237,13 @@ def review_request(
     """Record a support decision without processing the order."""
     store = store_of(request)
     result = require_request(store, request_id)
-    if result["status"] != "waiting_for_agent_review":
+    if result["status"] not in {"waiting_for_agent_review", "decided"}:
         raise HTTPException(status_code=409, detail="Request is not ready for review")
     saved_review = {
         "outcome": review.outcome,
         "notes": review.notes,
-        "reviewed_at": datetime.now(UTC).isoformat(),
+        "reviewed_at": (result.get("review") or {}).get("reviewed_at")
+        or datetime.now(UTC).isoformat(),
     }
     if not store.record_review(request_id, saved_review):
         raise HTTPException(status_code=409, detail="Request was already reviewed")

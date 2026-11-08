@@ -42,10 +42,10 @@ Rewrite `backend/store.py` using SQLAlchemy Core (`MetaData`, `Table`, `Column`,
 - Update `backend/seed.py` (`npm run seed`) to reset and reseed all tables (and clear checkpointer tables when on Postgres) idempotently on both backends.
 - Make recommendation and completion operations idempotent ("Nothing happens twice"): repeating the same recommendation on a request that already has that recommendation succeeds and returns the request without adding a second recommendation or step, while a different recommendation on an already-recommended request is refused with 409. Repeating an identical completion/decision is treated as done, while a conflicting decision is refused with 409.
 
-- [ ] Store and API tests pass on SQLite with `DATABASE_URL` unset, verifying table creation, seeding, `reseed()`, queue listing, request context, steps, runs, and to-do lists.
-- [ ] Tests verify idempotency: sending the same recommendation twice returns 200 and stores only one recommendation; sending a different recommendation on a decided or already-recommended request returns 409.
-- [ ] Engine configuration tests verify that `DATABASE_URL` configures the `undercover` schema search path and caps total pooled connections per process at 4 or fewer.
-- [ ] `npm run check:python` passes with at least 80% coverage.
+- [x] Store and API tests pass on SQLite with `DATABASE_URL` unset, verifying table creation, seeding, `reseed()`, queue listing, request context, steps, runs, and to-do lists.
+- [x] Tests verify idempotency: sending the same recommendation twice returns 200 and stores only one recommendation; sending a different recommendation on a decided or already-recommended request returns 409.
+- [x] Engine configuration tests verify that `DATABASE_URL` configures the `undercover` schema search path and caps total pooled connections per process at 4 or fewer.
+- [x] `npm run check:python` passes with at least 80% coverage.
 
 ## Phase 3: The request agent as a hand-written LangGraph graph
 

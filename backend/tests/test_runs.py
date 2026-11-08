@@ -3,7 +3,14 @@ from fastapi.testclient import TestClient
 
 from backend import main
 from backend.main import app
-from backend.store import Store
+from backend.seed import seed_database
+from backend.store import (
+    MAX_OVERFLOW,
+    MAX_POOL_SIZE,
+    SCHEMA,
+    Store,
+    sqlalchemy_postgres_url,
+)
 
 RECOMMENDATION = {
     "outcome": "approve",
@@ -57,14 +64,18 @@ def test_second_failure_leaves_a_request_for_support(store):
 def test_a_request_never_gets_a_second_recommendation(store):
     store.start_request("REQ-7001")
     assert store.save_recommendation("REQ-7001", RECOMMENDATION)
+    assert store.save_recommendation("REQ-7001", RECOMMENDATION)
     assert not store.save_recommendation("REQ-7001", {**RECOMMENDATION, "x": 1})
     assert store.start_request("REQ-7001") is None
+    assert store.record_review("REQ-7001", {"outcome": "approve", "notes": ""})
     assert store.record_review("REQ-7001", {"outcome": "approve", "notes": ""})
     assert not store.record_review("REQ-7001", {"outcome": "decline", "notes": ""})
     request = store.get_request("REQ-7001")
     assert request is not None
     assert request["recommendation"] == RECOMMENDATION
     assert request["review"]["outcome"] == "approve"
+    stages = [step["stage"] for step in request["steps"]]
+    assert stages.count("preparing_recommendation") == 1
 
 
 def test_restart_recovers_requests_and_runs_left_in_progress(store):
@@ -90,22 +101,38 @@ def test_reseed_rebuilds_every_request_as_waiting(store):
     assert store.current_run() is None
 
 
-def test_existing_database_gains_the_attempts_column(tmp_path):
-    path = tmp_path / "old.sqlite3"
-    store = Store(path)
-    with store.connect() as connection:
-        connection.execute(
-            """CREATE TABLE support_requests (
-                request_id TEXT PRIMARY KEY, order_id TEXT NOT NULL,
-                customer_id TEXT NOT NULL, customer_name TEXT NOT NULL,
-                request_type TEXT NOT NULL, created_at TEXT NOT NULL,
-                source_status TEXT NOT NULL, queue_status TEXT NOT NULL,
-                request_json TEXT NOT NULL, order_json TEXT NOT NULL,
-                recommendation_json TEXT, review_json TEXT)"""
-        )
-    connection.close()
-    store.initialize()
-    assert store.list_requests()[0]["attempts"] == 0
+def test_postgres_engine_uses_undercover_schema_and_caps_connections(
+    monkeypatch, tmp_path
+):
+    captured: dict[str, object] = {}
+
+    def fake_create_engine(url: str, **kwargs: object):
+        captured["url"] = url
+        captured.update(kwargs)
+        return "engine"
+
+    monkeypatch.setattr("backend.store.create_engine", fake_create_engine)
+    monkeypatch.delenv("SHOPPIE_DATABASE_PATH", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "postgres://postgres:pw@127.0.0.1:5432/postgres")
+    store = Store()
+
+    assert store.is_postgres is True
+    assert captured["url"] == "postgresql+psycopg://postgres:pw@127.0.0.1:5432/postgres"
+    assert captured["pool_size"] == MAX_POOL_SIZE
+    assert captured["max_overflow"] == MAX_OVERFLOW
+    assert MAX_POOL_SIZE + MAX_OVERFLOW <= 4
+    assert captured["connect_args"] == {"options": f"-c search_path={SCHEMA}"}
+    assert sqlalchemy_postgres_url("postgresql://u:p@h/db") == (
+        "postgresql+psycopg://u:p@h/db"
+    )
+    assert sqlalchemy_postgres_url("sqlite:///test.db") == "sqlite:///test.db"
+
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "seeded.sqlite3"))
+    monkeypatch.setattr("backend.seed.load_dotenv", lambda **kwargs: False)
+    monkeypatch.setattr(
+        "backend.store.create_engine", __import__("sqlalchemy").create_engine
+    )
+    assert "seeded.sqlite3" in seed_database()
 
 
 def test_runs_are_one_at_a_time_and_keep_a_to_do_list(client):
@@ -169,6 +196,10 @@ def test_agent_operations_start_save_and_fail_requests(client):
     duplicate = client.post(
         "/api/requests/REQ-7001/recommendation", json=RECOMMENDATION
     )
+    conflicting = client.post(
+        "/api/requests/REQ-7001/recommendation",
+        json={**RECOMMENDATION, "outcome": "decline"},
+    )
     client.post("/api/requests/REQ-7002/start")
     failed = client.post("/api/requests/REQ-7002/failure")
     not_running = client.post("/api/requests/REQ-7003/failure")
@@ -181,7 +212,8 @@ def test_agent_operations_start_save_and_fail_requests(client):
     assert again.status_code == 409
     assert missing.status_code == 404
     assert saved.json()["status"] == "waiting_for_agent_review"
-    assert duplicate.status_code == 409
+    assert duplicate.status_code == 200
+    assert conflicting.status_code == 409
     assert failed.json() == {"request_id": "REQ-7002", "status": "waiting"}
     assert not_running.status_code == 409
 
@@ -211,16 +243,21 @@ def test_support_review_decides_without_running_an_order_action(client):
         json={"outcome": "approve", "notes": "Confirmed by support."},
     )
     detail = client.get("/api/requests/REQ-7001").json()
-    duplicate = client.post(
+    repeat = client.post(
+        "/api/requests/REQ-7001/review",
+        json={"outcome": "approve", "notes": "Confirmed by support."},
+    )
+    conflicting = client.post(
         "/api/requests/REQ-7001/review", json={"outcome": "approve", "notes": ""}
     )
 
     assert early.status_code == 409
     assert response.status_code == 200
+    assert repeat.status_code == 200
     assert detail["status"] == "decided"
     assert detail["review"]["notes"] == "Confirmed by support."
     assert "action_result" not in detail
-    assert duplicate.status_code == 409
+    assert conflicting.status_code == 409
 
 
 def test_background_run_stores_the_queue_agent_summary(store, monkeypatch):

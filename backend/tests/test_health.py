@@ -1,8 +1,9 @@
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
+from sqlalchemy import update
 
 from backend.main import app
-from backend.store import Store
+from backend.store import Store, support_requests
 
 
 def test_health(tmp_path, monkeypatch):
@@ -23,16 +24,15 @@ def test_seed_is_idempotent(tmp_path):
 def test_seed_refreshes_request_and_order_records_in_an_existing_database(tmp_path):
     store = Store(tmp_path / "evidence.sqlite3")
     store.initialize()
-    with store.connect() as connection:
+    with store.engine.begin() as connection:
         connection.execute(
-            "UPDATE support_requests SET request_json = ?, order_json = ? "
-            "WHERE request_id = 'REQ-7002'",
-            (
-                '{"customer_message": "stale", "evidence": []}',
-                '{"items": []}',
-            ),
+            update(support_requests)
+            .where(support_requests.c.request_id == "REQ-7002")
+            .values(
+                request_json='{"customer_message": "stale", "evidence": []}',
+                order_json='{"items": []}',
+            )
         )
-    connection.close()
     store.initialize()
 
     request = store.get_request("REQ-7002")
