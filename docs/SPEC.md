@@ -11,18 +11,25 @@ Customers contact support about orders they want to cancel, items they want to r
 We want an AI agent, the Shoppie Agent, to help agents work through the support queue. For each request it should:
 
 - read the customer's request, order details and relevant history
-- check the request against the applicable cancellation, return or refund policy
+- look up the sections of the shopping, cancellation and returns policies the request needs, rather than reading whole policies
 - recommend whether to approve, decline or ask for more information
-- explain the recommendation and cite the relevant policy
+- explain the recommendation and cite the policy sections it relied on
+
+## Working the queue
+
+One run works the whole queue. A support agent starts the agent once, with a cap on how many requests the run may work, and the agent plans the run as a to-do list, chooses the order, works each waiting request up to the cap, and finishes with a short summary. Each request is worked by a fresh helper from a clean start. One named request can also be worked on its own.
+
+A long run will meet timeouts and errors. One bad request never stops the run or stays stuck in progress: a request that fails before it has a recommendation goes back in the queue and is tried again, and one that fails twice is left for a support agent. No request gets two recommendations or two reviews. Before it finishes, the agent checks it has not missed a waiting request within its cap.
 
 The agent supports the support team; agents remain responsible for processing requests and confirming decisions.
 
 ## What the team needs to see
 
-- The queue, with where each request stands: waiting, in progress, waiting for agent review or decided.
+- The queue, with where each request stands: waiting, in progress, waiting for agent review or decided, and which requests were left for a support agent.
+- The current run's to-do list, with each item to do, in progress, done or left for a support agent, and the run's summary when it ends.
 - Each request in full, with the agent's recommendation and its reasons.
-- What the agent is doing on a request while it works, step by step.
-- The agent's instructions, read only.
+- What the agent is doing on a request while it works, step by step, including the policy sections it read.
+- The agent's instructions for running the queue and for working a request, read only.
 
 ## Rules
 

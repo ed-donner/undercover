@@ -97,7 +97,7 @@ On the queue page, Initiate processing gets a number input for the cap, from 1 t
 
 Update `docs/SPEC.md` ("What the team needs to see": the to-do list and the sections read; working the queue in one capped run), `docs/TECH_STACK.md` (the queue agent and request subagent, the middleware, the default model) and `docs/STATUS.md`. Leave the Rules in `docs/SPEC.md` alone. Then run the product on the default model.
 
-- [ ] `npm run seed`, then a run capped at 5 from the dashboard works 5 requests on its own. The to-do list fills in and gets ticked off, each request's page shows its steps and the sections it read, and 3 requests stay waiting.
-- [ ] No request in that run has more than one recommendation, and none is marked decided without a support review.
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is.
-- [ ] `npm run check` is green, and `git diff --check` passes.
+- [x] `npm run seed`, then a run capped at 5 from the dashboard works 5 requests on its own. The to-do list fills in and gets ticked off, each request's page shows its steps and the sections it read, and 3 requests stay waiting.
+- [x] No request in that run has more than one recommendation, and none is marked decided without a support review.
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is.
+- [x] `npm run check` is green, and `git diff --check` passes.
