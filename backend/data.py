@@ -19,9 +19,10 @@ def _load_json(name: str) -> Any:
 COMPANY: dict[str, Any] = _load_json("company.json")
 PAYOUT_APPROVAL_LIMIT: Decimal = COMPANY["payout_approval_limit"]
 
-PLANS: dict[str, Any] = {
-    plan["plan"]: plan for plan in _load_json("plans.json")["plans"]
-}
+_PLAN_DATA = _load_json("plans.json")
+PLANS: dict[str, Any] = {plan["plan"]: plan for plan in _PLAN_DATA["plans"]}
+ADD_ONS: dict[str, Any] = {a["add_on"]: a for a in _PLAN_DATA["add_ons"]}
+DEDUCTIBLE_BENEFITS: list[str] = _PLAN_DATA["deductible_applies_to"]
 POLICIES: dict[str, Any] = {
     policy["policy_id"]: policy for policy in _load_json("policies.json")
 }

@@ -8,14 +8,57 @@ from http import HTTPStatus
 from typing import Annotated, Any, Literal
 
 import httpx
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 BACKEND_URL = "http://localhost:8000"
 
 Document = Literal["policy_wording", "claims_manual"]
 Decision = Literal["approve", "decline", "refer"]
 Amount = Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)]
+Benefit = Literal[
+    "trip_cancellation",
+    "trip_interruption",
+    "trip_delay",
+    "baggage_delay",
+    "baggage",
+    "passport",
+    "emergency_medical",
+]
 RunItemStatus = Literal["to do", "in progress", "done", "left for a handler"]
+
+
+class Line(BaseModel):
+    """One covered item or expense on a claim."""
+
+    description: str = Field(description="What the item or expense is")
+    amount: Amount = Field(
+        description="The total claimed for the line in US dollars, before any limits. "
+        "For several items, the total for all of them"
+    )
+    quantity: int = Field(
+        default=1,
+        ge=1,
+        description="How many separate items the line holds, such as 3 for three "
+        "shirts. A pair or a set is one item",
+    )
+    kind: Literal[
+        "item", "electronics", "cash", "expense", "hotel", "meals_without_receipts"
+    ] = Field(
+        description="item: a belonging, or a pair or set that counts as one item. "
+        "electronics: only a phone, tablet, laptop, camera or its lens, e-reader or "
+        "smartwatch; any other device is an item. "
+        "cash: cash that was lost or stolen. "
+        "expense: any other cost with a receipt, such as a medical bill, a meal, a "
+        "taxi, a fee or a prepaid trip cost. "
+        "hotel: a hotel during a trip delay. "
+        "meals_without_receipts: meals during a trip delay with no receipts."
+    )
+    nights: int = Field(default=0, description="For a hotel, the number of nights")
+    hours: int = Field(
+        default=0,
+        description="For meals without receipts, the length of the delay in hours",
+    )
+
 
 client = httpx.Client(base_url=BACKEND_URL, timeout=10)
 
@@ -77,6 +120,19 @@ def decide_claim(
         "policy_reference": policy_reference,
     }
     _call("POST", f"/api/claims/{claim_id}/decision", json=body)
+
+
+def calculate_payout(
+    policy_id: str, benefit: Benefit, lines: list[Line], paid_by_others: Amount
+) -> dict[str, Any]:
+    """Work out a payout with UnderCover's payout rules."""
+    body = {
+        "policy_id": policy_id,
+        "benefit": benefit,
+        "lines": [line.model_dump(mode="json") for line in lines],
+        "paid_by_others": str(paid_by_others),
+    }
+    return _call("POST", "/api/payouts", json=body)
 
 
 def requeue_claim(claim_id: str) -> None:

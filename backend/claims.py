@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import Any
 
-from backend import data, db, money
+from backend import data, db, money, payouts
 from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
 from backend.errors import Conflict, NotFound
 
@@ -67,7 +67,7 @@ def decide(
 ) -> dict[str, Any]:
     """Record a claim's one decision; an approval over the limit needs a sign-off."""
     get_row(claim_id)
-    over_limit = decision == "approve" and payout > data.PAYOUT_APPROVAL_LIMIT
+    over_limit = decision == "approve" and payouts.needs_sign_off(payout)
     with db.connection() as conn:
         decided = conn.execute(
             """UPDATE claims SET status = ?, decision = ?, payout_cents = ?,

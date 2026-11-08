@@ -5,12 +5,13 @@ Tools get their state from the run's context, never from closures or globals.
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 from langchain.tools import ToolRuntime, tool
 
 from agent import api, work
-from agent.api import Amount, Decision, Document
+from agent.api import Amount, Benefit, Decision, Document, Line
 
 
 @dataclass
@@ -57,6 +58,24 @@ def read_section(
 
 
 @tool
+def calculate_payout(
+    policy_id: str,
+    benefit: Benefit,
+    lines: list[Line],
+    paid_by_others: Amount = Decimal(0),
+) -> dict[str, Any]:
+    """Work out the payout on an approved claim with UnderCover's payout rules.
+
+    lines: the covered items and expenses, one for each line of the claim, with
+    any excluded ones left out. A pair or a set counts as one item.
+    paid_by_others: anything a carrier, hotel or other party has paid or refunded
+    for the same loss.
+    Returns the calculation, the payout and whether it needs sign-off.
+    """
+    return api.calculate_payout(policy_id, benefit, lines, paid_by_others)
+
+
+@tool
 def decide_claim(
     decision: Decision,
     payout: Amount,
@@ -92,5 +111,5 @@ def finish_run(summary: str, runtime: ToolRuntime[RunContext]) -> str:
     return f"Not finished — {outstanding}" if outstanding else "Run finished."
 
 
-CLAIM_TOOLS = [get_claim, list_sections, read_section, decide_claim]
+CLAIM_TOOLS = [get_claim, list_sections, read_section, calculate_payout, decide_claim]
 QUEUE_TOOLS = [get_to_do, work_claim, finish_run]

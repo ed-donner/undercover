@@ -6,10 +6,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend import agent_process, claims, data, runs
+from backend import agent_process, claims, data, payouts, runs
 from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.money import Amount
+from backend.payouts import Benefit, Line
 
 app = FastAPI(title="UnderCover")
 
@@ -41,6 +42,13 @@ class SignOff(BaseModel):
 
 class Payment(BaseModel):
     amount: Amount
+
+
+class PayoutRequest(BaseModel):
+    policy_id: str
+    benefit: Benefit
+    lines: list[Line]
+    paid_by_others: Amount
 
 
 class StartRun(BaseModel):
@@ -96,6 +104,14 @@ def get_claim_instructions() -> dict[str, str]:
 def get_queue_instructions() -> dict[str, str]:
     """Return the instructions for running the claims queue, read only."""
     return {"instructions": QUEUE_INSTRUCTIONS}
+
+
+@app.post("/api/payouts", operation_id="calculate_payout")
+def calculate_payout(request: PayoutRequest) -> dict[str, Any]:
+    """Work out the payout on an approved claim with UnderCover's payout rules."""
+    return payouts.work_out_payout(
+        request.policy_id, request.benefit, request.lines, request.paid_by_others
+    )
 
 
 @app.get("/api/handlers", operation_id="list_handlers")

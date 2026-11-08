@@ -82,3 +82,39 @@ def test_finish_run_is_refused_while_a_claim_is_outstanding(monkeypatch, script)
     run = api.get_current_run()
     assert run["summary"] == "Worked it."
     assert run["items"][0]["attempts"] == 1
+
+
+def test_payout_comes_from_the_payout_tool(backend, script):
+    line = {"description": "Hotel", "amount": "900.00", "kind": "hotel", "nights": 2}
+    llm = script(
+        ("get_claim", {}),
+        (
+            "calculate_payout",
+            {
+                "policy_id": "POL-2001",
+                "benefit": "trip_delay",
+                "lines": [line],
+                "paid_by_others": "0.00",
+            },
+        ),
+        (
+            "decide_claim",
+            {
+                "decision": "approve",
+                "payout": "700.00",
+                "reason": "Hotel limited to two nights.",
+                "policy_reference": "Section 10",
+            },
+        ),
+        "Approved.",
+    )
+
+    agents.decide_claim("CLM-1001", llm)
+
+    assert api.get_claim("CLM-1001")["payout"] == "700.00"
+    assert (
+        api.calculate_payout("POL-2001", "trip_delay", [api.Line(**line)], Decimal(0))[
+            "payout"
+        ]
+        == "700.00"
+    )
