@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActionPanel,
-  InstructionsPanel,
   OrderCard,
   ProgressCard,
   QueuePanel,
   RecommendationCard,
   RequestOverview,
-  ReviewRecord,
   RunPanel,
 } from "./components";
+import { formatDate } from "./format";
 import type {
   Instructions,
   Outcome,
@@ -174,10 +173,7 @@ export function App() {
     });
   }
 
-  function refreshQueue() {
-    void loadQueue();
-  }
-
+  const refreshQueue = () => void loadQueue();
   const selected = queue.find((item) => item.request_id === selectedId);
 
   return (
@@ -217,18 +213,20 @@ export function App() {
           )}
           {detail && selected && (
             <>
-              <RequestOverview detail={detail} orderId={selected.order_id} />
-              <OrderCard detail={detail} />
+              <div className="detail-grid">
+                <RequestOverview detail={detail} orderId={selected.order_id} />
+                <OrderCard detail={detail} />
+              </div>
               {detail.recommendation && (
                 <RecommendationCard recommendation={detail.recommendation} />
               )}
-              <ProgressCard detail={detail} />
               <ReviewRecord detail={detail} />
               <ActionPanel
                 detail={detail}
                 busy={busy}
                 onReview={recordReview}
               />
+              <ProgressCard detail={detail} />
             </>
           )}
         </section>
@@ -318,6 +316,66 @@ function Header({
         </div>
       </section>
     </>
+  );
+}
+
+function InstructionsPanel({
+  instructions,
+}: Readonly<{ instructions: Instructions | null }>) {
+  return (
+    <details className="instructions-panel panel">
+      <summary>
+        <span>
+          <span className="eyebrow">AGENT CONFIGURATION</span>
+          <strong>Shoppie Agent instructions</strong>
+        </span>
+        <span className="read-only">
+          Read only <span aria-hidden="true">＋</span>
+        </span>
+      </summary>
+      {instructions ? (
+        <>
+          <h3>Running the queue</h3>
+          <pre>{instructions.queue}</pre>
+          <h3>Working a request</h3>
+          <pre>{instructions.request}</pre>
+        </>
+      ) : (
+        <pre>Loading instructions…</pre>
+      )}
+    </details>
+  );
+}
+
+function ReviewRecord({ detail }: Readonly<{ detail: RequestDetail }>) {
+  if (!detail.review) return null;
+  const { outcome, notes, reviewed_by, reviewed_at } = detail.review;
+  const titles: Record<Outcome, string> = {
+    approve: "Approve",
+    decline: "Decline",
+    request_information: "Request information",
+  };
+  const badges: Record<Outcome, string> = {
+    approve: "Approved",
+    decline: "Declined",
+    request_information: "Info requested",
+  };
+  return (
+    <article className="panel review-record">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow">SUPPORT REVIEW RECORDED</p>
+          <h2>{titles[outcome]}</h2>
+        </div>
+        <span className={`outcome-pill outcome-${outcome}`}>
+          {badges[outcome]}
+        </span>
+      </div>
+      <p>{notes || "No review notes added."}</p>
+      <small>
+        Reviewed by {reviewed_by} · {formatDate(reviewed_at)} IST
+      </small>
+    </article>
   );
 }
 

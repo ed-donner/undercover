@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { SyntheticEvent } from "react";
 import type {
-  Instructions,
   Outcome,
   QueueItem,
   QueueStatus,
@@ -90,10 +89,18 @@ export function QueuePanel({
   onSelect: (id: string) => void;
   onRefresh: () => void;
 }>) {
+  const openCount = items.filter((i) =>
+    ["waiting", "in_progress"].includes(i.status),
+  ).length;
+  const reviewCount = items.filter(
+    (i) => i.status === "waiting_for_agent_review",
+  ).length;
+  const decidedCount = items.filter((i) => i.status === "decided").length;
   return (
     <aside className="queue-panel panel" aria-label="Support request queue">
       <div className="panel-heading queue-heading">
         <div>
+          <p className="eyebrow">INCOMING REQUESTS</p>
           <h2>Queue</h2>
           <p>{items.length} requests</p>
         </div>
@@ -101,6 +108,17 @@ export function QueuePanel({
           {String(items.length).padStart(2, "0")}
         </span>
       </div>
+      {items.length > 0 && (
+        <div className="queue-summary" aria-label="Queue breakdown">
+          <span className="summary-chip chip-waiting">{openCount} open</span>
+          <span className="summary-chip chip-review">
+            {reviewCount} to review
+          </span>
+          <span className="summary-chip chip-decided">
+            {decidedCount} decided
+          </span>
+        </div>
+      )}
       {state === "loading" && (
         <p className="state-message">Loading requests…</p>
       )}
@@ -355,6 +373,7 @@ export function ActionPanel({
   return (
     <div className="action-panel panel">
       <div className="action-copy">
+        <p className="eyebrow">SUPPORT SIGN-OFF</p>
         <strong>
           {detail.status === "in_progress" && detail.review
             ? "The agent is completing this reviewed request"
@@ -394,18 +413,21 @@ export function ActionPanel({
               placeholder="Your name"
             />
           </label>
-          <label>
-            Notes <span className="optional">(optional)</span>
+          <label className="notes-field">
+            <span>
+              Notes <span className="optional">(optional)</span>
+            </span>
             <textarea
               value={notes}
               onChange={(e) => {
                 setNotes(e.target.value);
               }}
+              placeholder="Add context for your decision…"
               rows={2}
             />
           </label>
           <button
-            className="secondary-button"
+            className="primary-button"
             disabled={busy || !reviewedBy.trim()}
             type="submit"
           >
@@ -417,39 +439,13 @@ export function ActionPanel({
   );
 }
 
-export function InstructionsPanel({
-  instructions,
-}: Readonly<{ instructions: Instructions | null }>) {
-  return (
-    <details className="instructions-panel panel">
-      <summary>
-        <span>
-          <span className="eyebrow">AGENT CONFIGURATION</span>
-          <strong>Shoppie Agent instructions</strong>
-        </span>
-        <span className="read-only">
-          Read only <span aria-hidden="true">＋</span>
-        </span>
-      </summary>
-      {instructions ? (
-        <>
-          <h3>Running the queue</h3>
-          <pre>{instructions.queue}</pre>
-          <h3>Working a request</h3>
-          <pre>{instructions.request}</pre>
-        </>
-      ) : (
-        <pre>Loading instructions…</pre>
-      )}
-    </details>
-  );
-}
-
 export function RunPanel({ run }: Readonly<{ run: Run | null }>) {
   if (!run) return null;
   const done = run.todos.filter((todo) =>
     ["done", "left_for_support"].includes(todo.status),
   ).length;
+  const pct =
+    run.todos.length > 0 ? Math.round((done / run.todos.length) * 100) : 0;
   return (
     <section className="panel run-panel" aria-label="Agent run">
       <div className="panel-heading">
@@ -468,6 +464,11 @@ export function RunPanel({ run }: Readonly<{ run: Run | null }>) {
           {runLabels[run.status]}
         </span>
       </div>
+      {run.todos.length > 0 && (
+        <div className="run-progress" aria-hidden="true">
+          <span style={{ width: `${String(pct)}%` }} />
+        </div>
+      )}
       {run.todos.length === 0 ? (
         <p className="muted">The agent is planning its run.</p>
       ) : (
@@ -491,20 +492,5 @@ export function RunPanel({ run }: Readonly<{ run: Run | null }>) {
         </div>
       )}
     </section>
-  );
-}
-
-export function ReviewRecord({ detail }: Readonly<{ detail: RequestDetail }>) {
-  if (!detail.review) return null;
-  const { outcome, notes, reviewed_by, reviewed_at } = detail.review;
-  return (
-    <article className="panel review-record">
-      <p className="eyebrow">SUPPORT REVIEW RECORDED</p>
-      <h2>{outcomeLabels[outcome]}</h2>
-      <p>{notes || "No review notes added."}</p>
-      <small>
-        Reviewed by {reviewed_by} · {formatDate(reviewed_at)} IST
-      </small>
-    </article>
   );
 }
