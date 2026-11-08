@@ -43,7 +43,7 @@ def model() -> ChatOpenAI:
 def run(
     request_id: str, thread_id: str, llm: BaseChatModel | None = None
 ) -> dict[str, object]:
-    """Run the agent on one support request and return its recommendation."""
+    """Run the agent on one request: approve, decline or request information."""
     request_context: dict[str, object] = {}
 
     @tool

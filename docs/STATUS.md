@@ -10,3 +10,7 @@ The Shoppie pilot is implemented:
 - `data/evals/`: reference decisions kept separate from agent-readable data
 
 The backend, Shoppie Agent workflow, and support dashboard are implemented. The dashboard displays INR values and IST times for the synthetic records. Agent recommendations support review; the pilot does not execute real customer or order actions. Run `uv sync` and `npm install` at the repository root, then `npm run dev`.
+
+## Harness build (in progress, `docs/PLAN_HARNESS.md`)
+
+- Phase 1: runs with a cap and a to-do list, attempt counting (a failed request goes back to the queue once, then is left for support), one recommendation and one review per request, recovery at startup, and `npm run seed`. The dashboard's Initiate processing button is rewired in Phase 5.

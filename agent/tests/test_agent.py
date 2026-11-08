@@ -1,15 +1,12 @@
 from typing import TypedDict
 
 import pytest
-from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
 from agent import main
 from agent.models import Recommendation
 from agent.safety import apply_context_overrides
-from backend.main import app
-from backend.store import Store
 
 
 class StubModel(GenericFakeChatModel):
@@ -77,37 +74,22 @@ def scripted_model(
 
 
 @pytest.mark.parametrize("outcome", ["approve", "decline", "request_information"])
-def test_run_returns_structured_recommendation(tmp_path, monkeypatch, outcome):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / f"{outcome}.sqlite3"))
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
-    store = Store(tmp_path / f"{outcome}.sqlite3")
-    store.initialize()
-    assert store.start_run("REQ-7008")
-    with TestClient(app):
-        result = main.run("REQ-7008", "thread-1", scripted_model(outcome))
+def test_run_returns_structured_recommendation(store, outcome):
+    assert store.start_request("REQ-7008")
+    result = main.run("REQ-7008", "thread-1", scripted_model(outcome))
     assert result["outcome"] == outcome
     assert result["policy_citations"] == ["Cancellation Policy: eligibility"]
     assert result["next_action"] == "Support agent to review and confirm."
 
 
-def test_run_rejects_missing_context(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "missing.sqlite3"))
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
-    Store(tmp_path / "missing.sqlite3").initialize()
-    with TestClient(app), pytest.raises(Exception, match="404 Not Found"):
+def test_run_rejects_missing_context(store):
+    with pytest.raises(Exception, match="404 Not Found"):
         main.run("REQ-0000", "thread-1", scripted_model())
 
 
-def test_run_rejects_recommendation_without_fetching_context(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "skipped.sqlite3"))
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
-    store = Store(tmp_path / "skipped.sqlite3")
-    store.initialize()
-    assert store.start_run("REQ-7008")
-    with (
-        TestClient(app),
-        pytest.raises(ValueError, match="did not retrieve request context"),
-    ):
+def test_run_rejects_recommendation_without_fetching_context(store):
+    assert store.start_request("REQ-7008")
+    with pytest.raises(ValueError, match="did not retrieve request context"):
         main.run("REQ-7008", "thread-skipped", scripted_model(include_context=False))
 
 
@@ -129,16 +111,11 @@ def test_run_rejects_recommendation_without_fetching_context(tmp_path, monkeypat
     ],
 )
 def test_context_overrides_hold_ambiguous_requests_and_pass_damage_reports(
-    tmp_path, monkeypatch, scenario: SafetyScenario
+    store, scenario: SafetyScenario
 ):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "safety.sqlite3"))
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
-    store = Store(tmp_path / "safety.sqlite3")
-    store.initialize()
     request_id = scenario["request_id"]
-    assert store.start_run(request_id)
-    with TestClient(app):
-        result = main.run(request_id, "thread-safety", scripted_model("approve"))
+    assert store.start_request(request_id)
+    result = main.run(request_id, "thread-safety", scripted_model("approve"))
     next_action = result["next_action"]
     assert isinstance(next_action, str)
     assert result["outcome"] == scenario["expected_outcome"]
@@ -171,16 +148,9 @@ def test_food_safety_report_is_held_for_priority_review():
     assert "Returns Policy: Food safety or allergy concern" in result.policy_citations
 
 
-def test_run_rejects_unsupported_action_claim(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "claim.sqlite3"))
-    monkeypatch.setattr(main, "backend", lambda: TestClient(app))
-    store = Store(tmp_path / "claim.sqlite3")
-    store.initialize()
-    assert store.start_run("REQ-7008")
-    with (
-        TestClient(app),
-        pytest.raises(ValueError, match="unconfirmed customer action"),
-    ):
+def test_run_rejects_unsupported_action_claim(store):
+    assert store.start_request("REQ-7008")
+    with pytest.raises(ValueError, match="unconfirmed customer action"):
         main.run(
             "REQ-7008",
             "thread-claim",

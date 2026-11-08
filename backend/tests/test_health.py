@@ -105,9 +105,12 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         assert route.dependant.query_params == []
     post_paths = {route.path for route in routes if "POST" in (route.methods or set())}
     assert post_paths == {
-        "/api/requests/run",
+        "/api/runs",
+        "/api/runs/{run_id}/todos/{request_id}",
         "/api/requests/{request_id}/steps",
-        "/api/requests/{request_id}/run",
+        "/api/requests/{request_id}/start",
+        "/api/requests/{request_id}/recommendation",
+        "/api/requests/{request_id}/failure",
         "/api/requests/{request_id}/review",
     }
 
@@ -154,131 +157,3 @@ def test_request_context_rejects_an_unsupported_type(tmp_path, monkeypatch):
     with TestClient(app) as client:
         response = client.get("/api/requests/REQ-7001/context")
     assert response.status_code == 422
-
-
-def test_request_run_persists_recommendation_and_progress(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "run.sqlite3"))
-    monkeypatch.setattr(
-        "backend.main.run_agent",
-        lambda request_id, thread_id: {
-            "outcome": "request_information",
-            "rationale": "Need the item photo.",
-            "policy_citations": ["Returns Policy"],
-            "next_action": "Ask support agent to request a photo.",
-            "priority_human_review": False,
-        },
-    )
-    with TestClient(app) as client:
-        response = client.post("/api/requests/REQ-7001/run")
-        detail = client.get("/api/requests/REQ-7001").json()
-        duplicate = client.post("/api/requests/REQ-7001/run")
-
-    assert response.status_code == 200
-    assert response.json() == {"request_id": "REQ-7001", "status": "in_progress"}
-    assert detail["status"] == "waiting_for_agent_review"
-    assert detail["recommendation"]["outcome"] == "request_information"
-    assert [step["stage"] for step in detail["steps"]] == [
-        "started",
-        "preparing_recommendation",
-    ]
-    assert duplicate.status_code == 200
-
-
-def test_agent_progress_endpoint_and_failed_run(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "failed.sqlite3"))
-    monkeypatch.setattr(
-        "backend.main.run_agent", lambda *args: (_ for _ in ()).throw(RuntimeError())
-    )
-    with TestClient(app) as client:
-        started = client.post("/api/requests/REQ-7001/run")
-        detail = client.get("/api/requests/REQ-7001").json()
-        invalid_stage = client.post(
-            "/api/requests/REQ-7001/steps", json={"stage": "finished"}
-        )
-
-    assert started.status_code == 200
-    assert detail["status"] == "waiting_for_agent_review"
-    assert detail["recommendation"] is None
-    assert detail["steps"][-1]["stage"] == "error"
-    assert invalid_stage.status_code == 422
-
-
-def test_support_review_decides_without_running_an_order_action(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "review.sqlite3"))
-    monkeypatch.setattr(
-        "backend.main.run_agent",
-        lambda *args: {
-            "outcome": "approve",
-            "rationale": "Eligible under the sample policy.",
-            "policy_citations": ["Cancellation Policy"],
-            "next_action": "Support agent to review.",
-            "priority_human_review": False,
-        },
-    )
-    with TestClient(app) as client:
-        client.post("/api/requests/REQ-7001/run")
-        response = client.post(
-            "/api/requests/REQ-7001/review",
-            json={"outcome": "approve", "notes": "Confirmed by support."},
-        )
-        detail = client.get("/api/requests/REQ-7001").json()
-        duplicate = client.post(
-            "/api/requests/REQ-7001/review", json={"outcome": "approve"}
-        )
-
-    assert response.status_code == 200
-    assert detail["status"] == "decided"
-    assert detail["review"]["outcome"] == "approve"
-    assert detail["review"]["notes"] == "Confirmed by support."
-    assert "action_result" not in detail
-    assert duplicate.status_code == 409
-
-
-def test_run_all_clears_past_work_and_runs_every_request(tmp_path, monkeypatch):
-    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "all.sqlite3"))
-    outcomes = {"REQ-7001": "approve", "REQ-7002": "decline"}
-    monkeypatch.setattr(
-        "backend.main.run_agent",
-        lambda request_id, thread_id: {
-            "outcome": outcomes.get(request_id, "request_information"),
-            "rationale": "Checked against the sample policy.",
-            "policy_citations": ["Cancellation Policy"],
-            "next_action": "Support agent to review.",
-            "priority_human_review": False,
-        },
-    )
-    with TestClient(app) as client:
-        client.post("/api/requests/REQ-7001/run")
-        client.post(
-            "/api/requests/REQ-7001/review",
-            json={"outcome": "decline", "notes": "Earlier review."},
-        )
-        response = client.post("/api/requests/run")
-        queue = client.get("/api/requests").json()
-        detail = client.get("/api/requests/REQ-7001").json()
-
-    assert response.status_code == 200
-    assert len(response.json()["request_ids"]) == 8
-    assert {item["status"] for item in queue} == {"waiting_for_agent_review"}
-    by_id = {item["request_id"]: item for item in queue}
-    assert by_id["REQ-7001"]["recommendation"]["outcome"] == "approve"
-    assert by_id["REQ-7002"]["recommendation"]["outcome"] == "decline"
-    assert by_id["REQ-7001"]["review"] is None
-    assert [step["stage"] for step in detail["steps"]] == [
-        "started",
-        "preparing_recommendation",
-    ]
-
-
-def test_run_all_skips_a_request_already_in_progress(tmp_path):
-    store = Store(tmp_path / "busy.sqlite3")
-    store.initialize()
-    store.start_run("REQ-7001")
-
-    request_ids = store.reset_all()
-
-    assert "REQ-7001" not in request_ids
-    assert len(request_ids) == 7
-    request = store.get_request("REQ-7001")
-    assert request is not None
-    assert request["status"] == "in_progress"
