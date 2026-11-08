@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 from langchain_core.messages import AIMessage
 
+from agent import main
 from agent.queue import run_queue
 from agent.tests.stubs import StubModel, call, scripted_model
 
@@ -174,3 +175,38 @@ def test_an_error_outside_the_helper_does_not_stop_the_run(store, monkeypatch):
     assert queue["REQ-7002"] == "waiting_for_agent_review"
     assert queue["REQ-7007"] == "waiting_for_agent_review"
     assert todo_statuses(store) == {"REQ-7007": "done", "REQ-7002": "done"}
+
+
+def test_run_finishes_signed_off_and_stopped_requests_when_agent_was_unreachable(
+    api, store
+):
+    main.work_request("REQ-7008", scripted_model())
+    signed_off = api.post(
+        "/api/requests/REQ-7008/review",
+        json={
+            "outcome": "approve",
+            "notes": "Signed off while agent service was offline.",
+            "reviewed_by": "Priya Nair",
+        },
+    )
+    assert signed_off.status_code == 200
+    assert store.get_request("REQ-7008")["status"] == "in_progress"
+
+    store.start_request("REQ-7002")
+    assert store.get_request("REQ-7002")["status"] == "in_progress"
+
+    run_id = start(store, 2)
+    llm = queue_model(
+        todos("REQ-7007"),
+        work("REQ-7007"),
+        finish("Finished REQ-7008, resumed REQ-7002, and worked REQ-7007."),
+    )
+
+    summary = run_queue(run_id, 2, llm, request_models())
+
+    assert "Finished REQ-7008" in summary
+    queue = statuses(store)
+    assert queue["REQ-7008"] == "decided"
+    assert queue["REQ-7002"] == "waiting_for_agent_review"
+    assert queue["REQ-7007"] == "waiting_for_agent_review"
+    assert todo_statuses(store) == {"REQ-7002": "done", "REQ-7007": "done"}

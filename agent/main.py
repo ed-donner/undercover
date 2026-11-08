@@ -385,9 +385,16 @@ def run_request(
     llm: BaseChatModel | None = None,
     attempt: int = 1,
 ) -> dict[str, Any]:
-    """Run the request graph until it pauses at approval with a recommendation."""
+    """Run or resume the request graph until it pauses at approval."""
     graph = build_request_graph(request_id, llm)
     context_manager, config = trace_context(request_id, thread_id)
+    state = graph.get_state(config)
+    if state.values and state.next and state.next != ("approval",):
+        with context_manager:
+            result = graph.invoke(None, config, durability="sync")
+        return result["recommendation"]
+    if state.values and state.values.get("recommendation"):
+        return state.values["recommendation"]
     initial_state: RequestState = {
         "messages": [HumanMessage("Review the assigned support request.")],
         "request_id": request_id,
@@ -424,17 +431,57 @@ def resume_request_thread(
     return {**(state.values or {}), "review": payload}
 
 
-def work_request(request_id: str, llm: BaseChatModel | None = None) -> WorkResult:
-    """Work one waiting request on a fresh thread and report back in a line."""
-    response = backend_post(f"/api/requests/{request_id}/start")
-    if response.status_code in {httpx.codes.NOT_FOUND, httpx.codes.CONFLICT}:
-        return {
-            "request_id": request_id,
-            "status": "skipped",
-            "line": f"{request_id}: not a waiting request, so not worked.",
-        }
+def resume_request(request_id: str, llm: BaseChatModel | None = None) -> dict[str, Any]:
+    """Resume a signed-off request by its request id and complete it."""
+    response = backend_get(f"/api/requests/{request_id}")
+    if response.status_code == httpx.codes.NOT_FOUND:
+        raise LookupError(f"Support request {request_id} not found")
     response.raise_for_status()
-    attempt = response.json()["attempt"]
+    detail = response.json()
+    review = detail.get("review")
+    if review is None:
+        raise ValueError(f"Request {request_id} has no review to resume")
+    if detail["status"] == "decided":
+        return {"request_id": request_id, "status": "decided", "review": review}
+    attempt = int(detail["attempts"]) + 1
+    thread_id = f"request-{request_id}-attempt-{attempt}"
+    result = resume_request_thread(request_id, thread_id, review, llm)
+    return {
+        "request_id": request_id,
+        "status": "decided",
+        "review": result.get("review") or review,
+    }
+
+
+def _skipped_result(request_id: str) -> WorkResult:
+    return {
+        "request_id": request_id,
+        "status": "skipped",
+        "line": f"{request_id}: not a waiting request, so not worked.",
+    }
+
+
+def work_request(request_id: str, llm: BaseChatModel | None = None) -> WorkResult:
+    """Work one waiting or interrupted request and report back in a line."""
+    response = backend_post(f"/api/requests/{request_id}/start")
+    if response.status_code == httpx.codes.NOT_FOUND:
+        return _skipped_result(request_id)
+    if response.status_code == httpx.codes.CONFLICT:
+        detail = backend_get(f"/api/requests/{request_id}").json()
+        if detail["status"] != "in_progress":
+            return _skipped_result(request_id)
+        if detail.get("review") is not None:
+            resumed = resume_request(request_id, llm)
+            outcome = resumed["review"]["outcome"]
+            return {
+                "request_id": request_id,
+                "status": "done",
+                "line": f"{request_id}: {outcome}, completed after support review.",
+            }
+        attempt = int(detail["attempts"]) + 1
+    else:
+        response.raise_for_status()
+        attempt = response.json()["attempt"]
     thread_id = f"request-{request_id}-attempt-{attempt}"
     try:
         recommendation = run_request(request_id, thread_id, llm, attempt=attempt)

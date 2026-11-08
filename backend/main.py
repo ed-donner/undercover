@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,7 @@ from backend.store import AGENT_STAGES, Store, TodoStatus
 DEFAULT_DATABASE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "shoppie.sqlite3"
 )
+DEFAULT_AGENT_URL = "http://127.0.0.1:8002"
 
 
 def database_path() -> Path:
@@ -49,6 +51,7 @@ class ReviewInput(BaseModel):
 
     outcome: Literal["approve", "decline", "request_information"]
     notes: str
+    reviewed_by: str = Field(min_length=1)
 
 
 class CompletionInput(BaseModel):
@@ -107,6 +110,19 @@ def run_in_background(store: Store, run_id: str, cap: int) -> None:
         store.finish_run(run_id, "failed", f"The run stopped: {error}")
         return
     store.finish_run(run_id, "finished", summary)
+
+
+def agent_service_url() -> str:
+    """Return the base URL of the Shoppie Agent service."""
+    return os.getenv("UNDERCOVER_AGENT", DEFAULT_AGENT_URL).rstrip("/")
+
+
+def notify_agent_resume(request_id: str) -> None:
+    """Tell the agent service to resume a signed-off request when reachable."""
+    try:
+        httpx.post(f"{agent_service_url()}/requests/{request_id}/resume", timeout=30)
+    except Exception:
+        return
 
 
 @app.get("/api/health", operation_id="health")
@@ -241,22 +257,29 @@ def record_failure(request_id: str, request: Request) -> dict[str, str]:
 
 @app.post("/api/requests/{request_id}/review", operation_id="review_request")
 def review_request(
-    request_id: str, review: ReviewInput, request: Request
+    request_id: str,
+    review: ReviewInput,
+    request: Request,
+    background_tasks: BackgroundTasks,
 ) -> dict[str, Any]:
-    """Record a support decision without processing the order."""
+    """Record a support decision and trigger agent completion without order actions."""
     store = store_of(request)
     result = require_request(store, request_id)
-    if result["status"] not in {"waiting_for_agent_review", "decided"}:
+    if result["status"] not in {"waiting_for_agent_review", "in_progress", "decided"}:
         raise HTTPException(status_code=409, detail="Request is not ready for review")
     saved_review = {
         "outcome": review.outcome,
         "notes": review.notes,
+        "reviewed_by": review.reviewed_by,
         "reviewed_at": (result.get("review") or {}).get("reviewed_at")
         or datetime.now(UTC).isoformat(),
     }
-    if not store.record_review(request_id, saved_review):
+    status = store.record_review(request_id, saved_review)
+    if status is None:
         raise HTTPException(status_code=409, detail="Request was already reviewed")
-    return {"request_id": request_id, "status": "decided", "review": saved_review}
+    if status == "in_progress":
+        background_tasks.add_task(notify_agent_resume, request_id)
+    return {"request_id": request_id, "status": status, "review": saved_review}
 
 
 @app.post("/api/requests/{request_id}/complete", operation_id="complete_request")

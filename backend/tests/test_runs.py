@@ -67,9 +67,16 @@ def test_a_request_never_gets_a_second_recommendation(store):
     assert store.save_recommendation("REQ-7001", RECOMMENDATION)
     assert not store.save_recommendation("REQ-7001", {**RECOMMENDATION, "x": 1})
     assert store.start_request("REQ-7001") is None
-    assert store.record_review("REQ-7001", {"outcome": "approve", "notes": ""})
-    assert store.record_review("REQ-7001", {"outcome": "approve", "notes": ""})
-    assert not store.record_review("REQ-7001", {"outcome": "decline", "notes": ""})
+    review = {"outcome": "approve", "notes": "", "reviewed_by": "Priya Nair"}
+    assert store.record_review("REQ-7001", review) == "in_progress"
+    assert store.record_review("REQ-7001", review) == "in_progress"
+    assert (
+        store.record_review(
+            "REQ-7001",
+            {"outcome": "decline", "notes": "", "reviewed_by": "Priya Nair"},
+        )
+        is None
+    )
     request = store.get_request("REQ-7001")
     assert request is not None
     assert request["recommendation"] == RECOMMENDATION
@@ -78,14 +85,14 @@ def test_a_request_never_gets_a_second_recommendation(store):
     assert stages.count("preparing_recommendation") == 1
 
 
-def test_restart_recovers_requests_and_runs_left_in_progress(store):
+def test_restart_keeps_requests_in_progress_and_closes_stopped_runs(store):
     run_id = store.create_run(5)
     store.start_request("REQ-7001")
     store.initialize()
     request = store.get_request("REQ-7001")
     run = store.current_run()
     assert request is not None
-    assert request["status"] == "waiting"
+    assert request["status"] == "in_progress"
     assert run is not None
     assert run["run_id"] == run_id
     assert run["status"] == "failed"
@@ -232,32 +239,61 @@ def test_agent_progress_steps_need_a_request_in_progress(client):
     assert recorded.status_code == 200
 
 
-def test_support_review_decides_without_running_an_order_action(client):
+def test_support_review_hands_off_to_agent_or_decides_left_for_support(
+    client, monkeypatch
+):
+    resumed: list[str] = []
+    monkeypatch.setattr(main, "notify_agent_resume", resumed.append)
+
     client.post("/api/requests/REQ-7001/start")
     early = client.post(
-        "/api/requests/REQ-7002/review", json={"outcome": "approve", "notes": ""}
+        "/api/requests/REQ-7002/review",
+        json={"outcome": "approve", "notes": "", "reviewed_by": "Priya Nair"},
     )
     client.post("/api/requests/REQ-7001/recommendation", json=RECOMMENDATION)
-    response = client.post(
+    review_payload = {
+        "outcome": "approve",
+        "notes": "Confirmed by support.",
+        "reviewed_by": "Priya Nair",
+    }
+    response = client.post("/api/requests/REQ-7001/review", json=review_payload)
+    repeat = client.post("/api/requests/REQ-7001/review", json=review_payload)
+    conflicting = client.post(
         "/api/requests/REQ-7001/review",
-        json={"outcome": "approve", "notes": "Confirmed by support."},
+        json={"outcome": "approve", "notes": "", "reviewed_by": "Priya Nair"},
+    )
+    signed_off = client.get("/api/requests/REQ-7001").json()
+    completed = client.post(
+        "/api/requests/REQ-7001/complete",
+        json={
+            **review_payload,
+            "reviewed_at": signed_off["review"]["reviewed_at"],
+        },
     )
     detail = client.get("/api/requests/REQ-7001").json()
-    repeat = client.post(
-        "/api/requests/REQ-7001/review",
-        json={"outcome": "approve", "notes": "Confirmed by support."},
-    )
-    conflicting = client.post(
-        "/api/requests/REQ-7001/review", json={"outcome": "approve", "notes": ""}
-    )
 
     assert early.status_code == 409
     assert response.status_code == 200
+    assert response.json()["status"] == "in_progress"
     assert repeat.status_code == 200
+    assert conflicting.status_code == 409
+    assert resumed == ["REQ-7001", "REQ-7001"]
+    assert completed.status_code == 200
     assert detail["status"] == "decided"
     assert detail["review"]["notes"] == "Confirmed by support."
+    assert detail["review"]["reviewed_by"] == "Priya Nair"
     assert "action_result" not in detail
-    assert conflicting.status_code == 409
+
+    client.post("/api/requests/REQ-7003/start")
+    client.post("/api/requests/REQ-7003/failure")
+    client.post("/api/requests/REQ-7003/start")
+    client.post("/api/requests/REQ-7003/failure")
+    left_review = client.post(
+        "/api/requests/REQ-7003/review",
+        json={"outcome": "decline", "notes": "Manual decision.", "reviewed_by": "Dev"},
+    )
+    assert left_review.status_code == 200
+    assert left_review.json()["status"] == "decided"
 
 
 def test_background_run_stores_the_queue_agent_summary(store, monkeypatch):

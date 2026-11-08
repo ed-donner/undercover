@@ -83,11 +83,11 @@ Add the agent web service (`agent/service.py`) and wire up restart survival and 
   - FastAPI app in `agent/service.py` exposing `GET /health`, `POST /requests/{request_id}/resume`, and `POST /runs`.
   - Update `package.json` so `npm run dev` starts `backend`, `agent` (`uv run -m uvicorn agent.service:app --port 8002`), and `dashboard` using Windows-compatible commands.
 
-- [ ] Stub-model test: stopping a request partway through (after tool calls, before `decide`) and running `work_request` again carries on from the last checkpoint on the same thread, keeps `attempts == 1`, does not re-run earlier steps, and produces a single recommendation.
-- [ ] Stub-model test: a request that raises an error goes back to `waiting` with `attempts == 1` and starts afresh on attempt 2.
-- [ ] API and service tests: signing off on a held request saves the review, sets status to `in_progress`, notifies the agent service, and transitions the request to `decided` with `reviewed_by` and `reviewed_at` recorded.
-- [ ] API and service tests: when the agent service is unreachable at sign-off time, the review still succeeds (200) and the next agent run picks up the signed-off request and finishes it.
-- [ ] `npm run check:python` passes with at least 80% coverage.
+- [x] Stub-model test: stopping a request partway through (after tool calls, before `decide`) and running `work_request` again carries on from the last checkpoint on the same thread, keeps `attempts == 1`, does not re-run earlier steps, and produces a single recommendation.
+- [x] Stub-model test: a request that raises an error goes back to `waiting` with `attempts == 1` and starts afresh on attempt 2.
+- [x] API and service tests: signing off on a held request saves the review, sets status to `in_progress`, notifies the agent service, and transitions the request to `decided` with `reviewed_by` and `reviewed_at` recorded.
+- [x] API and service tests: when the agent service is unreachable at sign-off time, the review still succeeds (200) and the next agent run picks up the signed-off request and finishes it.
+- [x] `npm run check:python` passes with at least 80% coverage.
 
 ## Phase 5: Dashboard sign-off updates and end-to-end tests
 

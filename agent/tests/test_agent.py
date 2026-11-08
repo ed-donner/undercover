@@ -1,9 +1,10 @@
 from contextlib import nullcontext
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import pytest
+from fastapi.testclient import TestClient
 
-from agent import main
+from agent import main, service
 from agent.models import Recommendation
 from agent.safety import apply_context_overrides
 from agent.tests.stubs import (
@@ -14,6 +15,7 @@ from agent.tests.stubs import (
     request_replies,
     scripted_model,
 )
+from backend import main as backend_main
 
 
 class SafetyScenario(TypedDict):
@@ -281,3 +283,83 @@ def test_runaway_loop_stops_after_30_model_calls(store):
     endless = StubModel(messages=iter(call("list_policy_sections") for _ in range(35)))
     with pytest.raises(RuntimeError, match="exceeded 30 model calls"):
         main.run_request("REQ-7008", "thread-runaway", endless)
+
+
+class InterruptedModel(StubModel):
+    """A stub model that stops with KeyboardInterrupt after its scripted replies."""
+
+    def _generate(self, *args: Any, **kwargs: Any):
+        try:
+            return super()._generate(*args, **kwargs)
+        except StopIteration as stop:
+            raise KeyboardInterrupt("process stopped mid-request") from stop
+
+
+def test_stopped_request_resumes_from_checkpoint_on_same_attempt(store):
+    early_replies = [
+        call("get_request_context"),
+        call("record_progress", {"stage": "reading_request"}),
+    ]
+    interrupted = InterruptedModel(messages=iter(early_replies))
+    with pytest.raises(KeyboardInterrupt, match="process stopped mid-request"):
+        main.work_request("REQ-7008", interrupted)
+
+    mid_flight = store.get_request("REQ-7008")
+    assert mid_flight["status"] == "in_progress"
+    assert mid_flight["attempts"] == 0
+    assert [step["stage"] for step in mid_flight["steps"]] == [
+        "started",
+        "reading_request",
+    ]
+
+    remaining = StubModel(messages=iter(request_replies(include_context=False)[1:]))
+    resumed = main.work_request("REQ-7008", remaining)
+    finished = store.get_request("REQ-7008")
+    stages = [step["stage"] for step in finished["steps"]]
+
+    assert resumed["status"] == "done"
+    assert finished["status"] == "waiting_for_agent_review"
+    assert finished["attempts"] == 0
+    assert finished["recommendation"]["outcome"] == "approve"
+    assert stages == [
+        "started",
+        "reading_request",
+        "read_section",
+        "checking_policy",
+        "preparing_recommendation",
+    ]
+
+
+def test_agent_service_resumes_signed_off_request_and_runs_queue(
+    api, store, monkeypatch
+):
+    monkeypatch.setattr(main, "model", scripted_model)
+    monkeypatch.setattr(backend_main, "run_in_background", lambda *args: None)
+    main.work_request("REQ-7008", scripted_model())
+
+    with TestClient(service.app) as agent_client:
+        assert agent_client.get("/health").json() == {"status": "ok"}
+        assert agent_client.post("/requests/REQ-0000/resume").status_code == 404
+        assert agent_client.post("/requests/REQ-7008/resume").status_code == 409
+
+        monkeypatch.setattr(
+            backend_main,
+            "notify_agent_resume",
+            lambda rid: agent_client.post(f"/requests/{rid}/resume"),
+        )
+        reviewed = api.post(
+            "/api/requests/REQ-7008/review",
+            json={
+                "outcome": "approve",
+                "notes": "Confirmed.",
+                "reviewed_by": "Priya Nair",
+            },
+        )
+        assert reviewed.status_code == 200
+        decided = store.get_request("REQ-7008")
+        assert decided["status"] == "decided"
+        assert decided["review"]["reviewed_by"] == "Priya Nair"
+
+        started_run = agent_client.post("/runs", json={"cap": 2})
+        assert started_run.status_code == 200
+        assert agent_client.post("/runs", json={"cap": 2}).status_code == 409

@@ -178,11 +178,6 @@ class Store:
                             connection, customer, order, request, safe_order
                         )
             connection.execute(
-                update(support_requests)
-                .where(support_requests.c.queue_status == "in_progress")
-                .values(queue_status="waiting")
-            )
-            connection.execute(
                 update(runs)
                 .where(runs.c.status == "running")
                 .values(
@@ -495,13 +490,14 @@ class Store:
             )
         return "left_for_support" if exhausted else "waiting"
 
-    def record_review(self, request_id: str, review: dict[str, Any]) -> bool:
-        """Store a support-agent decision once; treat an identical repeat as done."""
+    def record_review(self, request_id: str, review: dict[str, Any]) -> str | None:
+        """Store a support-agent sign-off once; return the resulting queue status."""
         with self.engine.begin() as connection:
             row = (
                 connection.execute(
                     select(
                         support_requests.c.queue_status,
+                        support_requests.c.recommendation_json,
                         support_requests.c.review_json,
                     ).where(support_requests.c.request_id == request_id)
                 )
@@ -509,21 +505,31 @@ class Store:
                 .first()
             )
             if row is None:
-                return False
+                return None
             existing = self.decode(row["review_json"])
             if existing is not None:
-                return self._reviews_match(existing, review)
+                if self._reviews_match(existing, review):
+                    return str(row["queue_status"])
+                return None
             if row["queue_status"] != "waiting_for_agent_review":
-                return False
+                return None
+            has_recommendation = row["recommendation_json"] is not None
+            next_status = "in_progress" if has_recommendation else "decided"
             connection.execute(
                 update(support_requests)
                 .where(support_requests.c.request_id == request_id)
                 .values(
                     review_json=json.dumps(review),
-                    queue_status="decided",
+                    queue_status=next_status,
                 )
             )
-        return True
+            self._insert_step(
+                connection,
+                request_id,
+                "signed_off",
+                f"Signed off ({review['outcome']}) by {review['reviewed_by']}.",
+            )
+        return next_status
 
     def complete_request(self, request_id: str, review: dict[str, Any]) -> bool:
         """Record the confirmed resolution once and mark the request decided."""

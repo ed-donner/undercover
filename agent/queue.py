@@ -50,6 +50,43 @@ class MissedRequestCheck(AgentMiddleware):
         return {"messages": [HumanMessage(reminder)], "jump_to": "model"}
 
 
+def resume_in_progress(
+    run_id: str,
+    cap: int,
+    worked: set[str],
+    request_model: Callable[[], BaseChatModel] | None = None,
+) -> dict[str, dict[str, str]]:
+    """Finish signed-off requests and resume mid-flight requests before new work."""
+    resumed_todos: dict[str, dict[str, str]] = {}
+    with main.backend() as client:
+        items = client.get("/api/requests").json()
+    for item in items:
+        if item["status"] != "in_progress":
+            continue
+        request_id = item["request_id"]
+        llm = request_model() if request_model else None
+        if item.get("review") is not None:
+            main.resume_request(request_id, llm)
+            continue
+        if len(worked) >= cap:
+            continue
+        worked.add(request_id)
+        result = main.work_request(request_id, llm)
+        todo_status = TODO_FOR_WORK.get(result["status"], "done")
+        todo = {
+            "request_id": request_id,
+            "title": f"Resume {request_id}",
+            "status": todo_status,
+        }
+        resumed_todos[request_id] = todo
+        with main.backend() as client:
+            client.post(
+                f"/api/runs/{run_id}/todos/{request_id}",
+                json={"status": todo_status},
+            ).raise_for_status()
+    return resumed_todos
+
+
 def run_queue(
     run_id: str,
     cap: int,
@@ -59,6 +96,7 @@ def run_queue(
     """Work the waiting queue up to the cap and return the run's summary."""
     worked: set[str] = set()
     lock = threading.Lock()
+    resumed_todos = resume_in_progress(run_id, cap, worked, request_model)
 
     def waiting_ids() -> list[str]:
         with main.backend() as client:
@@ -90,12 +128,18 @@ def run_queue(
     @tool
     def write_todos(todos: list[TodoItem]) -> str:
         """Replace the run's to-do list, in the order you will work the requests."""
+        planned = [todo.model_dump() for todo in todos]
+        planned_ids = {item["request_id"] for item in planned}
+        combined = [
+            *(todo for rid, todo in resumed_todos.items() if rid not in planned_ids),
+            *planned,
+        ]
         with main.backend() as client:
             client.put(
                 f"/api/runs/{run_id}/todos",
-                json={"todos": [todo.model_dump() for todo in todos]},
+                json={"todos": combined},
             ).raise_for_status()
-        return f"Recorded {len(todos)} to-do items."
+        return f"Recorded {len(combined)} to-do items."
 
     @tool
     def work_request(request_id: str) -> str:
