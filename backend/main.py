@@ -55,6 +55,13 @@ def run_request_in_background(store: Store, request_id: str) -> None:
         store.fail_run(request_id)
 
 
+def run_queue_in_background(store: Store, request_ids: list[str]) -> None:
+    """Run the Shoppie Agent on each request in turn."""
+    for request_id in request_ids:
+        if store.start_run(request_id):
+            run_request_in_background(store, request_id)
+
+
 @app.get("/api/health", operation_id="health")
 def health() -> dict[str, str]:
     """Check that the backend is running."""
@@ -108,6 +115,17 @@ def add_request_step(
     if not request.app.state.store.add_step(request_id, progress.stage):
         raise HTTPException(status_code=409, detail="Request is not in progress")
     return {"status": "recorded", "stage": progress.stage}
+
+
+@app.post("/api/requests/run", operation_id="run_all_requests")
+def run_all_requests(
+    request: Request, background_tasks: BackgroundTasks
+) -> dict[str, list[str]]:
+    """Clear earlier agent work and run the agent on every request."""
+    store: Store = request.app.state.store
+    request_ids = store.reset_all()
+    background_tasks.add_task(run_queue_in_background, store, request_ids)
+    return {"request_ids": request_ids}
 
 
 @app.post("/api/requests/{request_id}/run", operation_id="run_request")

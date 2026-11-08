@@ -20,6 +20,31 @@ const outcomeLabels: Record<Outcome, string> = {
   decline: "Decline",
   request_information: "Request information",
 };
+const decisionLabels: Record<Outcome, string> = {
+  approve: "Approve",
+  decline: "Decline",
+  request_information: "Needs info",
+};
+const reviewedLabels: Record<Outcome, string> = {
+  approve: "Approved",
+  decline: "Declined",
+  request_information: "Info requested",
+};
+
+export function QueueBadge({ item }: Readonly<{ item: QueueItem }>) {
+  const decision =
+    item.status === "decided" ? item.review : item.recommendation;
+  if (!decision || item.status === "in_progress")
+    return <StatusBadge status={item.status} />;
+  const labels = item.status === "decided" ? reviewedLabels : decisionLabels;
+  return (
+    <span className={`status-badge outcome-${decision.outcome}`}>
+      <i />
+      {labels[decision.outcome]}
+    </span>
+  );
+}
+
 export function StatusBadge({ status }: Readonly<{ status: QueueStatus }>) {
   return (
     <span className={`status-badge status-${status}`}>
@@ -81,7 +106,7 @@ export function QueuePanel({
           >
             <span className="queue-item-top">
               <span className="request-id">{item.request_id}</span>
-              <StatusBadge status={item.status} />
+              <QueueBadge item={item} />
             </span>
             <span className="queue-customer">{item.customer_name}</span>
             <span className="queue-item-bottom">
@@ -285,14 +310,12 @@ export function ProgressCard({ detail }: Readonly<{ detail: RequestDetail }>) {
 interface ActionPanelProps {
   detail: RequestDetail;
   busy: boolean;
-  onRun: () => void;
   onReview: (outcome: Outcome, notes: string) => void;
 }
 
 export function ActionPanel({
   detail,
   busy,
-  onRun,
   onReview,
 }: Readonly<ActionPanelProps>) {
   const [outcome, setOutcome] = useState<Outcome>("approve");
@@ -312,12 +335,6 @@ export function ActionPanel({
           performed here.
         </p>
       </div>
-      {(detail.status === "waiting" ||
-        detail.status === "waiting_for_agent_review") && (
-        <button className="primary-button" disabled={busy} onClick={onRun}>
-          {runLabel(detail.status, busy)}
-        </button>
-      )}
       {detail.status === "waiting_for_agent_review" && (
         <form className="review-form" onSubmit={submitReview}>
           <label>
@@ -356,19 +373,12 @@ export function ActionPanel({
 
 function actionHeading(status: QueueStatus) {
   const headings: Record<QueueStatus, string> = {
-    waiting: "Ready for agent review",
+    waiting: "Waiting to be processed",
     in_progress: "The agent is reviewing this request",
     waiting_for_agent_review: "Your review is required",
     decided: "Review complete",
   };
   return headings[status];
-}
-
-function runLabel(status: QueueStatus, busy: boolean) {
-  if (busy) return "Starting…";
-  return status === "waiting_for_agent_review"
-    ? "Run again"
-    : "Ask agent to review";
 }
 
 export function InstructionsPanel({

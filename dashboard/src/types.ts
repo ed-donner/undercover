@@ -9,6 +9,14 @@ export interface QueueItem {
   type: string;
   created_at: string;
   status: QueueStatus;
+  recommendation: Recommendation | null;
+  review: Review | null;
+}
+
+export interface Review {
+  outcome: Outcome;
+  notes: string;
+  reviewed_at: string;
 }
 
 export interface Recommendation {
@@ -50,10 +58,8 @@ export interface RequestDetail {
     delivery_fee: number;
     total: number;
   };
-  history: { request: SupportRequest; action_result: unknown }[];
   status: QueueStatus;
-  action_result: unknown;
   recommendation: Recommendation | null;
-  review: { outcome: Outcome; notes: string; reviewed_at: string } | null;
+  review: Review | null;
   steps: { stage: string; message: string; created_at: string }[];
 }

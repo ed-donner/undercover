@@ -306,6 +306,22 @@ button:disabled {
   color: #08745b;
   background: #e3f7f0;
 }
+.outcome-approve {
+  color: #08745b;
+  background: #e3f7f0;
+}
+.outcome-decline {
+  color: #b02a4b;
+  background: #fde8ed;
+}
+.outcome-request_information {
+  color: #a1482f;
+  background: #fff0ea;
+}
+.heading-actions {
+  display: flex;
+  gap: 8px;
+}
 .state-message {
   padding: 24px;
   color: #778990;

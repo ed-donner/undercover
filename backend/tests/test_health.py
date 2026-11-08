@@ -80,7 +80,7 @@ def test_request_queue_and_safe_detail(tmp_path, monkeypatch):
 
     assert queue.status_code == 200
     assert len(queue.json()) == 8
-    assert {item["status"] for item in queue.json()} == {"waiting", "decided"}
+    assert {item["status"] for item in queue.json()} == {"waiting"}
     assert detail.status_code == 200
     request = detail.json()["request"]
     assert request["request_id"] == "REQ-7001"
@@ -90,6 +90,8 @@ def test_request_queue_and_safe_detail(tmp_path, monkeypatch):
     assert "phone" not in detail.json()["customer"]
     assert detail.json()["order"]["order_id"] == "ORD-2026-10001"
     assert detail.json()["steps"] == []
+    assert "history" not in detail.json()
+    assert "action_result" not in detail.json()
     assert missing.status_code == 404
 
 
@@ -103,6 +105,7 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         assert route.dependant.query_params == []
     post_paths = {route.path for route in routes if "POST" in (route.methods or set())}
     assert post_paths == {
+        "/api/requests/run",
         "/api/requests/{request_id}/steps",
         "/api/requests/{request_id}/run",
         "/api/requests/{request_id}/review",
@@ -227,5 +230,55 @@ def test_support_review_decides_without_running_an_order_action(tmp_path, monkey
     assert detail["status"] == "decided"
     assert detail["review"]["outcome"] == "approve"
     assert detail["review"]["notes"] == "Confirmed by support."
-    assert detail["action_result"] is None
+    assert "action_result" not in detail
     assert duplicate.status_code == 409
+
+
+def test_run_all_clears_past_work_and_runs_every_request(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "all.sqlite3"))
+    outcomes = {"REQ-7001": "approve", "REQ-7002": "decline"}
+    monkeypatch.setattr(
+        "backend.main.run_agent",
+        lambda request_id, thread_id: {
+            "outcome": outcomes.get(request_id, "request_information"),
+            "rationale": "Checked against the sample policy.",
+            "policy_citations": ["Cancellation Policy"],
+            "next_action": "Support agent to review.",
+            "priority_human_review": False,
+        },
+    )
+    with TestClient(app) as client:
+        client.post("/api/requests/REQ-7001/run")
+        client.post(
+            "/api/requests/REQ-7001/review",
+            json={"outcome": "decline", "notes": "Earlier review."},
+        )
+        response = client.post("/api/requests/run")
+        queue = client.get("/api/requests").json()
+        detail = client.get("/api/requests/REQ-7001").json()
+
+    assert response.status_code == 200
+    assert len(response.json()["request_ids"]) == 8
+    assert {item["status"] for item in queue} == {"waiting_for_agent_review"}
+    by_id = {item["request_id"]: item for item in queue}
+    assert by_id["REQ-7001"]["recommendation"]["outcome"] == "approve"
+    assert by_id["REQ-7002"]["recommendation"]["outcome"] == "decline"
+    assert by_id["REQ-7001"]["review"] is None
+    assert [step["stage"] for step in detail["steps"]] == [
+        "started",
+        "preparing_recommendation",
+    ]
+
+
+def test_run_all_skips_a_request_already_in_progress(tmp_path):
+    store = Store(tmp_path / "busy.sqlite3")
+    store.initialize()
+    store.start_run("REQ-7001")
+
+    request_ids = store.reset_all()
+
+    assert "REQ-7001" not in request_ids
+    assert len(request_ids) == 7
+    request = store.get_request("REQ-7001")
+    assert request is not None
+    assert request["status"] == "in_progress"

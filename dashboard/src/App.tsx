@@ -30,6 +30,7 @@ export function App() {
   const [detailError, setDetailError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const loadQueue = useCallback(async () => {
     setQueueState("loading");
@@ -85,26 +86,28 @@ export function App() {
     };
   }, [loadDetail, selectedId]);
 
+  const active = queue.some(
+    (item) =>
+      item.status === "in_progress" ||
+      (processing && item.status === "waiting"),
+  );
+
   useEffect(() => {
-    if (detail?.status !== "in_progress" || !selectedId) return;
+    if (!active) return;
     const timer = window.setInterval(() => {
-      void loadDetail(selectedId);
       void loadQueue();
+      if (selectedId) void loadDetail(selectedId);
     }, 1500);
     return () => {
       window.clearInterval(timer);
     };
-  }, [detail?.status, loadDetail, loadQueue, selectedId]);
+  }, [active, loadDetail, loadQueue, selectedId]);
 
-  async function mutateRequest(
-    path: "run" | "review",
-    body?: Record<string, string>,
-  ) {
-    if (!selectedId) return;
+  async function post(url: string, done: string, body?: object) {
     setBusy(true);
     setMessage(null);
     try {
-      const response = await fetch(`/api/requests/${selectedId}/${path}`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         ...(body ? { body: JSON.stringify(body) } : {}),
@@ -115,8 +118,11 @@ export function App() {
           errorBody.detail ?? `Request failed (${String(response.status)})`,
         );
       }
-      setMessage(path === "run" ? "Agent review started." : "Review recorded.");
-      await Promise.all([loadDetail(selectedId), loadQueue()]);
+      setMessage(done);
+      await Promise.all([
+        loadQueue(),
+        selectedId ? loadDetail(selectedId) : Promise.resolve(),
+      ]);
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Something went wrong.",
@@ -131,12 +137,17 @@ export function App() {
     setMessage(null);
   }
 
-  function runAgent() {
-    void mutateRequest("run");
+  function initiateProcessing() {
+    setProcessing(true);
+    void post("/api/requests/run", "Processing started for every request.");
   }
 
   function recordReview(outcome: Outcome, notes: string) {
-    void mutateRequest("review", { outcome, notes });
+    if (!selectedId) return;
+    void post(`/api/requests/${selectedId}/review`, "Review recorded.", {
+      outcome,
+      notes,
+    });
   }
 
   function refreshQueue() {
@@ -147,7 +158,11 @@ export function App() {
 
   return (
     <main className="shell">
-      <Header onRefresh={refreshQueue} />
+      <Header
+        busy={busy || active}
+        onInitiate={initiateProcessing}
+        onRefresh={refreshQueue}
+      />
       {message && (
         <div className="notice" role="status">
           {message}
@@ -184,7 +199,6 @@ export function App() {
               <ActionPanel
                 detail={detail}
                 busy={busy}
-                onRun={runAgent}
                 onReview={recordReview}
               />
             </>
@@ -202,7 +216,13 @@ export function App() {
   );
 }
 
-function Header({ onRefresh }: Readonly<{ onRefresh: () => void }>) {
+interface HeaderProps {
+  busy: boolean;
+  onInitiate: () => void;
+  onRefresh: () => void;
+}
+
+function Header({ busy, onInitiate, onRefresh }: Readonly<HeaderProps>) {
   return (
     <>
       <header className="topbar">
@@ -229,9 +249,18 @@ function Header({ onRefresh }: Readonly<{ onRefresh: () => void }>) {
             Review order issues and recommendations from the Shoppie Agent.
           </p>
         </div>
-        <button className="secondary-button" onClick={onRefresh}>
-          <span aria-hidden="true">↻</span> Refresh queue
-        </button>
+        <div className="heading-actions">
+          <button className="secondary-button" onClick={onRefresh}>
+            <span aria-hidden="true">↻</span> Refresh queue
+          </button>
+          <button
+            className="primary-button"
+            disabled={busy}
+            onClick={onInitiate}
+          >
+            {busy ? "Processing…" : "Initiate processing"}
+          </button>
+        </div>
       </section>
     </>
   );

@@ -48,7 +48,6 @@ class Store:
                     queue_status TEXT NOT NULL,
                     request_json TEXT NOT NULL,
                     order_json TEXT NOT NULL,
-                    action_result_json TEXT,
                     recommendation_json TEXT,
                     review_json TEXT
                 )"""
@@ -66,17 +65,13 @@ class Store:
                 for order in customer["orders"]:
                     safe_order = self.safe_order(order)
                     for request in order["requests"]:
-                        source_status = request["status"]
-                        queue_status = (
-                            "decided" if source_status == "completed" else "waiting"
-                        )
                         safe_request = self.safe_request(request)
                         connection.execute(
                             """INSERT OR IGNORE INTO support_requests (
                                 request_id, order_id, customer_id, customer_name,
                                 request_type, created_at, source_status, queue_status,
-                                request_json, order_json, action_result_json
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                request_json, order_json
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, 'waiting', ?, ?)""",
                             (
                                 request["request_id"],
                                 order["order_id"],
@@ -84,13 +79,9 @@ class Store:
                                 customer["name"],
                                 request["type"],
                                 request["created_at"],
-                                source_status,
-                                queue_status,
+                                request["status"],
                                 json.dumps(safe_request),
                                 json.dumps(safe_order),
-                                json.dumps(request["action_result"])
-                                if request["action_result"]
-                                else None,
                             ),
                         )
                         connection.execute(
@@ -105,7 +96,7 @@ class Store:
 
     @staticmethod
     def safe_request(request: dict[str, Any]) -> dict[str, Any]:
-        """Select customer-provided request fields and recorded action results."""
+        """Select the customer-provided request fields."""
         return {
             "request_id": request["request_id"],
             "type": request["type"],
@@ -139,7 +130,8 @@ class Store:
         with closing(self.connect()) as connection, connection:
             rows = connection.execute(
                 """SELECT request_id, order_id, customer_id, customer_name,
-                          request_type, created_at, queue_status, recommendation_json
+                          request_type, created_at, queue_status, recommendation_json,
+                          review_json
                    FROM support_requests ORDER BY created_at, request_id"""
             ).fetchall()
         return [
@@ -152,6 +144,7 @@ class Store:
                 "created_at": row["created_at"],
                 "status": row["queue_status"],
                 "recommendation": self.decode(row["recommendation_json"]),
+                "review": self.decode(row["review_json"]),
             }
             for row in rows
         ]
@@ -164,13 +157,6 @@ class Store:
             ).fetchone()
             if row is None:
                 return None
-            history_rows = connection.execute(
-                """SELECT request_id, request_type, created_at, request_json,
-                          action_result_json
-                   FROM support_requests WHERE customer_id = ? AND request_id != ?
-                   ORDER BY created_at""",
-                (row["customer_id"], request_id),
-            ).fetchall()
             step_rows = connection.execute(
                 """SELECT stage, message, created_at FROM request_steps
                    WHERE request_id = ? ORDER BY step_id""",
@@ -183,19 +169,31 @@ class Store:
                 "name": row["customer_name"],
             },
             "order": json.loads(row["order_json"]),
-            "history": [
-                {
-                    "request": json.loads(history["request_json"]),
-                    "action_result": self.decode(history["action_result_json"]),
-                }
-                for history in history_rows
-            ],
             "status": row["queue_status"],
-            "action_result": self.decode(row["action_result_json"]),
             "recommendation": self.decode(row["recommendation_json"]),
             "review": self.decode(row["review_json"]),
             "steps": [dict(step) for step in step_rows],
         }
+
+    def reset_all(self) -> list[str]:
+        """Clear earlier agent work and reviews on every request not in progress."""
+        with closing(self.connect()) as connection, connection:
+            connection.execute(
+                """DELETE FROM request_steps WHERE request_id IN (
+                       SELECT request_id FROM support_requests
+                       WHERE queue_status != 'in_progress'
+                   )"""
+            )
+            connection.execute(
+                """UPDATE support_requests SET queue_status = 'waiting',
+                       recommendation_json = NULL, review_json = NULL
+                   WHERE queue_status != 'in_progress'"""
+            )
+            rows = connection.execute(
+                """SELECT request_id FROM support_requests
+                   WHERE queue_status = 'waiting' ORDER BY created_at, request_id"""
+            ).fetchall()
+        return [row["request_id"] for row in rows]
 
     def start_run(self, request_id: str) -> bool:
         """Move an eligible request into progress and reset its prior run."""

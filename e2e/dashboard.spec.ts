@@ -30,9 +30,7 @@ const detail = {
     delivery_fee: 0,
     total: 349,
   },
-  history: [],
   status: "waiting",
-  action_result: null,
   recommendation: null,
   review: null,
   steps: [],
@@ -66,8 +64,8 @@ test("support agent reviews the queue and sees the agent recommendation", async 
     };
     await route.fulfill({ json: detailRequests === 1 ? detail : inReview });
   });
-  await page.route("**/api/requests/REQ-7001/run", (route) =>
-    route.fulfill({ json: { request_id: "REQ-7001", status: "in_progress" } }),
+  await page.route("**/api/requests/run", (route) =>
+    route.fulfill({ json: { request_ids: ["REQ-7001"] } }),
   );
 
   await page.goto("/");
@@ -78,7 +76,7 @@ test("support agent reviews the queue and sees the agent recommendation", async 
   await page.getByRole("button", { name: /REQ-7001/ }).click();
   await expect(page.getByText("Please cancel this order.")).toBeVisible();
   await expect(page.getByText("ORD-2026-10001").first()).toBeVisible();
-  await page.getByRole("button", { name: /Ask agent to review/ }).click();
+  await page.getByRole("button", { name: "Initiate processing" }).click();
   await expect(
     page.getByText(
       "The request needs clarification before it can be processed.",
