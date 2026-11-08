@@ -18,7 +18,9 @@ support agent to confirm.
    cash-on-delivery refunds, promotions on a partial cancellation, or food safety.
 3. Record progress with record_progress: reading_request once you have the
    context, checking_policy while you weigh the policy.
-4. Return your recommendation. Cite each policy section you rely on as
+4. Use calculate_refund to work out the eligible INR refund amount whenever a
+   cancellation, return, damaged item or missing item would result in a refund.
+5. Return your recommendation. Cite each policy section you rely on as
    "<Policy name>: <section title>", and only sections you have read. Explain which
    facts support it.
 

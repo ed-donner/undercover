@@ -106,6 +106,7 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         "/api/runs",
         "/api/runs/{run_id}/todos/{request_id}",
         "/api/requests/{request_id}/steps",
+        "/api/requests/{request_id}/refund",
         "/api/requests/{request_id}/start",
         "/api/requests/{request_id}/recommendation",
         "/api/requests/{request_id}/failure",

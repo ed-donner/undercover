@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from typing import TypedDict
 
 import pytest
@@ -5,7 +6,14 @@ import pytest
 from agent import main
 from agent.models import Recommendation
 from agent.safety import apply_context_overrides
-from agent.tests.stubs import CITATION, FlakyModel, request_replies, scripted_model
+from agent.tests.stubs import (
+    CITATION,
+    FlakyModel,
+    StubModel,
+    call,
+    request_replies,
+    scripted_model,
+)
 
 
 class SafetyScenario(TypedDict):
@@ -173,3 +181,59 @@ def test_model_name(monkeypatch):
     override = main.model()
     assert override.model_name == "openrouter/free"
     assert override.reasoning_effort is None
+
+
+def test_request_agent_uses_calculate_refund_tool(store):
+    assert store.start_request("REQ-7002")
+    replies = [
+        call("get_request_context"),
+        call(
+            "calculate_refund",
+            {
+                "reason": "damaged_or_defective",
+                "lines": [{"item_id": "ITM-10002-1", "quantity": 1}],
+            },
+        ),
+        call(
+            "calculate_refund",
+            {
+                "reason": "damaged_or_defective",
+                "lines": [{"item_id": "ITM-NOPE", "quantity": 1}],
+            },
+        ),
+        *request_replies(include_context=False),
+    ]
+    result = main.run_request(
+        "REQ-7002", "thread-refund", StubModel(messages=iter(replies))
+    )
+    steps = store.get_request("REQ-7002")["steps"]
+
+    assert result["outcome"] == "approve"
+    assert any(
+        step["stage"] == "calculated_refund" and "₹90.00" in step["message"]
+        for step in steps
+    )
+
+
+def test_trace_context_attaches_langfuse_session_only_when_keys_are_set(monkeypatch):
+    monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
+    monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
+    _, without_keys = main.trace_context("REQ-7002", "thread-1")
+    assert "callbacks" not in without_keys
+
+    sessions: list[str | None] = []
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+    monkeypatch.setattr(main, "CallbackHandler", lambda: "stub-callback")
+
+    def fake_propagate(*, session_id: str | None = None, **kwargs):
+        sessions.append(session_id)
+        return nullcontext()
+
+    monkeypatch.setattr(main, "propagate_attributes", fake_propagate)
+    _, with_keys = main.trace_context("REQ-7002", "request-REQ-7002-attempt-1")
+    assert with_keys.get("callbacks") == ["stub-callback"]
+    assert with_keys.get("metadata") == {
+        "langfuse_session_id": "request-REQ-7002-attempt-1"
+    }
+    assert sessions == ["request-REQ-7002-attempt-1"]

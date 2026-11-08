@@ -14,6 +14,7 @@ STEP_MESSAGES = {
     "started": "The Shoppie Agent started reviewing this request.",
     "reading_request": "The agent retrieved the customer request and order details.",
     "checking_policy": "The agent checked the applicable Shoppie policy.",
+    "calculated_refund": "The agent calculated the eligible refund amount.",
     "preparing_recommendation": (
         "The agent prepared a recommendation for support review."
     ),

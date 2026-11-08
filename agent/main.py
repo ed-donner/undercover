@@ -1,7 +1,8 @@
 """The Shoppie Agent's request agent: works one support request from a clean start."""
 
 import os
-from typing import Literal, TypedDict
+from contextlib import AbstractContextManager, nullcontext
+from typing import Any, Literal, TypedDict
 
 import httpx
 from dotenv import load_dotenv
@@ -9,13 +10,17 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import ModelRetryMiddleware, ToolRetryMiddleware
 from langchain.agents.structured_output import ToolStrategy
 from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+from langfuse import propagate_attributes
+from langfuse.langchain import CallbackHandler
 from pydantic import SecretStr
 
 from agent.instructions import REQUEST_INSTRUCTIONS
 from agent.models import Recommendation
 from agent.safety import apply_context_overrides, contains_unsupported_execution_claim
+from backend.refunds import Line, RefundReason
 
 load_dotenv(override=True)
 
@@ -52,6 +57,24 @@ def model() -> ChatOpenAI:
     )
 
 
+def session_id_for(request_id: str, thread_id: str) -> str:
+    """Name a request's Langfuse session after the request and its thread."""
+    return thread_id if request_id in thread_id else f"{request_id}-{thread_id}"
+
+
+def trace_context(
+    request_id: str, thread_id: str
+) -> tuple[AbstractContextManager[Any], RunnableConfig]:
+    """Build the runnable config and Langfuse session context when keys are set."""
+    session_id = session_id_for(request_id, thread_id)
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    if os.getenv("LANGFUSE_SECRET_KEY") and os.getenv("LANGFUSE_PUBLIC_KEY"):
+        config["callbacks"] = [CallbackHandler()]
+        config["metadata"] = {"langfuse_session_id": session_id}
+        return propagate_attributes(session_id=session_id), config
+    return nullcontext(), config
+
+
 def retry_middleware() -> list[ModelRetryMiddleware | ToolRetryMiddleware]:
     """Retry model calls and backend calls that hit a passing error."""
     return [
@@ -67,11 +90,10 @@ def retry_middleware() -> list[ModelRetryMiddleware | ToolRetryMiddleware]:
     ]
 
 
-def run_request(
-    request_id: str, thread_id: str, llm: BaseChatModel | None = None
-) -> dict[str, object]:
-    """Run the request agent on one request: approve, decline or request information."""
-    request_context: dict[str, object] = {}
+def make_request_tools(
+    request_id: str, request_context: dict[str, object]
+) -> list[Any]:
+    """Create the backend API tools for working one support request."""
 
     @tool
     def get_request_context() -> str:
@@ -103,6 +125,22 @@ def run_request(
         return response.text
 
     @tool
+    def calculate_refund(reason: RefundReason, lines: list[Line]) -> str:
+        """Work out the eligible INR refund for covered items on this request."""
+        with backend() as client:
+            response = client.post(
+                f"/api/requests/{request_id}/refund",
+                json={
+                    "reason": reason,
+                    "lines": [line.model_dump() for line in lines],
+                },
+            )
+        if response.status_code == httpx.codes.UNPROCESSABLE_ENTITY:
+            return response.json().get("detail", "Invalid refund calculation input.")
+        response.raise_for_status()
+        return response.text
+
+    @tool
     def record_progress(stage: ProgressStage) -> str:
         """Record a supported progress stage for this request."""
         with backend() as client:
@@ -112,26 +150,37 @@ def run_request(
         response.raise_for_status()
         return response.text
 
+    return [
+        get_request_context,
+        list_policy_sections,
+        read_policy_section,
+        calculate_refund,
+        record_progress,
+    ]
+
+
+def run_request(
+    request_id: str, thread_id: str, llm: BaseChatModel | None = None
+) -> dict[str, object]:
+    """Run the request agent on one request: approve, decline or request information."""
+    request_context: dict[str, object] = {}
     agent = create_agent(
         llm or model(),
-        tools=[
-            get_request_context,
-            list_policy_sections,
-            read_policy_section,
-            record_progress,
-        ],
+        tools=make_request_tools(request_id, request_context),
         system_prompt=REQUEST_INSTRUCTIONS,
         response_format=ToolStrategy(Recommendation),
         middleware=retry_middleware(),
     )
-    result = agent.invoke(
-        {
-            "messages": [
-                {"role": "user", "content": "Review the assigned support request."}
-            ]
-        },
-        config={"configurable": {"thread_id": thread_id}},
-    )
+    context_manager, config = trace_context(request_id, thread_id)
+    with context_manager:
+        result = agent.invoke(
+            {
+                "messages": [
+                    {"role": "user", "content": "Review the assigned support request."}
+                ]
+            },
+            config=config,
+        )
     structured = result["structured_response"]
     if not isinstance(structured, Recommendation):
         raise TypeError("The Shoppie Agent returned an invalid recommendation")

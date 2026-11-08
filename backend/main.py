@@ -13,6 +13,7 @@ from agent.instructions import QUEUE_INSTRUCTIONS, REQUEST_INSTRUCTIONS
 from agent.models import Recommendation
 from agent.queue import run_queue
 from backend.policies import list_policies, read_section
+from backend.refunds import RefundCalculation, RefundInput, work_out_refund
 from backend.store import AGENT_STAGES, Store, TodoStatus
 
 DEFAULT_DATABASE_PATH = (
@@ -170,6 +171,27 @@ def add_request_step(
     if not store_of(request).add_step(request_id, progress.stage):
         raise HTTPException(status_code=409, detail="Request is not in progress")
     return {"status": "recorded", "stage": progress.stage}
+
+
+@app.post("/api/requests/{request_id}/refund", operation_id="calculate_refund")
+def calculate_refund(
+    request_id: str, refund: RefundInput, request: Request
+) -> RefundCalculation:
+    """Calculate the policy-backed refund for a request in progress."""
+    store = store_of(request)
+    record = require_request(store, request_id)
+    if not store.is_in_progress(request_id):
+        raise HTTPException(status_code=409, detail="Request is not in progress")
+    try:
+        result = work_out_refund(record["order"], refund.reason, refund.lines)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    store.add_step(
+        request_id,
+        "calculated_refund",
+        f"Calculated eligible refund of ₹{result['refund']:,.2f}.",
+    )
+    return result
 
 
 @app.post("/api/requests/{request_id}/start", operation_id="start_request")
