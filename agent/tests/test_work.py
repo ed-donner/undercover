@@ -32,7 +32,7 @@ def test_retries_once_then_succeeds(backend, run_id):
         api.decide_claim(claim_id, **DECISION)
         return "Approved for $100.00."
 
-    assert work.work_claim(run_id, "CLM-1001", decide) == "Approved for $100.00."
+    assert work.work_claim(run_id, "CLM-1001", decide) == "Approved $100.00"
 
     assert len(attempts) == 2
     assert api.get_claim("CLM-1001")["status"] == "decided"
@@ -64,7 +64,7 @@ def test_does_not_retry_a_claim_already_decided(backend, run_id):
     outcome = work.work_claim(run_id, "CLM-1001", decide)
 
     assert len(attempts) == 1
-    assert "decided" in outcome.lower()
+    assert outcome == "Approved $100.00"
     assert item(backend)["status"] == "done"
 
 
@@ -95,3 +95,28 @@ def test_a_claim_that_failed_starts_afresh_on_a_new_thread(backend, run_id):
     assert api.get_claim("CLM-1001")["thread"] == 2
     assert item(backend)["attempts"] == 2
     assert item(backend)["status"] == "done"
+
+
+def test_a_referral_is_left_for_a_handler_in_one_line(backend, run_id):
+    def decide(claim_id):
+        refer = {**DECISION, "decision": "refer", "payout": Decimal(0)}
+        api.decide_claim(claim_id, **refer)
+        return "A long\nmulti-line account of the referral."
+
+    outcome = work.work_claim(run_id, "CLM-1001", decide)
+
+    assert outcome == "Referred"
+    assert item(backend)["status"] == "left for a handler"
+    assert item(backend)["note"] == "Referred"
+    assert item(backend)["attempts"] == 1
+
+
+def test_a_held_approval_is_done_and_says_it_waits(backend, run_id):
+    def decide(claim_id):
+        api.decide_claim(claim_id, **{**DECISION, "payout": Decimal("2000.00")})
+        return "Approved."
+
+    work.work_claim(run_id, "CLM-1001", decide)
+
+    assert item(backend)["status"] == "done"
+    assert item(backend)["note"] == "Approved $2,000.00, waiting for sign-off"

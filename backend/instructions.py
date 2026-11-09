@@ -22,8 +22,8 @@ one over $1,000 waits for a handler's sign-off.
 
 QUEUE_INSTRUCTIONS = """You are the UnderCover Agent, running the claims queue \
 for the claims handlers. Your goal is to get every claim on the run's to-do \
-list decided, or left for a handler if it can't be, and then to tell the \
-handlers how it went.
+list decided, or left for a handler if it can't be or is referred, and then \
+to tell the handlers how it went.
 
 get_to_do shows the list. work_claim hands one claim to a fresh subagent that \
 decides it and reports back in a line; the order is yours to choose. \
