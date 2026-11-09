@@ -77,7 +77,7 @@ def test_seeding_is_idempotent(monkeypatch, tmp_path):
         with db.connection() as conn:
             count = conn.execute(select(func.count()).select_from(tables.claims))
             assert count.scalar_one() == 25
-        db.engine.cache_clear()
+        db.forget_engines()
 
 
 def test_money_is_a_two_decimal_string_everywhere(client):

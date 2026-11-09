@@ -5,8 +5,8 @@ import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 
 from sqlalchemy import Connection, Engine, create_engine, func, insert, select, text
 
@@ -30,6 +30,10 @@ def database_url() -> str:
     return f"sqlite:///{db_path()}"
 
 
+_lock = Lock()
+_engines: dict[str, Engine] = {}
+
+
 def make_engine(url: str) -> Engine:
     """Make an engine; Postgres keeps our tables in their own schema."""
     json_options = {
@@ -47,10 +51,22 @@ def make_engine(url: str) -> Engine:
     )
 
 
-@lru_cache
 def engine(url: str) -> Engine:
-    """Make the engine for a database, creating and seeding its tables once."""
-    made = make_engine(url)
+    """Return the engine for a database, made once even when requests race for it."""
+    with _lock:
+        if url not in _engines:
+            _engines[url] = _prepare(make_engine(url), url)
+        return _engines[url]
+
+
+def forget_engines() -> None:
+    """Forget every engine, so the next use makes one again."""
+    with _lock:
+        _engines.clear()
+
+
+def _prepare(made: Engine, url: str) -> Engine:
+    """Create a database's schema and tables, and seed them if they are empty."""
     if not url.startswith("sqlite"):
         with made.begin() as conn:
             conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"))

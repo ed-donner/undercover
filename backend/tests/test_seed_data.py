@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -66,6 +67,14 @@ def test_amounts_come_back_exact(client):
 
 
 def test_starting_again_adds_nothing(client):
-    db.engine.cache_clear()
+    db.forget_engines()
     with db.connection() as conn:
         assert count(conn, tables.policies) == 50
+
+
+def test_requests_racing_for_a_new_database_share_one_engine(tmp_path):
+    url = f"sqlite:///{tmp_path / 'race.db'}"
+    with ThreadPoolExecutor(8) as pool:
+        engines = list(pool.map(lambda _: db.engine(url), range(8)))
+
+    assert len({id(e) for e in engines}) == 1

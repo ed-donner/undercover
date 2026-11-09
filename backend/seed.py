@@ -12,7 +12,7 @@ from backend import db
 def reset() -> None:
     """Delete every claim's state, step, run and saved progress, and seed again."""
     url = db.database_url()
-    db.engine.cache_clear()
+    db.forget_engines()
     if url.startswith("sqlite"):
         for suffix in ("", "-wal", "-shm", "-journal"):
             db.db_path().with_name(db.db_path().name + suffix).unlink(missing_ok=True)

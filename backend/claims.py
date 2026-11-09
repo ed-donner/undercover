@@ -6,7 +6,6 @@ from typing import Any
 from sqlalchemy import and_, insert, or_, select, update
 
 from backend import db, money, payouts, reference, tables
-from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS
 from backend.errors import Conflict, NotFound
 
 
@@ -31,25 +30,28 @@ def _with_dollars(row: dict[str, Any]) -> dict[str, Any]:
 
 def list_summaries() -> list[dict[str, Any]]:
     """List every claim in the queue, oldest submitted first."""
+    columns = tables.claims.c
     with db.connection() as conn:
-        rows = conn.execute(select(tables.claims.c.claim_id, tables.claims.c.status))
-        statuses = {claim_id: status for claim_id, status in rows}
-    return [
-        {
-            "claim_id": claim_id,
-            "claim_type": CLAIMS[claim_id]["claim_type"],
-            "summary": CLAIMS[claim_id]["summary"],
-            "amount_claimed": CLAIMS[claim_id]["amount_claimed"],
-            "status": statuses[claim_id],
-        }
-        for claim_id in CLAIM_IDS_BY_SUBMITTED_ON
-    ]
+        rows = conn.execute(
+            select(
+                columns.claim_id,
+                columns.claim_type,
+                columns.summary,
+                columns.amount_claimed_cents,
+                columns.status,
+            ).order_by(columns.submitted_on, columns.claim_id)
+        )
+        return [money.dollar_fields(dict(row._mapping)) for row in rows]
 
 
 def get_full(claim_id: str) -> dict[str, Any]:
     """Return a claim in full, with its policy and its customer's claim history."""
     row = get_row(claim_id)
-    claim = {k: v for k, v in CLAIMS[claim_id].items() if k != "status"}
+    with db.connection() as conn:
+        content = conn.execute(
+            select(*tables.CONTENT_COLUMNS).where(tables.claims.c.claim_id == claim_id)
+        ).one()
+    claim = money.dollar_fields(dict(content._mapping))
     return {
         **claim,
         **row,

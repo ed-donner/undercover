@@ -101,10 +101,10 @@ Move the smallest users first.
 
 **Success criteria**
 
-- [ ] `data.py` is gone and `grep -rn "backend.data\|import data" backend agent` finds nothing.
-- [ ] A test compares `GET /api/claims` and `GET /api/claims/<id>` for all 25 claims with values built from `data/claims.json`, `policies.json` and `customers.json`, field by field.
-- [ ] `GET /api/claims/CLM-9999` is still 404.
-- [ ] `npx vitest run --root dashboard` and `npm run e2e` pass unchanged, which shows the API did not change.
+- [x] `data.py` is gone and `grep -rn "backend.data\|import data" backend agent` finds nothing.
+- [x] A test compares `GET /api/claims` and `GET /api/claims/<id>` for all 25 claims with values built from `data/claims.json`, `policies.json` and `customers.json`, field by field.
+- [x] `GET /api/claims/CLM-9999` is still 404.
+- [x] `npx vitest run --root dashboard` and `npm run e2e` pass unchanged, which shows the API did not change.
 
 ### Phase 6: Supabase, checks and docs
 
