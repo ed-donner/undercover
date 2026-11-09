@@ -8,7 +8,6 @@ export default defineConfig({
     environment: "jsdom",
     coverage: {
       include: ["src/**"],
-      exclude: ["src/main.tsx"],
       thresholds: { statements: 80 },
     },
   },

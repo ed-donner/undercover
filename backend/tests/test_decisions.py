@@ -240,3 +240,18 @@ def test_the_sign_off_stands_when_the_agent_is_unreachable(client):
 
     assert response.status_code == 200
     assert client.get("/api/claims/CLM-1001").json()["signed_off_by"] == "HND-01"
+
+
+@pytest.mark.parametrize("decision", ["decline", "refer"])
+def test_only_an_approval_has_a_payout(client, decision):
+    response = client.post(
+        "/api/claims/CLM-1001/decision",
+        json={
+            "decision": decision,
+            "payout": "50.00",
+            "reason": "r",
+            "policy_reference": "s",
+        },
+    )
+
+    assert response.status_code == 422

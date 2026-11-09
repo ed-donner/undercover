@@ -3,6 +3,7 @@
 One client, and one function for each operation the agents use.
 """
 
+import os
 from decimal import Decimal
 from http import HTTPStatus
 from typing import Annotated, Any, Literal
@@ -10,7 +11,7 @@ from typing import Annotated, Any, Literal
 import httpx
 from pydantic import BaseModel, Field
 
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = os.environ.get("UNDERCOVER_BACKEND", "http://localhost:8000")
 
 Document = Literal["policy_wording", "claims_manual"]
 Decision = Literal["approve", "decline", "refer"]

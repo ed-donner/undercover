@@ -29,6 +29,11 @@ def saver() -> PostgresSaver:
         return _make_saver()
 
 
+def forget() -> None:
+    """Forget this process's checkpointer, so the next use makes one again."""
+    _make_saver.cache_clear()
+
+
 @lru_cache
 def _make_saver() -> PostgresSaver:
     pool = ConnectionPool(

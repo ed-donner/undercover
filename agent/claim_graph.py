@@ -16,7 +16,8 @@ from langgraph.prebuilt import ToolNode
 from agent import claim_nodes
 from agent.api import ApiRefusal
 from agent.claim_state import ClaimState
-from agent.tools import CLAIM_TOOLS, ClaimContext
+from agent.contexts import ClaimContext
+from agent.tools import CLAIM_TOOLS
 
 
 def after_agent(state: ClaimState) -> Literal["tools", "settle"]:

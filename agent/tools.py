@@ -3,8 +3,6 @@
 Tools get their state from the run's context, never from closures or globals.
 """
 
-from collections.abc import Callable
-from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
@@ -12,21 +10,7 @@ from langchain.tools import ToolRuntime, tool
 
 from agent import api, work
 from agent.api import Amount, Benefit, Decision, Document, Line
-
-
-@dataclass
-class ClaimContext:
-    """The claim an agent is deciding."""
-
-    claim_id: str
-
-
-@dataclass
-class RunContext:
-    """The queue run an orchestrator is working, and how it decides one claim."""
-
-    run_id: int
-    decide: Callable[[str], str]
+from agent.contexts import ClaimContext, RunContext
 
 
 @tool

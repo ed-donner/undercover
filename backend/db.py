@@ -1,4 +1,4 @@
-"""The database: table definitions and one way to connect, on SQLite or Postgres."""
+"""The database: one way to connect, on SQLite or Postgres, and to seed it."""
 
 import json
 import os

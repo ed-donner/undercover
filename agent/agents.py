@@ -11,8 +11,9 @@ from langgraph.types import Command
 from agent import api, checkpoint, lease, tracing
 from agent.claim_graph import build_graph
 from agent.claim_state import new_claim
+from agent.contexts import ClaimContext, RunContext
 from agent.harness import AgentSpec, model, run_agent
-from agent.tools import QUEUE_TOOLS, ClaimContext, RunContext
+from agent.tools import QUEUE_TOOLS
 
 
 def decide_claim(

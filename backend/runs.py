@@ -1,4 +1,4 @@
-"""A run's to-do list: one row per claim it works, tracked in SQLite."""
+"""A run's to-do list: one row per claim it works."""
 
 from typing import Any
 

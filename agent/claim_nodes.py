@@ -12,7 +12,7 @@ from langgraph.types import interrupt
 from agent import api
 from agent.api import WAITING_FOR_SIGN_OFF
 from agent.claim_state import ClaimState
-from agent.tools import ClaimContext
+from agent.contexts import ClaimContext
 
 MAX_MODEL_CALLS = 30
 

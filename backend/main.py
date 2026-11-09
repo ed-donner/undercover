@@ -1,10 +1,10 @@
 """The UnderCover backend: the HTTP routes, each a thin call into the logic modules."""
 
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from backend import agent_process, agent_service, claims, payouts, reference, runs
 from backend.errors import Conflict, NotFound
@@ -31,6 +31,12 @@ class Decision(BaseModel):
     payout: Amount
     reason: str
     policy_reference: str
+
+    @model_validator(mode="after")
+    def only_an_approval_pays(self) -> Self:
+        if self.decision != "approve" and self.payout != 0:
+            raise ValueError("Only an approval has a payout")
+        return self
 
 
 class Step(BaseModel):

@@ -39,11 +39,11 @@ def test_racing_threads_open_one_pool(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@host/db")
     monkeypatch.setattr(checkpoint, "ConnectionPool", FakePool)
     monkeypatch.setattr(checkpoint, "PostgresSaver", FakeSaver)
-    checkpoint._make_saver.cache_clear()
+    checkpoint.forget()
 
     with ThreadPoolExecutor(8) as threads:
         savers = list(threads.map(lambda _: checkpoint.saver(), range(8)))
 
     assert FakePool.opened == 1
     assert len({id(saver) for saver in savers}) == 1
-    checkpoint._make_saver.cache_clear()
+    checkpoint.forget()
