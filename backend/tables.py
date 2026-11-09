@@ -114,6 +114,8 @@ claims = Table(
     Column("signed_off_on", String),
     Column("paid_cents", Integer),
     Column("paid_on", String),
+    Column("lease_owner", String),
+    Column("lease_expires_on", String),
 )
 
 STATE_COLUMNS = [

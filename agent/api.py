@@ -137,6 +137,20 @@ def pay_claim(claim_id: str, amount: Amount) -> dict[str, Any]:
     return _call("POST", f"/api/claims/{claim_id}/payment", json=body)
 
 
+def acquire_lease(claim_id: str, owner: str) -> int | None:
+    """Lease a claim, or renew the lease: its length in seconds, or None if held."""
+    response = client.post(f"/api/claims/{claim_id}/lease", json={"owner": owner})
+    if response.status_code == HTTPStatus.CONFLICT:
+        return None
+    response.raise_for_status()
+    return response.json()["lease_seconds"]
+
+
+def release_lease(claim_id: str, owner: str) -> None:
+    """Give up a claim's lease."""
+    _call("POST", f"/api/claims/{claim_id}/lease/release", json={"owner": owner})
+
+
 def list_unfinished_claims() -> list[str]:
     """List the claims the agent must carry on with."""
     return _call("GET", "/api/unfinished-claims")

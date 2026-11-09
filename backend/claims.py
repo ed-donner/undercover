@@ -10,6 +10,8 @@ from backend import db, money, payouts, reference, tables
 from backend.errors import Conflict, NotFound
 from backend.statuses import ClaimStatus
 
+LEASE_SECONDS = 30
+
 
 def get_row(claim_id: str) -> dict[str, Any]:
     """Return a claim's mutable state, or raise NotFound."""
@@ -195,8 +197,46 @@ def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
     return get_row(claim_id)
 
 
+def acquire_lease(claim_id: str, owner: str) -> int:
+    """Lease a claim to an agent for a short time; holding it again renews it.
+
+    Raises Conflict while another agent holds a lease that has not run out.
+    Returns the length of the lease in seconds.
+    """
+    get_row(claim_id)
+    columns = tables.claims.c
+    with db.connection() as conn:
+        leased = conn.execute(
+            update(tables.claims)
+            .where(
+                columns.claim_id == claim_id,
+                or_(
+                    columns.lease_owner.is_(None),
+                    columns.lease_owner == owner,
+                    columns.lease_expires_on < db.now(),
+                ),
+            )
+            .values(lease_owner=owner, lease_expires_on=db.now(LEASE_SECONDS))
+        )
+    if leased.rowcount == 0:
+        raise Conflict("Claim is being worked by another agent")
+    return LEASE_SECONDS
+
+
+def release_lease(claim_id: str, owner: str) -> None:
+    """Give up a lease, if this agent still holds it."""
+    get_row(claim_id)
+    columns = tables.claims.c
+    with db.connection() as conn:
+        conn.execute(
+            update(tables.claims)
+            .where(columns.claim_id == claim_id, columns.lease_owner == owner)
+            .values(lease_owner=None, lease_expires_on=None)
+        )
+
+
 def list_unfinished() -> list[str]:
-    """List the claims the agent must carry on with: stopped, or ready to pay."""
+    """List the claims to carry on with: stopped or ready to pay, and not leased."""
     payable = and_(
         tables.claims.c.decision == "approve",
         tables.claims.c.paid_cents.is_(None),
@@ -208,7 +248,13 @@ def list_unfinished() -> list[str]:
     with db.connection() as conn:
         rows = conn.execute(
             select(tables.claims.c.claim_id)
-            .where(or_(tables.claims.c.status == ClaimStatus.IN_PROGRESS, payable))
+            .where(
+                or_(tables.claims.c.status == ClaimStatus.IN_PROGRESS, payable),
+                or_(
+                    tables.claims.c.lease_expires_on.is_(None),
+                    tables.claims.c.lease_expires_on < db.now(),
+                ),
+            )
             .order_by(tables.claims.c.claim_id)
         )
         return [claim_id for (claim_id,) in rows]

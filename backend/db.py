@@ -4,7 +4,7 @@ import json
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from threading import Lock
 
@@ -88,6 +88,6 @@ def connection() -> Iterator[Connection]:
         yield conn
 
 
-def now() -> str:
-    """Return the current UTC time as an ISO 8601 string."""
-    return datetime.now(UTC).isoformat()
+def now(plus_seconds: int = 0) -> str:
+    """Return the UTC time, now or some seconds ahead, as an ISO 8601 string."""
+    return (datetime.now(UTC) + timedelta(seconds=plus_seconds)).isoformat()

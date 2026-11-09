@@ -41,6 +41,10 @@ class SignOff(BaseModel):
     handler_id: str
 
 
+class Lease(BaseModel):
+    owner: str
+
+
 class Payment(BaseModel):
     amount: Amount
 
@@ -160,6 +164,19 @@ def sign_off_claim(
 def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
     """Pay a claim's approved payout, blocked until any required sign-off is given."""
     return claims.pay(claim_id, payment.amount)
+
+
+@app.post("/api/claims/{claim_id}/lease", operation_id="acquire_lease")
+def acquire_lease(claim_id: str, lease: Lease) -> dict[str, int]:
+    """Lease a claim to an agent, or renew its lease; refused while another holds it."""
+    return {"lease_seconds": claims.acquire_lease(claim_id, lease.owner)}
+
+
+@app.post("/api/claims/{claim_id}/lease/release", operation_id="release_lease")
+def release_lease(claim_id: str, lease: Lease) -> dict[str, str]:
+    """Give up a claim's lease, if the agent still holds it."""
+    claims.release_lease(claim_id, lease.owner)
+    return {"claim_id": claim_id}
 
 
 @app.post("/api/claims/{claim_id}/run", operation_id="run_agent")

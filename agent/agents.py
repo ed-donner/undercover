@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.types import Command
 
-from agent import api, checkpoint, tracing
+from agent import api, checkpoint, lease, tracing
 from agent.claim_graph import build_graph
 from agent.claim_state import new_claim
 from agent.harness import AgentSpec, model, run_agent
@@ -26,13 +26,19 @@ def decide_claim(
     neither the queue agent's callbacks nor its trace with it.
 
     A claim waiting at its sign-off carries on only once a handler has signed off.
+    A claim another agent is working is left to that agent.
     """
-    claim = api.get_claim(claim_id)
-    thread_id = f"{claim_id}-{claim['thread']}"
-    graph = build_graph(
-        checkpointer or checkpoint.saver(), llm or model(), api.claim_instructions()
-    )
-    return Context().run(_work_traced, graph, claim, thread_id)
+    with lease.held(claim_id) as free:
+        if not free:
+            return f"{claim_id} is being worked by another agent."
+        claim = api.get_claim(claim_id)
+        thread_id = f"{claim_id}-{claim['thread']}"
+        graph = build_graph(
+            checkpointer or checkpoint.saver(),
+            llm or model(),
+            api.claim_instructions(),
+        )
+        return Context().run(_work_traced, graph, claim, thread_id)
 
 
 def _work_traced(graph: Any, claim: dict[str, Any], thread_id: str) -> str:

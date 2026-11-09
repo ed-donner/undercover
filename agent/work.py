@@ -13,6 +13,7 @@ from agent import api
 from agent.api import WAITING_FOR_SIGN_OFF
 
 MAX_ATTEMPTS = 2
+BUSY_NOTE = "Being worked by another agent"
 
 
 def _attempt(
@@ -40,6 +41,9 @@ def _settle(run_id: int, claim_id: str) -> str:
     A referral needs a handler's judgment, so it is left for one.
     """
     claim = api.get_claim(claim_id)
+    if claim["decision"] is None:
+        api.update_run_item(run_id, claim_id, "done", BUSY_NOTE)
+        return BUSY_NOTE
     match claim["decision"]:
         case "approve":
             note = f"Approved ${Decimal(claim['payout']):,.2f}"
