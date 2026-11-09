@@ -15,16 +15,6 @@ def _load_json(name: str) -> Any:
     return money.convert(json.loads(text, parse_float=Decimal))
 
 
-_PLAN_DATA = _load_json("plans.json")
-PLANS: dict[str, Any] = {plan["plan"]: plan for plan in _PLAN_DATA["plans"]}
-ADD_ONS: dict[str, Any] = {a["add_on"]: a for a in _PLAN_DATA["add_ons"]}
-DEDUCTIBLE_BENEFITS: list[str] = _PLAN_DATA["deductible_applies_to"]
-POLICIES: dict[str, Any] = {
-    policy["policy_id"]: policy for policy in _load_json("policies.json")
-}
-CUSTOMERS: dict[str, Any] = {
-    customer["customer_id"]: customer for customer in _load_json("customers.json")
-}
 CLAIMS: dict[str, Any] = {
     claim["claim_id"]: claim for claim in _load_json("claims.json")
 }

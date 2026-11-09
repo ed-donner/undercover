@@ -89,9 +89,9 @@ Move the smallest users first.
 
 **Success criteria**
 
-- [ ] `uv run pytest -q` passes, `test_payouts.py` unchanged.
-- [ ] `GET /api/claims/CLM-1001` returns the claim merged with policy `POL-2001` and customer `CUS-3001`'s previous claims, as `docs/PLAN.md` described, compared in a test with a result built from the files.
-- [ ] `POST /api/payouts` gives the same payout as before for a Premium baggage claim and an Economy trip delay.
+- [x] `uv run pytest -q` passes, `test_payouts.py` unchanged.
+- [x] `GET /api/claims/CLM-1001` returns the claim merged with policy `POL-2001` and customer `CUS-3001`'s previous claims, as `docs/PLAN.md` described, compared in a test with a result built from the files.
+- [x] `POST /api/payouts` gives the same payout as before for a Premium baggage claim and an Economy trip delay.
 
 ### Phase 5: The claims' content switches over
 

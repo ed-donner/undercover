@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import and_, insert, or_, select, update
 
 from backend import db, money, payouts, reference, tables
-from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
+from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS
 from backend.errors import Conflict, NotFound
 
 
@@ -53,8 +53,10 @@ def get_full(claim_id: str) -> dict[str, Any]:
     return {
         **claim,
         **row,
-        "policy": POLICIES[claim["policy_id"]],
-        "customer_previous_claims": CUSTOMERS[claim["customer_id"]]["previous_claims"],
+        "policy": reference.policy(claim["policy_id"]),
+        "customer_previous_claims": reference.customer(claim["customer_id"])[
+            "previous_claims"
+        ],
     }
 
 

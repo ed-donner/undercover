@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from backend import data, money, reference
+from backend import money, reference
 from backend.money import Amount
 
 CASH_LIMIT = Decimal(100)
@@ -60,15 +60,14 @@ def _step(description: str, amount: Decimal) -> dict[str, Any]:
     return {"step": description, "amount": money.dollars(amount)}
 
 
-def _limit(line: Line, policy: dict[str, Any]) -> Decimal | None:
+def _limit(line: Line, policy: dict[str, Any], plan: dict[str, Any]) -> Decimal | None:
     """Return the most paid for one line, or None when it has no limit of its own."""
-    plan = data.PLANS[policy["plan"]]
     travelers = len(policy["travelers"])
     match line.kind:
         case "item":
             return plan["per_item_limit"] * line.quantity
         case "electronics":
-            plus = data.ADD_ONS["electronics_plus"]["electronics_per_item_limit"]
+            plus = reference.add_on("electronics_plus")["electronics_per_item_limit"]
             has_plus = "electronics_plus" in policy["add_ons"]
             return (plus if has_plus else plan["per_item_limit"]) * line.quantity
         case "hotel":
@@ -79,15 +78,19 @@ def _limit(line: Line, policy: dict[str, Any]) -> Decimal | None:
             return None
 
 
-def _eligible(line: Line, policy: dict[str, Any]) -> dict[str, Any]:
-    limit = _limit(line, policy)
+def _eligible(
+    line: Line, policy: dict[str, Any], plan: dict[str, Any]
+) -> dict[str, Any]:
+    limit = _limit(line, policy, plan)
     if limit is not None and line.amount > limit:
         return _step(f"{line.description}, limited to ${limit:,.2f}", limit)
     return _step(line.description, line.amount)
 
 
-def _benefit_maximum(policy: dict[str, Any], benefit: Benefit) -> Decimal:
-    maximum = data.PLANS[policy["plan"]][BENEFIT_MAXIMUM[benefit]]
+def _benefit_maximum(
+    policy: dict[str, Any], plan: dict[str, Any], benefit: Benefit
+) -> Decimal:
+    maximum = plan[BENEFIT_MAXIMUM[benefit]]
     if benefit in ("trip_cancellation", "trip_interruption"):
         return min(maximum, policy["trip"]["trip_cost"])
     return maximum
@@ -100,8 +103,9 @@ def work_out_payout(
     paid_by_others: Decimal,
 ) -> dict[str, Any]:
     """Work out the payout on an approved claim, following section 10 of the wording."""
-    policy = data.POLICIES[policy_id]
-    calculation = [_eligible(i, policy) for i in lines if i.kind != "cash"]
+    policy = reference.policy(policy_id)
+    plan = reference.plan(policy["plan"])
+    calculation = [_eligible(i, policy, plan) for i in lines if i.kind != "cash"]
     cash = sum((i.amount for i in lines if i.kind == "cash"), Decimal(0))
     if cash:
         calculation.append(
@@ -115,13 +119,13 @@ def work_out_payout(
         )
         total -= paid_by_others
 
-    if benefit in data.DEDUCTIBLE_BENEFITS and total > 0:
-        deductible = min(data.PLANS[policy["plan"]]["deductible"], total)
+    if benefit in reference.deductible_benefits() and total > 0:
+        deductible = min(plan["deductible"], total)
         if deductible:
             calculation.append(_step("Less the deductible", -deductible))
             total -= deductible
 
-    maximum = _benefit_maximum(policy, benefit)
+    maximum = _benefit_maximum(policy, plan, benefit)
     if total > maximum:
         calculation.append(
             _step(
