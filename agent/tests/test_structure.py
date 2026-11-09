@@ -82,3 +82,15 @@ def test_the_agent_applies_no_approval_limit():
         text = path.read_text()
         assert "APPROVAL_LIMIT" not in text, path.name
         assert "1000" not in text, path.name
+
+
+def test_only_seed_data_reads_the_data_folder():
+    for path in (ROOT / "backend").glob("*.py"):
+        if path.name != "seed_data.py":
+            assert "DATA_DIR" not in path.read_text(), path.name
+            assert '"data"' not in path.read_text(), path.name
+
+
+def test_the_answer_key_is_never_mentioned_outside_tests():
+    for path in [*(ROOT / "backend").glob("*.py"), *(ROOT / "agent").glob("*.py")]:
+        assert "evals" not in path.read_text(), path.name

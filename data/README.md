@@ -4,6 +4,8 @@ The data behind UnderCover Travel Insurance, a fictional insurer. Everything her
 
 ## The insurer's systems
 
+The backend loads these files into its database the first time it starts, and `npm run seed` loads them again from scratch. After that the database is the source: a change to a file shows only after a reseed, which also resets every claim.
+
 - `company.json`: company settings, including the $1,000 payout approval limit.
 - `plans.json`: the three plans (Economy, Premium, First) with their limits, waiting periods and deductibles, and the three add-ons.
 - `policies.json`: one policy per trip, with the plan, the add-ons, the purchase date, the trip and the travelers.

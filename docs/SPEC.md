@@ -39,7 +39,7 @@ If the agent is stopped partway through a claim, by a crash, a restart or Ctrl-C
 
 ## Our records
 
-Everything is in `data/`, described in `data/README.md`: the claims queue, the policies, the customers, the plans, the handlers, the policy wording and the claims manual. The held-out claims in `data/evals/` are for checking the agent later and stay out of the queue.
+Everything starts in `data/`, described in `data/README.md`, and is then kept in our database: the claims queue, the policies, the customers, the plans, the handlers, the policy wording and the claims manual. The held-out claims in `data/evals/` are for checking the agent later and stay out of the queue.
 
 ## Not for now
 

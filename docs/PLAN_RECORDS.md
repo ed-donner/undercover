@@ -113,13 +113,15 @@ Move the smallest users first.
 
 **Success criteria**
 
-- [ ] With `.env`, stop `npm run dev` and run `npm run seed`. Through the Supabase MCP server, `undercover` holds all the new tables with 25 claims, 50 policies, 49 customers, 3 plans, 3 add-ons, 3 handlers, and the sections of both documents.
-- [ ] `npm run dev` then shows the queue with 25 claims, and a claim page with its story, items, policy and the customer's history (Playwright MCP, light and dark).
-- [ ] A held claim can still be signed off on the dashboard and shows as paid, without a model: after `decide_claim` through the API on a claim over the limit, the sign-off buttons appear, and a sign-off with the agent's service stopped is accepted.
-- [ ] The Supabase advisors report nothing new, and I note that the `undercover` schema is not exposed through Supabase's data API (customers' personal data is in it).
-- [ ] `pg_stat_activity` for user postgres shows no more connections from our processes than before: still at most 4 in the backend.
-- [ ] `npm run check` is green with `.env` moved out of the way.
-- [ ] No live model run is needed: the agent and its tools are unchanged and reach everything through the API. If wanted, one claim with `MODEL_NAME=openrouter/free` after a reseed.
+- [x] With `.env`, stop `npm run dev` and run `npm run seed`. Through the Supabase MCP server, `undercover` holds all the new tables with 25 claims, 50 policies, 49 customers, 3 plans, 3 add-ons, 3 handlers, and the sections of both documents.
+- [x] `npm run dev` then shows the queue with 25 claims, and a claim page with its story, items, policy and the customer's history (Playwright MCP, light and dark).
+- [x] A held claim can still be signed off on the dashboard and shows as paid, without a model: after `decide_claim` through the API on a claim over the limit, the sign-off buttons appear, and a sign-off with the agent's service stopped is accepted.
+- [x] The Supabase advisors report nothing new, and I note that the `undercover` schema is not exposed through Supabase's data API (customers' personal data is in it).
+- [x] `pg_stat_activity` for user postgres shows no more connections from our processes than before: still at most 4 in the backend.
+- [x] `npm run check` is green with `.env` moved out of the way.
+- [x] No live model run is needed: the agent and its tools are unchanged and reach everything through the API. If wanted, one claim with `MODEL_NAME=openrouter/free` after a reseed.
+
+Along the way: two requests racing for a fresh database each built the engine and created the tables, which showed as "table already exists" in the end-to-end run. `db.engine` now makes each engine once under a lock, with a test. The live checks ran with the agent's service stopped, so the over-limit claim was decided through the API without a model; a sign-off on the dashboard was accepted and left the claim `in progress` and listed as unfinished, for the agent to pay on its next run. After reseeding, Supabase held 25 claims, 50 policies, 49 customers, 3 plans, 3 add-ons, 3 handlers, 9 settings, 2 deductible benefits and 12 and 14 sections for the two documents; `pg_stat_activity` showed 3 Supavisor connections from user postgres; the security advisors listed nothing. I did not check dark mode, since no screen changed.
 
 ## Questions for you
 
