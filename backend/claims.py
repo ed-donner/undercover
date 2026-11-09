@@ -1,5 +1,6 @@
 """A claim's state: its row, its steps, its sign-off and its payment."""
 
+from collections.abc import Callable
 from decimal import Decimal
 from typing import Any
 
@@ -213,10 +214,14 @@ def list_unfinished() -> list[str]:
         return [claim_id for (claim_id,) in rows]
 
 
-def start_work(claim_id: str) -> dict[str, Any]:
-    """Mark a waiting claim as in progress, before the agent starts on it."""
+def start_work(claim_id: str, launch: Callable[[str], None]) -> dict[str, Any]:
+    """Launch the agent on a waiting claim, then mark it in progress.
+
+    If the launch fails the claim stays waiting.
+    """
     if get_row(claim_id)["status"] != ClaimStatus.WAITING:
         raise Conflict("Claim is not waiting")
+    launch(claim_id)
     with db.connection() as conn:
         conn.execute(
             update(tables.claims)

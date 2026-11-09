@@ -1,3 +1,5 @@
+import pytest
+
 from backend import agent_process
 
 
@@ -10,6 +12,18 @@ def test_run_agent_schedules_the_agent(client, monkeypatch):
     assert response.status_code == 200
     assert response.json()["status"] == "in progress"
     assert calls == ["CLM-1001"]
+
+
+def test_a_failed_launch_leaves_the_claim_waiting(client, monkeypatch):
+    def fail(claim_id):
+        raise OSError("cannot start")
+
+    monkeypatch.setattr(agent_process, "start", fail)
+
+    with pytest.raises(OSError, match="cannot start"):
+        client.post("/api/claims/CLM-1001/run")
+
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
 
 
 def test_run_agent_blocked_when_not_waiting(client):

@@ -118,7 +118,7 @@ def calculate_payout(request: PayoutRequest) -> dict[str, Any]:
 @app.get("/api/handlers", operation_id="list_handlers")
 def list_handlers() -> list[dict[str, Any]]:
     """List the claims handlers who can sign off an over-limit payout."""
-    return [h for h in reference.handlers() if h["can_approve_over_limit"]]
+    return reference.approvers()
 
 
 @app.get("/api/unfinished-claims", operation_id="list_unfinished_claims")
@@ -165,9 +165,7 @@ def pay_claim(claim_id: str, payment: Payment) -> dict[str, Any]:
 @app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
 def run_agent(claim_id: str) -> dict[str, Any]:
     """Start the UnderCover Agent on a waiting claim."""
-    claim = claims.start_work(claim_id)
-    agent_process.start(claim_id)
-    return claim
+    return claims.start_work(claim_id, agent_process.start)
 
 
 @app.post("/api/claims/{claim_id}/requeue", operation_id="requeue_claim")

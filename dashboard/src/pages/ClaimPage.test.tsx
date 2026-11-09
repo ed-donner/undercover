@@ -100,7 +100,9 @@ it("shows a decided claim's story, items and decision", async () => {
   renderClaimPage();
 
   expect(await screen.findByText(claim.story)).toBeDefined();
-  expect(screen.getByText("Airport hotel: $245.00")).toBeDefined();
+  expect(screen.getByText("$245.00").parentElement?.textContent).toBe(
+    "Airport hotel: $245.00",
+  );
   expect(screen.getByText("approve, $245.00")).toBeDefined();
   expect(screen.getByText("A covered trip delay with receipts.")).toBeDefined();
   expect(screen.getByText(/Checked bag arrived 30 hours late/)).toBeDefined();
@@ -162,4 +164,27 @@ it("runs the agent and polls the step log as it works", async () => {
 
   vi.advanceTimersByTime(2000);
   expect(await screen.findByText("Decided: approve for $245.00")).toBeDefined();
+});
+
+it("updates a waiting claim when a run picks it up", async () => {
+  let claimCalls = 0;
+  const impl = (input: FetchInput): Promise<Response> => {
+    if (requestUrl(input).endsWith("/steps")) {
+      return Promise.resolve(new Response("[]"));
+    }
+    const status = claimCalls === 0 ? "waiting" : "in progress";
+    claimCalls += 1;
+    return Promise.resolve(
+      new Response(JSON.stringify(claimToWire(makeClaim({ status })))),
+    );
+  };
+  vi.stubGlobal("fetch", vi.fn(impl));
+
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+  renderClaimPage();
+  await screen.findByText("waiting");
+
+  vi.advanceTimersByTime(2000);
+
+  expect(await screen.findByText("in progress")).toBeDefined();
 });

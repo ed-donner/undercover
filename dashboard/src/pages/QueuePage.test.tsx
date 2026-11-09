@@ -112,3 +112,20 @@ it("shows the current run's to-do list", async () => {
   const inProgress = screen.getByText("In progress").nextElementSibling;
   expect(inProgress?.textContent).toBe("0");
 });
+
+it("says so when the queue cannot be loaded", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => Promise.resolve(new Response("down", { status: 500 }))),
+  );
+
+  render(
+    <MemoryRouter>
+      <QueuePage />
+    </MemoryRouter>,
+  );
+
+  expect((await screen.findByRole("alert")).textContent).toBe(
+    "Could not load the latest.",
+  );
+});

@@ -79,6 +79,11 @@ a {
   font-size: 0.85rem;
 }
 
+.mono,
+.totals dd {
+  font-family: "JetBrains Mono", monospace;
+}
+
 .totals dd {
   margin: 0;
   font-size: 1.75rem;

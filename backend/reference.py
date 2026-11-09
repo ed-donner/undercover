@@ -60,6 +60,11 @@ def handlers() -> list[dict[str, Any]]:
         return [dict(row._mapping) for row in rows]
 
 
+def approvers() -> list[dict[str, Any]]:
+    """List the handlers who can sign off a payout over the limit."""
+    return [h for h in handlers() if h["can_approve_over_limit"]]
+
+
 def handler(handler_id: str) -> dict[str, Any] | None:
     """Return the handler with this id, or None."""
     return next((h for h in handlers() if h["handler_id"] == handler_id), None)

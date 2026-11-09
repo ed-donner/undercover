@@ -1,18 +1,26 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { fetchClaimInstructions, fetchQueueInstructions } from "../api";
+import { LoadError } from "../components/LoadError";
+import { usePolling } from "../usePolling";
 
 export function InstructionsPage() {
   const [queueInstructions, setQueueInstructions] = useState("");
   const [claimInstructions, setClaimInstructions] = useState("");
 
-  useEffect(() => {
-    void fetchQueueInstructions().then(setQueueInstructions);
-    void fetchClaimInstructions().then(setClaimInstructions);
-  }, []);
+  const load = useCallback(
+    () =>
+      Promise.all([
+        fetchQueueInstructions().then(setQueueInstructions),
+        fetchClaimInstructions().then(setClaimInstructions),
+      ]),
+    [],
+  );
+  const failed = usePolling(load, false);
 
   return (
     <main className="panel">
       <h1>The agent's instructions</h1>
+      {failed && <LoadError />}
 
       <h2>Working the queue</h2>
       <pre>{queueInstructions}</pre>

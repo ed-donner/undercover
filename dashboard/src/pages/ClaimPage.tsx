@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 import { fetchClaim, fetchSteps, runAgent } from "../api";
+import { LoadError } from "../components/LoadError";
 import { PaymentPanel } from "../components/PaymentPanel";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatMoney } from "../money";
@@ -12,24 +13,27 @@ export function ClaimPage() {
   const [claim, setClaim] = useState<Claim | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
 
-  const load = useCallback(() => {
-    if (!claimId) return;
-    void fetchClaim(claimId).then(setClaim);
-    void fetchSteps(claimId).then(setSteps);
-  }, [claimId]);
-
-  useEffect(load, [load]);
-  usePolling(load, claim?.status === "in progress");
+  const load = useCallback(
+    () =>
+      Promise.all([
+        fetchClaim(claimId ?? "").then(setClaim),
+        fetchSteps(claimId ?? "").then(setSteps),
+      ]),
+    [claimId],
+  );
+  const failed = usePolling(load, claim?.status !== "decided");
 
   if (!claim) {
-    return <main className="panel">Loading…</main>;
+    return <main className="panel">{failed ? <LoadError /> : "Loading…"}</main>;
   }
 
   return (
     <main className="panel">
       <h1>
-        {claim.claim_id} <StatusBadge status={claim.status} />
+        <span className="mono">{claim.claim_id}</span>{" "}
+        <StatusBadge status={claim.status} />
       </h1>
+      {failed && <LoadError />}
 
       {claim.status === "waiting" && (
         <button
@@ -62,7 +66,8 @@ export function ClaimPage() {
       <ul>
         {claim.items.map((item) => (
           <li key={item.description}>
-            {item.description}: {formatMoney(item.amount)}
+            {item.description}:{" "}
+            <span className="mono">{formatMoney(item.amount)}</span>
           </li>
         ))}
       </ul>
