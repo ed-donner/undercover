@@ -59,7 +59,10 @@ def records() -> dict[Table, list[dict[str, Any]]]:
             for key, value in _load_json("company.json").items()
         ],
         tables.plans: [money.cents_columns(plan) for plan in plan_data["plans"]],
-        tables.add_ons: plan_data["add_ons"],
+        tables.add_ons: [
+            {"electronics_per_item_limit_cents": None, **money.cents_columns(add_on)}
+            for add_on in plan_data["add_ons"]
+        ],
         tables.deductible_benefits: [
             {"benefit": benefit} for benefit in plan_data["deductible_applies_to"]
         ],

@@ -19,7 +19,7 @@ Moves the data the backend reads from `data/` files at startup (claims, policies
 |---|---|---|
 | `settings` | company setting | `key`, `value` (JSON): the approval limit, the filing window, the repeat-claim review, the allowances, the document versions |
 | `plans` | plan | `plan`, `name`, the limits, waiting hours and deductible as columns |
-| `add_ons` | add-on | `add_on`, `name`, `effect` (JSON) |
+| `add_ons` | add-on | `add_on`, `name`, `effect`, and `electronics_per_item_limit_cents` for the one add-on that has it |
 | `deductible_benefits` | benefit the deductible applies to | `benefit` |
 | `policies` | policy | `policy_id`, `customer_id`, `plan`, `purchased_on`, `sold_through`, `status`, with `add_ons`, `trip` and `travelers` as JSON |
 | `customers` | customer | `customer_id`, `name`, `email`, `phone`, `date_of_birth`, `customer_since`, with `address` and `previous_claims` as JSON |
@@ -62,9 +62,9 @@ One module for reading the records back, so callers never write SQL.
 
 **Success criteria**
 
-- [ ] A new `backend/tests/test_reference.py` goes through each function and compares the result with the same record loaded straight from the file (the test reads the file, not `data.py`).
-- [ ] A missing policy, customer, plan, handler, document and section each raise `NotFound`.
-- [ ] Sections come back in the order of the document.
+- [x] A new `backend/tests/test_reference.py` goes through each function and compares the result with the same record loaded straight from the file (the test reads the file, not `data.py`).
+- [x] A missing policy, customer, plan, add-on, setting, document and section each raise `NotFound`. A missing handler returns `None`, as `data.handler` did, because a sign-off by an unknown handler is a 409, not a 404.
+- [x] Sections come back in the order of the document.
 
 ### Phase 3: Documents, handlers and settings switch over
 

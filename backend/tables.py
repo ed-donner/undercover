@@ -34,6 +34,7 @@ add_ons = Table(
     Column("add_on", String, primary_key=True),
     Column("name", String, nullable=False),
     Column("effect", JSON, nullable=False),
+    Column("electronics_per_item_limit_cents", Integer),
 )
 
 deductible_benefits = Table(

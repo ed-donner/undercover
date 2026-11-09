@@ -68,7 +68,7 @@ def dollar_fields(row: dict[str, Any]) -> dict[str, Any]:
     """Turn a row's `<name>_cents` columns back into `Decimal` dollars `<name>`."""
     return {
         key.removesuffix("_cents"): (
-            from_cents(value) if key.endswith("_cents") else value
+            from_cents(value) if key.endswith("_cents") and value is not None else value
         )
         for key, value in row.items()
     }
