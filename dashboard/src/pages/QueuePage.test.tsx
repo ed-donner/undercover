@@ -43,6 +43,24 @@ function stubFetch(run: Run | null) {
   vi.stubGlobal("fetch", vi.fn(impl));
 }
 
+it("shows dashes in the totals until the data arrives", () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise<Response>(() => undefined)),
+  );
+
+  render(
+    <MemoryRouter>
+      <QueuePage />
+    </MemoryRouter>,
+  );
+
+  expect(screen.getByText("Waiting").nextElementSibling?.textContent).toBe("–");
+  expect(
+    screen.getByText("Left for a handler").nextElementSibling?.textContent,
+  ).toBe("–");
+});
+
 it("lists claims with their status", async () => {
   stubFetch(null);
 

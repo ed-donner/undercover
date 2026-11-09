@@ -15,8 +15,8 @@ const TOTALS = [
 ] as const;
 
 export function QueuePage() {
-  const [claims, setClaims] = useState<ClaimSummary[]>([]);
-  const [run, setRun] = useState<Run | null>(null);
+  const [claims, setClaims] = useState<ClaimSummary[] | null>(null);
+  const [run, setRun] = useState<Run | null | undefined>(undefined);
 
   const load = useCallback(() => {
     void fetchClaims().then(setClaims);
@@ -27,10 +27,12 @@ export function QueuePage() {
   usePolling(load, !run?.finished_on);
 
   const count = (status: string) =>
-    claims.filter((claim) => claim.status === status).length;
+    claims ? claims.filter((claim) => claim.status === status).length : "–";
   const leftForHandler =
-    run?.items.filter((item) => item.status === "left for a handler").length ??
-    0;
+    run === undefined
+      ? "–"
+      : (run?.items.filter((item) => item.status === "left for a handler")
+          .length ?? 0);
 
   return (
     <main className="panel">
@@ -75,7 +77,7 @@ export function QueuePage() {
           </tr>
         </thead>
         <tbody>
-          {claims.map((claim) => (
+          {(claims ?? []).map((claim) => (
             <tr key={claim.claim_id}>
               <td>
                 <Link to={`/claims/${claim.claim_id}`}>{claim.claim_id}</Link>
