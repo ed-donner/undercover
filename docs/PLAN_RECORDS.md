@@ -77,9 +77,9 @@ Move the smallest users first.
 
 **Success criteria**
 
-- [ ] `uv run pytest -q` passes, the payout and sign-off tests unchanged.
-- [ ] A test changes the approval limit row and shows `needs_sign_off` follows it with no restart.
-- [ ] `GET /api/documents/policy_wording/sections` and one section return the same text as before (compared with the file in a test).
+- [x] `uv run pytest -q` passes, the payout and sign-off tests unchanged.
+- [x] A test changes the approval limit row and shows `needs_sign_off` follows it with no restart.
+- [x] `GET /api/documents/policy_wording/sections` and one section return the same text as before (compared with the file in a test).
 
 ### Phase 4: Plans, policies and customers switch over
 

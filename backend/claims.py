@@ -5,7 +5,7 @@ from typing import Any
 
 from sqlalchemy import and_, insert, or_, select, update
 
-from backend import data, db, money, payouts, tables
+from backend import db, money, payouts, reference, tables
 from backend.data import CLAIM_IDS_BY_SUBMITTED_ON, CLAIMS, CUSTOMERS, POLICIES
 from backend.errors import Conflict, NotFound
 
@@ -132,7 +132,7 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
         return row
     if row["status"] != "waiting for sign-off":
         raise Conflict("Claim is not waiting for sign-off")
-    handler = data.handler(handler_id)
+    handler = reference.handler(handler_id)
     if handler is None or not handler["can_approve_over_limit"]:
         raise Conflict("This handler cannot sign off this claim")
     with db.connection() as conn:

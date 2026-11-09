@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from backend import data, money
+from backend import data, money, reference
 from backend.money import Amount
 
 CASH_LIMIT = Decimal(100)
@@ -53,7 +53,7 @@ class Line(BaseModel):
 
 def needs_sign_off(payout: Decimal) -> bool:
     """Say whether a payout is over the limit that needs a handler's sign-off."""
-    return payout > data.PAYOUT_APPROVAL_LIMIT
+    return payout > reference.company_setting("payout_approval_limit")
 
 
 def _step(description: str, amount: Decimal) -> dict[str, Any]:

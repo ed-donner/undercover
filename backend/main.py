@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend import agent_process, agent_service, claims, data, payouts, runs
+from backend import agent_process, agent_service, claims, payouts, reference, runs
 from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.money import Amount
@@ -85,13 +85,13 @@ def get_claim(claim_id: str) -> dict[str, Any]:
 @app.get("/api/documents/{document}/sections", operation_id="list_sections")
 def list_sections(document: str) -> list[str]:
     """List a document's section headings, in order."""
-    return list(data.get_document(document))
+    return list(reference.sections(document))
 
 
 @app.get("/api/documents/{document}/section", operation_id="get_section")
 def get_section(document: str, heading: str) -> dict[str, str]:
     """Return the text of one section of a document."""
-    return {"text": data.get_section(document, heading)}
+    return {"text": reference.section(document, heading)}
 
 
 @app.get("/api/claim-instructions", operation_id="get_claim_instructions")
@@ -117,7 +117,7 @@ def calculate_payout(request: PayoutRequest) -> dict[str, Any]:
 @app.get("/api/handlers", operation_id="list_handlers")
 def list_handlers() -> list[dict[str, Any]]:
     """List the claims handlers who can sign off an over-limit payout."""
-    return [h for h in data.HANDLERS if h["can_approve_over_limit"]]
+    return [h for h in reference.handlers() if h["can_approve_over_limit"]]
 
 
 @app.get("/api/unfinished-claims", operation_id="list_unfinished_claims")
