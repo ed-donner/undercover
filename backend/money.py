@@ -52,3 +52,23 @@ def convert(value: Any) -> Any:
     if isinstance(value, list):
         return [convert(item) for item in value]
     return value
+
+
+def cents_columns(row: dict[str, Any]) -> dict[str, Any]:
+    """Turn a record's top-level money fields into `<name>_cents` columns."""
+    return {
+        f"{key}_cents" if key in MONEY_KEYS else key: (
+            to_cents(value) if key in MONEY_KEYS else value
+        )
+        for key, value in row.items()
+    }
+
+
+def dollar_fields(row: dict[str, Any]) -> dict[str, Any]:
+    """Turn a row's `<name>_cents` columns back into `Decimal` dollars `<name>`."""
+    return {
+        key.removesuffix("_cents"): (
+            from_cents(value) if key.endswith("_cents") else value
+        )
+        for key, value in row.items()
+    }

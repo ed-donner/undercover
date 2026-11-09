@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 
-from backend import db
+from backend import db, tables
 
 
 def test_list_claims(client):
@@ -75,7 +75,7 @@ def test_seeding_is_idempotent(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
     for _ in range(2):
         with db.connection() as conn:
-            count = conn.execute(select(func.count()).select_from(db.claims))
+            count = conn.execute(select(func.count()).select_from(tables.claims))
             assert count.scalar_one() == 25
         db.engine.cache_clear()
 

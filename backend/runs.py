@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy import func, insert, select, update
 
-from backend import db
+from backend import db, tables
 from backend.errors import Conflict, NotFound
 
 SETTLED_STATUSES = {"done", "left for a handler"}
@@ -18,19 +18,19 @@ def get_run(run_id: int) -> dict[str, Any]:
     """Return one run with its items, or raise NotFound."""
     with db.connection() as conn:
         run = conn.execute(
-            select(db.runs).where(db.runs.c.run_id == run_id)
+            select(tables.runs).where(tables.runs.c.run_id == run_id)
         ).one_or_none()
         if run is None:
             raise NotFound(f"No run {run_id}")
         items = conn.execute(
             select(
-                db.run_items.c.claim_id,
-                db.run_items.c.status,
-                db.run_items.c.attempts,
-                db.run_items.c.note,
+                tables.run_items.c.claim_id,
+                tables.run_items.c.status,
+                tables.run_items.c.attempts,
+                tables.run_items.c.note,
             )
-            .where(db.run_items.c.run_id == run_id)
-            .order_by(db.run_items.c.claim_id)
+            .where(tables.run_items.c.run_id == run_id)
+            .order_by(tables.run_items.c.claim_id)
         )
         return {
             **run._mapping,
@@ -41,7 +41,7 @@ def get_run(run_id: int) -> dict[str, Any]:
 def get_current_run() -> dict[str, Any] | None:
     """Return the most recently started run with its items, or None before the first."""
     with db.connection() as conn:
-        run_id = conn.execute(select(func.max(db.runs.c.run_id))).scalar_one()
+        run_id = conn.execute(select(func.max(tables.runs.c.run_id))).scalar_one()
     return None if run_id is None else get_run(run_id)
 
 
@@ -49,11 +49,13 @@ def start_run(claim_ids: list[str]) -> dict[str, Any]:
     """Start a run with one `to do` item per claim."""
     with db.connection() as conn:
         run_id = conn.execute(
-            insert(db.runs).values(started_on=db.now()).returning(db.runs.c.run_id)
+            insert(tables.runs)
+            .values(started_on=db.now())
+            .returning(tables.runs.c.run_id)
         ).scalar_one()
         if claim_ids:
             conn.execute(
-                insert(db.run_items),
+                insert(tables.run_items),
                 [
                     {"run_id": run_id, "claim_id": claim_id, "status": "to do"}
                     for claim_id in claim_ids
@@ -69,16 +71,19 @@ def update_run_item(
     attempt = 1 if status == "in progress" else 0
     with db.connection() as conn:
         updated = conn.execute(
-            update(db.run_items)
-            .where(db.run_items.c.run_id == run_id, db.run_items.c.claim_id == claim_id)
+            update(tables.run_items)
+            .where(
+                tables.run_items.c.run_id == run_id,
+                tables.run_items.c.claim_id == claim_id,
+            )
             .values(
-                status=status, note=note, attempts=db.run_items.c.attempts + attempt
+                status=status, note=note, attempts=tables.run_items.c.attempts + attempt
             )
             .returning(
-                db.run_items.c.claim_id,
-                db.run_items.c.status,
-                db.run_items.c.attempts,
-                db.run_items.c.note,
+                tables.run_items.c.claim_id,
+                tables.run_items.c.status,
+                tables.run_items.c.attempts,
+                tables.run_items.c.note,
             )
         ).one_or_none()
     if updated is None:
@@ -100,8 +105,8 @@ def finish_run(run_id: int, summary: str) -> dict[str, Any]:
         raise RunNotReady(f"Still outstanding: {', '.join(outstanding)}")
     with db.connection() as conn:
         conn.execute(
-            update(db.runs)
-            .where(db.runs.c.run_id == run_id)
+            update(tables.runs)
+            .where(tables.runs.c.run_id == run_id)
             .values(finished_on=db.now(), summary=summary)
         )
     return get_run(run_id)
