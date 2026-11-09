@@ -73,10 +73,9 @@ export const fetchQueueInstructions = () =>
 /** The most recent run, or null before the first one. */
 export async function fetchCurrentRun(): Promise<Run | null> {
   const response = await fetch("/api/runs/current");
-  if (response.status === 404) return null;
   if (!response.ok)
     throw new Error(`/api/runs/current: ${String(response.status)}`);
-  return (await response.json()) as Run;
+  return (await response.json()) as Run | null;
 }
 
 export const runAgent = (claimId: string) => post(`/api/claims/${claimId}/run`);

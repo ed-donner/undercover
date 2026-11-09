@@ -7,6 +7,13 @@ import { formatMoney } from "../money";
 import type { ClaimSummary, Run } from "../types";
 import { usePolling } from "../usePolling";
 
+const TOTALS = [
+  ["Waiting", "waiting"],
+  ["In progress", "in progress"],
+  ["Waiting for sign-off", "waiting for sign-off"],
+  ["Decided", "decided"],
+] as const;
+
 export function QueuePage() {
   const [claims, setClaims] = useState<ClaimSummary[]>([]);
   const [run, setRun] = useState<Run | null>(null);
@@ -19,9 +26,28 @@ export function QueuePage() {
   useEffect(load, [load]);
   usePolling(load, !run?.finished_on);
 
+  const count = (status: string) =>
+    claims.filter((claim) => claim.status === status).length;
+  const leftForHandler =
+    run?.items.filter((item) => item.status === "left for a handler").length ??
+    0;
+
   return (
     <main className="panel">
       <h1>The claims queue</h1>
+
+      <dl className="totals">
+        {TOTALS.map(([label, status]) => (
+          <div key={status}>
+            <dt>{label}</dt>
+            <dd>{count(status)}</dd>
+          </div>
+        ))}
+        <div>
+          <dt>Left for a handler</dt>
+          <dd>{leftForHandler}</dd>
+        </div>
+      </dl>
 
       {run && (
         <>

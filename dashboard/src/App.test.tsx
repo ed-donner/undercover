@@ -72,7 +72,7 @@ function mockFetch() {
   const impl = (input: FetchInput): Promise<Response> => {
     const url = requestUrl(input);
     if (url.endsWith("/runs/current")) {
-      return Promise.resolve(new Response(null, { status: 404 }));
+      return Promise.resolve(new Response("null"));
     }
     return Promise.resolve(new Response(JSON.stringify(bodyFor(url))));
   };

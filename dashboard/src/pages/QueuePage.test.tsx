@@ -33,9 +33,7 @@ function stubFetch(run: Run | null) {
   const impl = (input: FetchInput): Promise<Response> => {
     if (requestUrl(input).endsWith("/runs/current")) {
       return Promise.resolve(
-        run
-          ? new Response(JSON.stringify(run))
-          : new Response(null, { status: 404 }),
+        run ? new Response(JSON.stringify(run)) : new Response("null"),
       );
     }
     return Promise.resolve(
@@ -57,6 +55,8 @@ it("lists claims with their status", async () => {
   expect(await screen.findByText("CLM-1001")).toBeDefined();
   expect(screen.getByText("CLM-1002")).toBeDefined();
   expect(screen.getByText("waiting")).toBeDefined();
+  expect(screen.getByText("Waiting").nextElementSibling?.textContent).toBe("1");
+  expect(screen.getByText("Decided").nextElementSibling?.textContent).toBe("1");
   expect(screen.getByText("decided")).toBeDefined();
   expect(screen.queryByText("The current run")).toBeNull();
 });
@@ -88,4 +88,9 @@ it("shows the current run's to-do list", async () => {
   expect(screen.getByText("in progress")).toBeDefined();
   expect(screen.getByText("left for a handler")).toBeDefined();
   expect(screen.getByText(/boom/)).toBeDefined();
+
+  const left = screen.getByText("Left for a handler").nextElementSibling;
+  expect(left?.textContent).toBe("1");
+  const inProgress = screen.getByText("In progress").nextElementSibling;
+  expect(inProgress?.textContent).toBe("0");
 });

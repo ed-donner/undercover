@@ -68,6 +68,23 @@ a {
   color: var(--cerulean);
 }
 
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0 0 1.5rem;
+}
+
+.totals dt {
+  font-size: 0.85rem;
+}
+
+.totals dd {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
 .status-badge {
   display: inline-block;
   border-radius: 999px;

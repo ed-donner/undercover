@@ -38,13 +38,11 @@ def get_run(run_id: int) -> dict[str, Any]:
         }
 
 
-def get_current_run() -> dict[str, Any]:
-    """Return the most recently started run with its items, or raise NotFound."""
+def get_current_run() -> dict[str, Any] | None:
+    """Return the most recently started run with its items, or None before the first."""
     with db.connection() as conn:
         run_id = conn.execute(select(func.max(db.runs.c.run_id))).scalar_one()
-    if run_id is None:
-        raise NotFound("No run yet")
-    return get_run(run_id)
+    return None if run_id is None else get_run(run_id)
 
 
 def start_run(claim_ids: list[str]) -> dict[str, Any]:

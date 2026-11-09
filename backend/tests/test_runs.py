@@ -72,9 +72,10 @@ def test_finish_run_succeeds_once_all_items_settled(client):
     assert current["summary"] == "Worked 2 claims."
 
 
-def test_get_current_run_404_when_none_started(client):
+def test_get_current_run_is_null_when_none_started(client):
     response = client.get("/api/runs/current")
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json() is None
 
 
 def test_requeue_claim(client):

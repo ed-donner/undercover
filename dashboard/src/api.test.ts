@@ -16,10 +16,10 @@ it("rejects instead of returning an error body as data", async () => {
   await expect(fetchClaim("CLM-9999")).rejects.toThrow("404");
 });
 
-it("treats a 404 for the current run as no run yet", async () => {
+it("treats a null current run as no run yet", async () => {
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve(new Response(null, { status: 404 }))),
+    vi.fn(() => Promise.resolve(new Response("null"))),
   );
 
   expect(await fetchCurrentRun()).toBeNull();

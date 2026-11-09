@@ -182,8 +182,8 @@ def start_run(start: StartRun) -> dict[str, Any]:
 
 
 @app.get("/api/runs/current", operation_id="get_current_run")
-def get_current_run() -> dict[str, Any]:
-    """Return the most recently started run, with its items."""
+def get_current_run() -> dict[str, Any] | None:
+    """Return the most recently started run, with its items, or null."""
     return runs.get_current_run()
 
 
