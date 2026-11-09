@@ -2,6 +2,8 @@ from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from sqlalchemy import update
 
+from agent import main as agent_main
+from backend import main as backend_main
 from backend.main import app
 from backend.store import Store, support_requests
 
@@ -113,3 +115,35 @@ def test_api_routes_have_operation_ids_and_no_query_inputs():
         "/api/requests/{request_id}/review",
         "/api/requests/{request_id}/complete",
     }
+
+
+def test_serves_built_dashboard_and_resolves_backend_url(tmp_path, monkeypatch):
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>Shoppie</title>")
+    (dist / "assets" / "app.js").write_text("console.log('shoppie');")
+    monkeypatch.setenv("SHOPPIE_DATABASE_PATH", str(tmp_path / "dist.sqlite3"))
+    monkeypatch.setattr(backend_main, "DASHBOARD_DIST", dist)
+
+    with TestClient(app) as client:
+        root = client.get("/")
+        page = client.get("/requests/REQ-7001")
+        asset = client.get("/assets/app.js")
+        missing_api = client.get("/api/unknown")
+
+    assert root.status_code == 200
+    assert "<title>Shoppie</title>" in root.text
+    assert page.status_code == 200
+    assert "<title>Shoppie</title>" in page.text
+    assert asset.status_code == 200
+    assert "shoppie" in asset.text
+    assert missing_api.status_code == 404
+    assert missing_api.json() == {"detail": "Not Found"}
+
+    monkeypatch.delenv("UNDERCOVER_API", raising=False)
+    monkeypatch.delenv("PORT", raising=False)
+    assert agent_main.backend_url() == "http://localhost:8000"
+    monkeypatch.setenv("PORT", "10000")
+    assert agent_main.backend_url() == "http://127.0.0.1:10000"
+    monkeypatch.setenv("UNDERCOVER_API", "https://shoppie.onrender.com/")
+    assert agent_main.backend_url() == "https://shoppie.onrender.com"

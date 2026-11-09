@@ -67,9 +67,18 @@ class WorkResult(TypedDict):
     line: str
 
 
+def backend_url() -> str:
+    """Return the base URL of the Shoppie backend."""
+    if url := os.getenv("UNDERCOVER_API"):
+        return url.rstrip("/")
+    if port := os.getenv("PORT"):
+        return f"http://127.0.0.1:{port}"
+    return BACKEND_URL
+
+
 def backend() -> httpx.Client:
     """Return a client for the Shoppie backend."""
-    return httpx.Client(base_url=BACKEND_URL, timeout=30)
+    return httpx.Client(base_url=backend_url(), timeout=30)
 
 
 def model() -> ChatOpenAI:

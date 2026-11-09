@@ -13,7 +13,7 @@ Agent recommendations support review; the product does not execute real customer
 
 ## Running it
 
-Run `uv sync` and `npm install` at the repository root. Start the local Postgres container (`shoppie-postgres` on `127.0.0.1:5432`, with `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres` in `.env`), run `npm run seed` to reset the `undercover` schema, and run `npm run dev` to start the backend (`:8000`), the agent service (`:8002`), and the dashboard (`:5173`). Start a run from the dashboard, or with `uv run -m agent --cap 5` while `npm run dev` is running. For trials on the real model, reseed first and cap the run at five requests.
+Run `uv sync` and `npm install` at the repository root. Start the local Postgres container (`shoppie-postgres` on `127.0.0.1:5432`, with `DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres` in `.env`), run `npm run seed` to reset the `undercover` schema, and run `npm run dev` to start the backend (`:8000`), the agent service (`:8002`), and the dashboard (`:5173`). `npm run build` builds the dashboard into `dashboard/dist`, which `backend.main:app` serves at `/` on a web server such as Render. Start a run from the dashboard, or with `uv run -m agent --cap 5` while `npm run dev` is running. For trials on the real model, reseed first and cap the run at five requests.
 
 ## Last live check
 

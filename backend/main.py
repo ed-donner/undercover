@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from agent.instructions import QUEUE_INSTRUCTIONS, REQUEST_INSTRUCTIONS
@@ -20,6 +21,7 @@ from backend.store import AGENT_STAGES, Store, TodoStatus
 DEFAULT_DATABASE_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "shoppie.sqlite3"
 )
+DASHBOARD_DIST = Path(__file__).resolve().parent.parent / "dashboard" / "dist"
 DEFAULT_AGENT_URL = "http://127.0.0.1:8002"
 
 
@@ -38,6 +40,35 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Shoppie", lifespan=lifespan)
+
+
+def dashboard_file(url_path: str) -> Path | None:
+    """Resolve a static file or SPA index.html from the built dashboard."""
+    if not DASHBOARD_DIST.is_dir():
+        return None
+    root = DASHBOARD_DIST.resolve()
+    relative = url_path.lstrip("/")
+    if relative:
+        candidate = (root / relative).resolve()
+        if root in candidate.parents and candidate.is_file():
+            return candidate
+    index = root / "index.html"
+    return index if index.is_file() else None
+
+
+@app.middleware("http")
+async def serve_dashboard(request: Request, call_next: Any) -> Any:
+    """Serve the built React dashboard outside /api when dashboard/dist exists."""
+    path = request.url.path
+    if (
+        request.method in {"GET", "HEAD"}
+        and path != "/api"
+        and not path.startswith("/api/")
+    ):
+        target = dashboard_file(path)
+        if target is not None:
+            return FileResponse(target)
+    return await call_next(request)
 
 
 class ProgressInput(BaseModel):
