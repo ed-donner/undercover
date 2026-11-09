@@ -107,6 +107,7 @@ Render's screens change, so the guides link to Render's documentation. As of Oct
 
 - **W3D1:** a Render account, then GitHub under **Git Deployment Credentials** in Account Settings, for the student's own builds. Signing in with GitHub and letting Render deploy from GitHub are separate permissions. Step 3 explains the free tier.
 - **W3D2:**
+  - **On Ed's branch:** `.env` has no `UNDERCOVER_API_KEY` until the student adds one, since the build is what adds it. It goes in before `npm run dev` and before it's copied to Render; the Week 3 guide has the command that prints one.
   - **After the deploy:** the app is live in a minute or two. `/api/health` answers `{"status":"ok"}`, and `/api/claims/CLM-1901` gives a 401, because a browser doesn't send the agent's key.
   - **Sign-in:** Dana signs in on the deployed dashboard and sees the same queue as on the laptop.
   - **Dispatches** say the agent's service isn't running, which is expected until Day 4. A sign-off works and pays.

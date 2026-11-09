@@ -107,7 +107,7 @@ This week UnderCover goes into production on AWS, and the free route uses Render
 - To start from my build: `git checkout week3day2-start`
 - Lab 1: [labs/week3day2_lab1.ipynb](labs/week3day2_lab1.ipynb), or [labs/week3day2_lab1free.ipynb](labs/week3day2_lab1free.ipynb) on free models
 - Product brief: [labs/week3day2_product_SECURE.md](labs/week3day2_product_SECURE.md), copied to `docs/SECURE.md`
-- My build: `git checkout week3day2-end`
+- My build: `git checkout week3day2-end`, then add `UNDERCOVER_API_KEY` to your `.env` with a random value from `uv run python -c "import secrets; print(secrets.token_hex(32))"`
 - Lab 2: [labs/week3day2_lab2.ipynb](labs/week3day2_lab2.ipynb) on AWS, or [labs/week3day2_lab2free.ipynb](labs/week3day2_lab2free.ipynb) on Render
 
 **Day 3: Enterprise Context Layer & Integrations**
