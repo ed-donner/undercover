@@ -10,11 +10,11 @@ from langgraph.runtime import Runtime
 from langgraph.types import interrupt
 
 from agent import api
+from agent.api import WAITING_FOR_SIGN_OFF
 from agent.claim_state import ClaimState
 from agent.tools import ClaimContext
 
 MAX_MODEL_CALLS = 30
-WAITING_FOR_SIGN_OFF = "waiting for sign-off"
 
 
 class ModelCallLimit(Exception):  # noqa: N818 - a failure of the claim

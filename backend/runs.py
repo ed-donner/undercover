@@ -6,8 +6,9 @@ from sqlalchemy import func, insert, select, update
 
 from backend import db, tables
 from backend.errors import Conflict, NotFound
+from backend.statuses import ItemStatus
 
-SETTLED_STATUSES = {"done", "left for a handler"}
+SETTLED_STATUSES = {ItemStatus.DONE, ItemStatus.LEFT_FOR_A_HANDLER}
 
 
 class RunNotReady(Conflict):
@@ -57,7 +58,7 @@ def start_run(claim_ids: list[str]) -> dict[str, Any]:
             conn.execute(
                 insert(tables.run_items),
                 [
-                    {"run_id": run_id, "claim_id": claim_id, "status": "to do"}
+                    {"run_id": run_id, "claim_id": claim_id, "status": ItemStatus.TO_DO}
                     for claim_id in claim_ids
                 ],
             )
@@ -68,7 +69,7 @@ def update_run_item(
     run_id: int, claim_id: str, status: str, note: str
 ) -> dict[str, Any]:
     """Update one run item's status and note; `in progress` counts as an attempt."""
-    attempt = 1 if status == "in progress" else 0
+    attempt = 1 if status == ItemStatus.IN_PROGRESS else 0
     with db.connection() as conn:
         updated = conn.execute(
             update(tables.run_items)

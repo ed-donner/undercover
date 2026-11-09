@@ -24,6 +24,8 @@ Benefit = Literal[
     "passport",
     "emergency_medical",
 ]
+WAITING = "waiting"
+WAITING_FOR_SIGN_OFF = "waiting for sign-off"
 RunItemStatus = Literal["to do", "in progress", "done", "left for a handler"]
 
 

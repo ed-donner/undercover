@@ -7,6 +7,7 @@ from sqlalchemy import and_, insert, or_, select, update
 
 from backend import db, money, payouts, reference, tables
 from backend.errors import Conflict, NotFound
+from backend.statuses import ClaimStatus
 
 
 def get_row(claim_id: str) -> dict[str, Any]:
@@ -83,7 +84,9 @@ def decide(
                 tables.claims.c.decision.is_(None),
             )
             .values(
-                status="waiting for sign-off" if over_limit else "decided",
+                status=ClaimStatus.WAITING_FOR_SIGN_OFF
+                if over_limit
+                else ClaimStatus.DECIDED,
                 decision=decision,
                 payout_cents=money.to_cents(payout),
                 reason=reason,
@@ -111,9 +114,9 @@ def record_step(claim_id: str, text: str) -> None:
             update(tables.claims)
             .where(
                 tables.claims.c.claim_id == claim_id,
-                tables.claims.c.status == "waiting",
+                tables.claims.c.status == ClaimStatus.WAITING,
             )
-            .values(status="in progress")
+            .values(status=ClaimStatus.IN_PROGRESS)
         )
 
 
@@ -134,7 +137,7 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
     row = get_row(claim_id)
     if row["signed_off_by"] == handler_id:
         return row
-    if row["status"] != "waiting for sign-off":
+    if row["status"] != ClaimStatus.WAITING_FOR_SIGN_OFF:
         raise Conflict("Claim is not waiting for sign-off")
     handler = reference.handler(handler_id)
     if handler is None or not handler["can_approve_over_limit"]:
@@ -144,7 +147,9 @@ def sign_off(claim_id: str, handler_id: str) -> dict[str, Any]:
             update(tables.claims)
             .where(tables.claims.c.claim_id == claim_id)
             .values(
-                status="in progress", signed_off_by=handler_id, signed_off_on=db.now()
+                status=ClaimStatus.IN_PROGRESS,
+                signed_off_by=handler_id,
+                signed_off_on=db.now(),
             )
         )
     return get_row(claim_id)
@@ -182,7 +187,7 @@ def pay(claim_id: str, amount: Decimal) -> dict[str, Any]:
                     tables.claims.c.signed_off_by.is_not(None),
                 ),
             )
-            .values(status="decided", paid_cents=cents, paid_on=db.now())
+            .values(status=ClaimStatus.DECIDED, paid_cents=cents, paid_on=db.now())
         )
     if paid.rowcount == 0:
         raise Conflict(_why_not_payable(row, amount))
@@ -202,7 +207,7 @@ def list_unfinished() -> list[str]:
     with db.connection() as conn:
         rows = conn.execute(
             select(tables.claims.c.claim_id)
-            .where(or_(tables.claims.c.status == "in progress", payable))
+            .where(or_(tables.claims.c.status == ClaimStatus.IN_PROGRESS, payable))
             .order_by(tables.claims.c.claim_id)
         )
         return [claim_id for (claim_id,) in rows]
@@ -210,13 +215,13 @@ def list_unfinished() -> list[str]:
 
 def start_work(claim_id: str) -> dict[str, Any]:
     """Mark a waiting claim as in progress, before the agent starts on it."""
-    if get_row(claim_id)["status"] != "waiting":
+    if get_row(claim_id)["status"] != ClaimStatus.WAITING:
         raise Conflict("Claim is not waiting")
     with db.connection() as conn:
         conn.execute(
             update(tables.claims)
             .where(tables.claims.c.claim_id == claim_id)
-            .values(status="in progress")
+            .values(status=ClaimStatus.IN_PROGRESS)
         )
     return get_row(claim_id)
 
@@ -224,12 +229,15 @@ def start_work(claim_id: str) -> dict[str, Any]:
 def requeue(claim_id: str) -> dict[str, Any]:
     """Put a stuck claim back in the queue as waiting, to start afresh."""
     row = get_row(claim_id)
-    if row["status"] not in ("waiting", "in progress") or row["decision"]:
+    if (
+        row["status"] not in (ClaimStatus.WAITING, ClaimStatus.IN_PROGRESS)
+        or row["decision"]
+    ):
         raise Conflict("Claim is already decided")
     with db.connection() as conn:
         conn.execute(
             update(tables.claims)
             .where(tables.claims.c.claim_id == claim_id)
-            .values(status="waiting", thread=tables.claims.c.thread + 1)
+            .values(status=ClaimStatus.WAITING, thread=tables.claims.c.thread + 1)
         )
     return get_row(claim_id)

@@ -11,6 +11,7 @@ from backend.errors import Conflict, NotFound
 from backend.instructions import CLAIM_INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.money import Amount
 from backend.payouts import Benefit, Line
+from backend.statuses import ItemStatus
 
 app = FastAPI(title="UnderCover")
 
@@ -56,7 +57,7 @@ class StartRun(BaseModel):
 
 
 class RunItemUpdate(BaseModel):
-    status: Literal["to do", "in progress", "done", "left for a handler"]
+    status: ItemStatus
     note: str
 
 

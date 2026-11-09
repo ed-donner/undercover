@@ -8,6 +8,7 @@ from typing import Any
 from sqlalchemy import Table
 
 from backend import money, tables
+from backend.statuses import ClaimStatus
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DOCUMENTS = {"policy_wording": "policy_wording.md", "claims_manual": "claims_manual.md"}
@@ -47,7 +48,7 @@ def _document_rows() -> list[dict[str, Any]]:
 
 def _claim_row(claim: dict[str, Any]) -> dict[str, Any]:
     row = money.cents_columns({k: v for k, v in claim.items() if k != "status"})
-    return {**row, "status": "waiting"}
+    return {**row, "status": ClaimStatus.WAITING}
 
 
 def records() -> dict[Table, list[dict[str, Any]]]:

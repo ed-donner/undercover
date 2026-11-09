@@ -83,7 +83,9 @@ def run_queue(cap: int | None = None, llm: BaseChatModel | None = None) -> str:
     if run:
         run_id = run["run_id"]
     else:
-        waiting = [c["claim_id"] for c in api.list_claims() if c["status"] == "waiting"]
+        waiting = [
+            c["claim_id"] for c in api.list_claims() if c["status"] == api.WAITING
+        ]
         run_id = api.start_run(waiting[:cap])
     with tracing.trace(f"run-{run_id}") as config:
         return run_agent(
