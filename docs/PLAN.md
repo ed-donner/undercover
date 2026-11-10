@@ -104,11 +104,13 @@ Add a read-only instructions view. Use Instrument Sans for text, Instrument Seri
 
 ### Success criteria
 
-- [ ] Vitest/Testing Library tests cover queue loading/error/empty states, claim selection and the complete claim-detail content.
-- [ ] UI tests cover progress refresh, all decision outcomes, above-limit sign-off, payment success and backend rejection without falsely showing a paid claim.
-- [ ] The instructions view displays backend-owned text without edit controls, and a failed run offers retry only when the server permits it.
-- [ ] `npm run check:ts` passes with strict TypeScript, no `any`, and the existing 80% coverage thresholds.
+- [x] Vitest/Testing Library tests cover queue loading/error/empty states, claim selection and the complete claim-detail content.
+- [x] UI tests cover progress refresh, all decision outcomes, above-limit sign-off, payment success and backend rejection without falsely showing a paid claim.
+- [x] The instructions view displays backend-owned text without edit controls, and a failed run offers retry only when the server permits it.
+- [x] `npm run check:ts` passes with strict TypeScript, no `any`, and the existing 80% coverage thresholds.
 - [ ] In a browser via the Playwright MCP server, check the queue, detail, progress, instructions and sign-off/payment interaction at desktop and narrow viewport sizes. Verify readable contrast, full document text, keyboard focus and USD formatting in light and dark modes. Record any unavailable browser tooling as a blocker rather than marking this verified.
+
+Browser verification note: no Playwright MCP server is exposed in this session, so that specific tooling criterion remains blocked. Local Playwright/Chromium inspection passed against the real backend using an isolated preview database and a synthetic approval (no model): 1440px desktop and 390px mobile, light/dark, expanded receipt text, activity, read-only instructions, keyboard focus, exact USD formatting, no horizontal overflow or page errors. Direct payment before sign-off returned 409; signing off then separately paying worked. Desktop and mobile screenshots were visually inspected. The initial keyboard check tabbed beyond the last control; the corrected check verified visible focus on the claims-navigation button.
 
 ## Phase 6 — End-to-end verification and handover
 
