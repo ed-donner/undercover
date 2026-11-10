@@ -66,13 +66,13 @@ Use `openai/gpt-6-luna` with low reasoning effort by default, honoring `MODEL_NA
 
 ### Success criteria
 
-- [ ] Stub-model tests demonstrate the complete read-context → decision → payment flow through HTTP tools, without any model-provider requests or real API key.
-- [ ] Tests cover approve, decline, refer and an above-limit approval whose attempted payment is blocked by the backend.
-- [ ] Tool tests verify that the current claim cannot mutate another claim and that no tool can sign off, read local records or access arbitrary paths/URLs.
-- [ ] Tests verify that instructions and claim context come from the API and that the entry point passes the supplied thread ID into the agent invocation.
-- [ ] Model-construction tests confirm the default model, low default reasoning effort, OpenRouter URL and `MODEL_NAME` override without contacting OpenRouter.
-- [ ] Missing backend data or a failed tool call cannot silently become a successful decision or payment.
-- [ ] `npm run check:python` passes with no live-model tests.
+- [x] Stub-model tests demonstrate the complete read-context → decision → payment flow through HTTP tools, without any model-provider requests or real API key.
+- [x] Tests cover approve, decline, refer and an above-limit approval whose attempted payment is blocked by the backend.
+- [x] Tool tests verify that the current claim cannot mutate another claim and that no tool can sign off, read local records or access arbitrary paths/URLs.
+- [x] Tests verify that instructions and claim context come from the API and that the entry point passes the supplied thread ID into the agent invocation.
+- [x] Model-construction tests confirm the default model, low default reasoning effort, OpenRouter URL and `MODEL_NAME` override without contacting OpenRouter.
+- [x] Missing backend data or a failed tool call cannot silently become a successful decision or payment.
+- [x] `npm run check:python` passes with no live-model tests.
 
 ## Phase 4 — Run orchestration and observable progress
 
