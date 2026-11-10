@@ -13,14 +13,19 @@ from backend.models import (
     Claim,
     Company,
     Customer,
+    DecisionInput,
     Handler,
+    PaymentInput,
     PlanDetails,
     Policy,
     QueueEntry,
+    Run,
+    SignOffInput,
     TextDocument,
     Wording,
 )
 from backend.store import Store
+from backend.workflow import Workflow
 
 
 def store(request: Request) -> Store:
@@ -62,7 +67,7 @@ def list_claims(db: Database) -> list[QueueEntry]:
 @router.get("/claims/{claim_id}", operation_id="get_claim")
 def get_claim(claim_id: str, db: Database) -> Claim:
     """Read a complete claim."""
-    return Claim.model_validate(db.claim(claim_id))
+    return Workflow(db).detail(claim_id)
 
 
 @router.get("/policies/{policy_id}", operation_id="get_policy")
@@ -105,6 +110,36 @@ def get_wording(db: Database) -> Wording:
 def get_instructions() -> TextDocument:
     """Read the agent's instructions."""
     return TextDocument(text=INSTRUCTIONS)
+
+
+@router.post("/claims/{claim_id}/runs", operation_id="start_claim", status_code=202)
+def start_claim(claim_id: str, db: Database) -> Run:
+    """Start processing a waiting claim."""
+    return Workflow(db).start(claim_id)
+
+
+@router.get("/claims/{claim_id}/runs", operation_id="list_runs")
+def list_runs(claim_id: str, db: Database) -> list[Run]:
+    """Read a claim's run history."""
+    return Workflow(db).runs(claim_id)
+
+
+@router.post("/claims/{claim_id}/decision", operation_id="record_decision")
+def record_decision(claim_id: str, decision: DecisionInput, db: Database) -> Claim:
+    """Record the agent's final decision."""
+    return Workflow(db).decide(claim_id, decision)
+
+
+@router.post("/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
+def sign_off_claim(claim_id: str, sign_off: SignOffInput, db: Database) -> Claim:
+    """Record a handler's sign-off for an above-limit payout."""
+    return Workflow(db).sign_off(claim_id, sign_off)
+
+
+@router.post("/claims/{claim_id}/payment", operation_id="pay_claim")
+def pay_claim(claim_id: str, payment: PaymentInput, db: Database) -> Claim:
+    """Record a simulated payment of the approved amount."""
+    return Workflow(db).pay(claim_id, payment)
 
 
 app = create_app()

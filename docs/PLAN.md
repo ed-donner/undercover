@@ -48,13 +48,13 @@ Payment is a separate operation with an explicit amount. It checks the recorded 
 
 ### Success criteria
 
-- [ ] Starting a waiting claim changes its state to `in_progress`; a duplicate or conflicting start returns `409` and creates no second run.
-- [ ] Decision tests cover approve, decline and refer, persisted reasons/calculation/references, invalid outcomes and invalid amounts.
-- [ ] An approval for $1,000.00 can be paid without sign-off; an approval for $1,000.01 becomes `waiting_for_sign_off` and direct payment returns `409` with no payment record.
-- [ ] Signing off with a known handler records the handler and timestamp, changes the queue state to `decided`, and allows a subsequent exact-amount payment. Unknown handlers and sign-off of an ineligible claim are rejected.
-- [ ] Direct API tests reject payment before decision, payment for decline/referral, mismatched amounts, zero/negative/non-finite amounts and a second payment; none alters the existing financial record.
-- [ ] A concurrent payment test produces exactly one payment record. Decision replacement and conflicting repeat sign-offs cannot invalidate a completed payment.
-- [ ] `npm run check:python` passes, including persistence and transition tests.
+- [x] Starting a waiting claim changes its state to `in_progress`; a duplicate or conflicting start returns `409` and creates no second run.
+- [x] Decision tests cover approve, decline and refer, persisted reasons/calculation/references, invalid outcomes and invalid amounts.
+- [x] An approval for $1,000.00 can be paid without sign-off; an approval for $1,000.01 becomes `waiting_for_sign_off` and direct payment returns `409` with no payment record.
+- [x] Signing off with a known handler records the handler and timestamp, changes the queue state to `decided`, and allows a subsequent exact-amount payment. Unknown handlers and sign-off of an ineligible claim are rejected.
+- [x] Direct API tests reject payment before decision, payment for decline/referral, mismatched amounts, zero/negative/non-finite amounts and a second payment; none alters the existing financial record.
+- [x] A concurrent payment test produces exactly one payment record. Decision replacement and conflicting repeat sign-offs cannot invalidate a completed payment.
+- [x] `npm run check:python` passes, including persistence and transition tests.
 
 ## Phase 3 — API-only claim agent
 

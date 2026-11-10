@@ -88,6 +88,28 @@ class Store:
                 CREATE TABLE IF NOT EXISTS claims (
                     id TEXT PRIMARY KEY, status TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS runs (
+                    run_id TEXT PRIMARY KEY,
+                    claim_id TEXT NOT NULL REFERENCES claims(id),
+                    thread_id TEXT NOT NULL UNIQUE, status TEXT NOT NULL,
+                    started_at TEXT NOT NULL, finished_at TEXT, error TEXT
+                );
+                CREATE TABLE IF NOT EXISTS decisions (
+                    claim_id TEXT PRIMARY KEY REFERENCES claims(id),
+                    run_id TEXT NOT NULL REFERENCES runs(run_id), outcome TEXT NOT NULL,
+                    payout_cents INTEGER NOT NULL CHECK(payout_cents >= 0),
+                    calculation TEXT NOT NULL, explanation TEXT NOT NULL,
+                    policy_sections TEXT NOT NULL, recorded_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS sign_offs (
+                    claim_id TEXT PRIMARY KEY REFERENCES decisions(claim_id),
+                    handler_id TEXT NOT NULL, signed_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS payments (
+                    claim_id TEXT PRIMARY KEY REFERENCES decisions(claim_id),
+                    amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
+                    paid_at TEXT NOT NULL
+                );
             """)
         with self.transaction() as connection:
             if connection.execute("SELECT 1 FROM records LIMIT 1").fetchone():

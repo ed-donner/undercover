@@ -3,7 +3,7 @@
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, PlainSerializer
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, model_validator
 
 Money = Annotated[
     Decimal,
@@ -11,6 +11,56 @@ Money = Annotated[
     PlainSerializer(float, return_type=float, when_used="json"),
 ]
 QueueStatus = Literal["waiting", "in_progress", "waiting_for_sign_off", "decided"]
+Section = Annotated[int, Field(ge=1, le=12)]
+NonEmpty = Annotated[str, Field(min_length=1, max_length=6000)]
+
+
+class DecisionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    run_id: str
+    outcome: Literal["approve", "decline", "refer"]
+    payout: Money
+    calculation: NonEmpty
+    explanation: NonEmpty
+    policy_sections: Annotated[list[Section], Field(min_length=1)]
+
+    @model_validator(mode="after")
+    def consistent_payout(self) -> "DecisionInput":
+        if (self.outcome == "approve") != (self.payout > 0):
+            raise ValueError("Approve needs a positive payout; decline/refer need zero")
+        return self
+
+
+class Decision(DecisionInput):
+    recorded_at: str
+
+
+class SignOffInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    handler_id: str
+
+
+class SignOff(SignOffInput):
+    signed_at: str
+
+
+class PaymentInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    amount: Annotated[Money, Field(gt=0)]
+
+
+class Payment(PaymentInput):
+    paid_at: str
+
+
+class Run(BaseModel):
+    run_id: str
+    claim_id: str
+    thread_id: str
+    status: Literal["running", "completed", "failed"]
+    started_at: str
+    finished_at: str | None
+    error: str | None
 
 
 class Company(BaseModel):
@@ -46,6 +96,9 @@ class Claim(BaseModel):
     amount_claimed: Money
     documents: list[Document]
     status: QueueStatus
+    decision: Decision | None = None
+    sign_off: SignOff | None = None
+    payment: Payment | None = None
 
 
 class QueueEntry(BaseModel):
