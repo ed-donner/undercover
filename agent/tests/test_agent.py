@@ -148,6 +148,26 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
     )
 
 
+def test_missing_payment_is_not_a_completed_approval(client):
+    active = client.post("/api/claims/CLM-1001/runs").json()
+    replies = list(scripted_model().messages)
+    without_payment = StubModel(messages=iter([*replies[:3], replies[-1]]))
+    with pytest.raises(RuntimeError, match="without paying"):
+        main.run("CLM-1001", active["thread_id"], without_payment)
+    claim = client.get("/api/claims/CLM-1001").json()
+    assert claim["decision"]["outcome"] == "approve"
+    assert claim["payment"] is None
+
+
+def test_backend_tool_failure_does_not_record_a_decision(client):
+    active = client.post("/api/claims/CLM-1001/runs").json()
+    with client.app.state.store.transaction() as connection:
+        connection.execute("DELETE FROM records WHERE kind = 'policies'")
+    with pytest.raises(Exception, match="404 Not Found"):
+        main.run("CLM-1001", active["thread_id"], scripted_model())
+    assert client.get("/api/claims/CLM-1001").json()["decision"] is None
+
+
 def test_model_configuration(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.delenv("MODEL_NAME", raising=False)

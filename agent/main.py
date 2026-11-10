@@ -35,6 +35,8 @@ def model() -> ChatOpenAI:
         base_url=OPENROUTER_BASE_URL,
         api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
         reasoning_effort=None if name else "low",
+        timeout=60,
+        max_retries=1,
     )
 
 
@@ -157,4 +159,11 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
         final = tools.get(path)
         if final["decision"] is None:
             raise RuntimeError("Agent finished without recording a decision")
+        limit = tools.get("/api/company")["payout_approval_limit"]
+        if (
+            final["decision"]["outcome"] == "approve"
+            and final["decision"]["payout"] <= limit
+            and final["payment"] is None
+        ):
+            raise RuntimeError("Agent finished without paying a below-limit approval")
         return result["messages"][-1].text

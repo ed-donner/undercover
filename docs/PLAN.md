@@ -6,7 +6,7 @@ Build the claims pilot from `docs/SPEC.md`, starting with the existing health-ch
 
 The backend owns records, workflow transitions, decisions, sign-offs, simulated payments, agent instructions and progress events. The agent reads business data and instructions only through explicit backend API operations. The dashboard uses the same API. Use short background runs and persisted progress events with dashboard polling; durable orchestration, a dispatcher and production hosting are later work.
 
-The six phases below are sequential. Each includes tests and independently verifiable acceptance criteria. During implementation, complete every phase, verify and tick its criteria, update `docs/STATUS.md`, and commit before continuing. This planning change adds no product code.
+The six phases below are sequential. Each includes tests and independently verifiable acceptance criteria. During implementation, complete every phase, verify and tick its criteria, update `docs/STATUS.md`, and commit before continuing.
 
 ### Business boundaries
 
@@ -110,7 +110,7 @@ Add a read-only instructions view. Use Instrument Sans for text, Instrument Seri
 - [x] `npm run check:ts` passes with strict TypeScript, no `any`, and the existing 80% coverage thresholds.
 - [ ] In a browser via the Playwright MCP server, check the queue, detail, progress, instructions and sign-off/payment interaction at desktop and narrow viewport sizes. Verify readable contrast, full document text, keyboard focus and USD formatting in light and dark modes. Record any unavailable browser tooling as a blocker rather than marking this verified.
 
-Browser verification note: no Playwright MCP server is exposed in this session, so that specific tooling criterion remains blocked. Local Playwright/Chromium inspection passed against the real backend using an isolated preview database and a synthetic approval (no model): 1440px desktop and 390px mobile, light/dark, expanded receipt text, activity, read-only instructions, keyboard focus, exact USD formatting, no horizontal overflow or page errors. Direct payment before sign-off returned 409; signing off then separately paying worked. Desktop and mobile screenshots were visually inspected. The initial keyboard check tabbed beyond the last control; the corrected check verified visible focus on the claims-navigation button.
+Browser verification note: no Playwright MCP server is exposed in this session, so that specific tooling criterion remains blocked. Local Playwright/Chromium inspection passed against the real backend using an isolated preview database and a synthetic approval (no model): 1440px desktop and 390px mobile, light/dark, expanded receipt text, activity, read-only instructions, visible keyboard focus, exact USD formatting, no horizontal overflow or page errors. Direct payment before sign-off returned 409; signing off then separately paying worked. Desktop and mobile screenshots were visually inspected.
 
 ## Phase 6 — End-to-end verification and handover
 
@@ -122,14 +122,16 @@ Keep root installation, development and check commands working on Windows and ma
 
 ### Success criteria
 
-- [ ] Playwright covers a below-limit approval paid automatically, a decline, a referral and an above-limit approval that remains unpaid until handler sign-off and the separate payment action.
-- [ ] End-to-end tests verify full claim content, live steps, read-only instructions, failed-run recovery and persistence after page reload.
-- [ ] Each test starts from isolated state and leaves the developer's database untouched; the full suite runs with no OpenRouter key or network calls to a model.
-- [ ] `uv sync` and root `npm install` succeed, including hook installation. With the documented environment set, `npm run dev` serves a healthy backend and usable dashboard.
-- [ ] `npm run check` exits successfully: ruff formatting/lint, pyright, pytest at 80% or higher coverage, Prettier, ESLint, tsc, Vitest at 80% or higher coverage, and Playwright. Do not lower thresholds, disable rules or exclude files to pass.
-- [ ] Browser inspection confirms that a direct unpaid above-limit approval stays blocked even when bypassing disabled UI controls; the UI reflects the backend response.
-- [ ] `docs/STATUS.md` and README describe what actually shipped and how to run it. The final implementation commit passes the pre-commit hook; no push is performed.
+- [x] Playwright covers a below-limit approval paid automatically, a decline, a referral and an above-limit approval that remains unpaid until handler sign-off and the separate payment action.
+- [x] End-to-end tests verify full claim content, live steps, read-only instructions, failed-run recovery and persistence after page reload.
+- [x] Each test starts from isolated state and leaves the developer's database untouched; the full suite runs with no OpenRouter key or network calls to a model.
+- [x] `uv sync` and root `npm install` succeed, including hook installation. With the documented environment set, `npm run dev` serves a healthy backend and usable dashboard.
+- [x] `npm run check` exits successfully: ruff formatting/lint, pyright, pytest at 80% or higher coverage, Prettier, ESLint, tsc, Vitest at 80% or higher coverage, and Playwright. Do not lower thresholds, disable rules or exclude files to pass.
+- [x] Browser inspection confirms that a direct unpaid above-limit approval stays blocked even when bypassing disabled UI controls; the UI reflects the backend response.
+- [x] `docs/STATUS.md` and README describe what actually shipped and how to run it. The final implementation commit passes the pre-commit hook; no push is performed.
 
-## Review checkpoint
+Phase 6 verification: `npm run check` passed with 49 Python tests (100% coverage), 19 UI tests (100% statement coverage) and seven Playwright tests. `npx vite build dashboard` also passed. End-to-end tests launch a dedicated server on port 8011 with scripted LangChain models, controlled progress and a temporary database reset between tests, plus a separate Vite server on port 5174. Test controls exist only in `e2e/server.py`, not the production app. Final review added bounded model requests and verification that an unpaid below-limit approval is not reported as a successfully completed agent run. No check rules or thresholds were weakened.
 
-Plan only. Wait for approval to implement the pilot. No live-model runs, evaluation-file access, infrastructure creation or product implementation are authorized by this plan request.
+## Handover
+
+Implementation followed the user's approval. All six phases are built; the specific Playwright MCP verification remains blocked as recorded above, with local Playwright inspection and automated browser tests passing. No live-model runs, evaluation-file access, infrastructure creation or pushes were performed. The user's notebook edits were left untouched.

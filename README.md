@@ -2,6 +2,26 @@
 
 ## UnderCover Agent: the Travel Insurance Platform
 
+### Run the local pilot
+
+Requires Python 3.12, uv and Node 26. From the repo root:
+
+```sh
+uv sync
+npm install
+npm run dev
+```
+
+Add `OPENROUTER_API_KEY` to your existing `.env` (see `.env.example`). The agent defaults to `openai/gpt-6-luna` with low reasoning effort; optional `MODEL_NAME` selects another OpenRouter model, such as `openrouter/free`. Starting a claim makes model calls and may incur API costs.
+
+- Dashboard: `http://localhost:5173`. API reference: `http://localhost:8000/docs`.
+- Select a claim and choose **Process claim**. Review evidence, live activity and the recorded decision. Payouts above $1,000 require a handler's **Sign off payout**, followed by **Record simulated payment**. The backend rejects payment before sign-off, even through direct API calls.
+- Data persists in git-ignored `undercover.db`; optional `DATABASE_PATH` changes its location. Optional `BACKEND_URL` changes the agent's API address. One local backend process owns the database; interrupted undecided runs become retryable after restart, not automatically resumed.
+- Run `npm run check` for lint, formatting, types, unit coverage and Playwright. Tests use scripted models and isolated databases, need no model key and do not spend API credits. End-to-end tests use ports 8011 and 5174 and never reuse the development database.
+- Pilot limits: no sign-in, real payments or customer messages. Handler selection records attribution, not authenticated identity. Policy wording only; the claims manual and evaluation answers are not loaded. Decision accuracy has not been evaluated against handlers' answers.
+
+Implementation and verification details: [docs/STATUS.md](docs/STATUS.md).
+
 ![An alien in disguise joins a line of travelers](assets/undercover.jpg)
 
 Welcome to the most substantive commercial project I've ever made on any course! We will work on this project throughout the 3-week journey, culminating in a capstone that is truly enterprise grade.

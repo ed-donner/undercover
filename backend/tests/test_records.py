@@ -93,4 +93,10 @@ def test_api_contract(client):
         if "requestBody" in operation:
             assert operation["requestBody"]["required"]
     assert set(spec["paths"]["/api/instructions"]) == {"get"}
+    assert not any(path.startswith("/__test__/") for path in spec["paths"])
+    assert client.post("/__test__/reset").status_code == 404
+    for name in ("DecisionInput", "SignOffInput", "PaymentInput", "ActivityInput"):
+        if name in spec["components"]["schemas"]:
+            schema = spec["components"]["schemas"][name]
+            assert set(schema["required"]) == set(schema["properties"])
     assert client.post("/api/instructions", json={"text": "replace"}).status_code == 405
