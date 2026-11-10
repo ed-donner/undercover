@@ -2,14 +2,20 @@
 
 import os
 from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 
+from agent.main import run as run_agent
+from backend.execution import Runner, execute
 from backend.instructions import INSTRUCTIONS
 from backend.models import (
+    ActivityEvent,
+    ActivityInput,
     Claim,
     Company,
     Customer,
@@ -35,16 +41,22 @@ def store(request: Request) -> Store:
 Database = Annotated[Store, Depends(store)]
 
 
-def create_app(database_path: Path | None = None) -> FastAPI:
+def create_app(
+    database_path: Path | None = None, runner: Runner | None = run_agent
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.store.initialize()
+        Workflow(application.state.store).recover()
+        application.state.executor = ThreadPoolExecutor(max_workers=4)
         yield
+        application.state.executor.shutdown(wait=True)
 
     application = FastAPI(title="UnderCover", lifespan=lifespan)
     application.state.store = Store(
         database_path or Path(os.getenv("DATABASE_PATH", "undercover.db"))
     )
+    application.state.runner = runner
     application.include_router(router)
     return application
 
@@ -113,9 +125,12 @@ def get_instructions() -> TextDocument:
 
 
 @router.post("/claims/{claim_id}/runs", operation_id="start_claim", status_code=202)
-def start_claim(claim_id: str, db: Database) -> Run:
+def start_claim(claim_id: str, db: Database, request: Request) -> Run:
     """Start processing a waiting claim."""
-    return Workflow(db).start(claim_id)
+    run = Workflow(db).start(claim_id)
+    if request.app.state.runner is not None:
+        request.app.state.executor.submit(execute, db, run, request.app.state.runner)
+    return run
 
 
 @router.get("/claims/{claim_id}/runs", operation_id="list_runs")
@@ -139,7 +154,26 @@ def sign_off_claim(claim_id: str, sign_off: SignOffInput, db: Database) -> Claim
 @router.post("/claims/{claim_id}/payment", operation_id="pay_claim")
 def pay_claim(claim_id: str, payment: PaymentInput, db: Database) -> Claim:
     """Record a simulated payment of the approved amount."""
-    return Workflow(db).pay(claim_id, payment)
+    workflow = Workflow(db)
+    try:
+        return workflow.pay(claim_id, payment)
+    except HTTPException as exc:
+        if exc.status_code == HTTPStatus.CONFLICT:
+            workflow.payment_blocked(claim_id)
+        raise
+
+
+@router.get("/claims/{claim_id}/events", operation_id="list_events")
+def list_events(claim_id: str, db: Database) -> list[ActivityEvent]:
+    """Read a claim's ordered public activity history."""
+    return Workflow(db).events(claim_id)
+
+
+@router.post("/runs/{run_id}/events", operation_id="record_activity")
+def record_activity(run_id: str, activity: ActivityInput, db: Database) -> TextDocument:
+    """Record an allowlisted agent activity without sensitive payloads."""
+    Workflow(db).event(run_id, activity.activity)
+    return TextDocument(text="Activity recorded")
 
 
 app = create_app()

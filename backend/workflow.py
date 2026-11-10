@@ -1,13 +1,16 @@
 """Transactional decision, sign-off and simulated payment rules."""
 
 import json
+import sqlite3
 from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 from fastapi import HTTPException
 
+from backend.activity import LABELS, Activity
 from backend.models import (
+    ActivityEvent,
     Claim,
     Decision,
     DecisionInput,
@@ -88,6 +91,7 @@ class Workflow:
                 "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?)",
                 tuple(run.model_dump().values()),
             )
+            self._event(connection, run.run_id, "run_started")
         return run
 
     def runs(self, claim_id: str) -> list[Run]:
@@ -137,6 +141,7 @@ class Workflow:
             connection.execute(
                 "UPDATE claims SET status = ? WHERE id = ?", (status, claim_id)
             )
+            self._event(connection, decision.run_id, "decision_recorded")
         return self.detail(claim_id)
 
     def sign_off(self, claim_id: str, sign_off: SignOffInput) -> Claim:
@@ -154,6 +159,10 @@ class Workflow:
                 "INSERT INTO sign_offs VALUES (?, ?, ?)",
                 (claim_id, sign_off.handler_id, now()),
             )
+            decision = connection.execute(
+                "SELECT run_id FROM decisions WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            self._event(connection, decision["run_id"], "sign_off_recorded")
         return self.detail(claim_id)
 
     def pay(self, claim_id: str, payment: PaymentInput) -> Claim:
@@ -177,7 +186,76 @@ class Workflow:
                 "INSERT INTO payments VALUES (?, ?, ?)",
                 (claim_id, int(payment.amount * 100), now()),
             )
+            self._event(connection, decision["run_id"], "payment_recorded")
         return self.detail(claim_id)
+
+    def payment_blocked(self, claim_id: str) -> None:
+        with self.store.transaction() as connection:
+            run = connection.execute(
+                "SELECT run_id FROM runs WHERE claim_id = ? ORDER BY started_at DESC",
+                (claim_id,),
+            ).fetchone()
+            if run:
+                self._event(connection, run["run_id"], "payment_blocked")
+
+    @staticmethod
+    def _event(connection: sqlite3.Connection, run_id: str, kind: str) -> None:
+        connection.execute(
+            "INSERT INTO events (run_id, kind, label, created_at) VALUES (?, ?, ?, ?)",
+            (run_id, kind, LABELS[kind], now()),
+        )
+
+    def event(self, run_id: str, activity: Activity) -> None:
+        with self.store.transaction() as connection:
+            run = connection.execute(
+                "SELECT status FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            if run is None:
+                raise HTTPException(404, "Run not found")
+            require(run["status"] == "running", "Run is no longer active")
+            self._event(connection, run_id, activity)
+
+    def events(self, claim_id: str) -> list[ActivityEvent]:
+        self.store.claim(claim_id)
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT events.* FROM events JOIN runs USING (run_id) "
+                "WHERE runs.claim_id = ? ORDER BY sequence",
+                (claim_id,),
+            ).fetchall()
+        return [ActivityEvent.model_validate(dict(row)) for row in rows]
+
+    def finish(self, run_id: str, error: str | None) -> None:
+        with self.store.transaction() as connection:
+            run = connection.execute(
+                "SELECT * FROM runs WHERE run_id = ? AND status = 'running'", (run_id,)
+            ).fetchone()
+            if run is None:
+                return
+            decision = connection.execute(
+                "SELECT 1 FROM decisions WHERE claim_id = ?", (run["claim_id"],)
+            ).fetchone()
+            if decision is None:
+                error = error or "Agent finished without recording a decision."
+                connection.execute(
+                    "UPDATE claims SET status = 'waiting' WHERE id = ?",
+                    (run["claim_id"],),
+                )
+            status = "failed" if error else "completed"
+            connection.execute(
+                "UPDATE runs SET status = ?, finished_at = ?, error = ? "
+                "WHERE run_id = ?",
+                (status, now(), error, run_id),
+            )
+            self._event(connection, run_id, f"run_{status}")
+
+    def recover(self) -> None:
+        with self.store.connect() as connection:
+            runs = connection.execute(
+                "SELECT run_id FROM runs WHERE status = 'running'"
+            ).fetchall()
+        for run in runs:
+            self.finish(run["run_id"], "Run interrupted by backend restart.")
 
     @staticmethod
     def _check_payment(connection, claim_id, decision, payment: PaymentInput) -> None:

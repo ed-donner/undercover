@@ -5,6 +5,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, model_validator
 
+from backend.activity import Activity
+
 Money = Annotated[
     Decimal,
     Field(ge=0, max_digits=12, decimal_places=2, allow_inf_nan=False),
@@ -61,6 +63,19 @@ class Run(BaseModel):
     started_at: str
     finished_at: str | None
     error: str | None
+
+
+class ActivityInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    activity: Activity
+
+
+class ActivityEvent(BaseModel):
+    sequence: int
+    run_id: str
+    kind: str
+    label: str
+    created_at: str
 
 
 class Company(BaseModel):

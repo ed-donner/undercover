@@ -20,7 +20,7 @@ class StubModel(GenericFakeChatModel):
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    with TestClient(create_app(tmp_path / "agent.db")) as test_client:
+    with TestClient(create_app(tmp_path / "agent.db", runner=None)) as test_client:
         monkeypatch.setattr(main, "backend", lambda: nullcontext(test_client))
         yield test_client
 

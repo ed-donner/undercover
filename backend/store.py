@@ -110,6 +110,11 @@ class Store:
                     amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
                     paid_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS events (
+                    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id TEXT NOT NULL REFERENCES runs(run_id),
+                    kind TEXT NOT NULL, label TEXT NOT NULL, created_at TEXT NOT NULL
+                );
             """)
         with self.transaction() as connection:
             if connection.execute("SELECT 1 FROM records LIMIT 1").fetchone():

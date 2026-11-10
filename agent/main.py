@@ -66,17 +66,28 @@ class ClaimTools:
         self.context_read = True
         return context
 
+    def event(self, activity: str) -> None:
+        response = self.client.post(
+            f"/api/runs/{self.run_id}/events", json={"activity": activity}
+        )
+        response.raise_for_status()
+
     def tools(self) -> list[BaseTool]:
         @tool
         def read_context() -> str:
             """Read the claim, policy, plan, customer history and company settings."""
-            return json.dumps(self.context())
+            self.event("context_started")
+            result = json.dumps(self.context())
+            self.event("context_read")
+            return result
 
         @tool
         def read_wording() -> str:
             """Read the full policy wording used to decide coverage and payout."""
+            self.event("wording_started")
             wording = self.get("/api/wording")
             self.wording_read = True
+            self.event("wording_read")
             return json.dumps(wording)
 
         @tool
@@ -90,6 +101,7 @@ class ClaimTools:
             """Record a decision with a USD payout and policy section numbers."""
             if not self.context_read or not self.wording_read:
                 raise RuntimeError("Read context and wording before deciding")
+            self.event("decision_started")
             response = self.client.post(
                 f"{self.path}/decision",
                 json={
@@ -107,6 +119,7 @@ class ClaimTools:
         @tool
         def request_payment(amount: str) -> str:
             """Request a separate simulated USD payment; sign-off may block it."""
+            self.event("payment_started")
             response = self.client.post(f"{self.path}/payment", json={"amount": amount})
             if response.status_code == HTTPStatus.CONFLICT:
                 return json.dumps({"paid": False, "reason": response.json()["detail"]})

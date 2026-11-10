@@ -86,13 +86,13 @@ Keep failure handling small and explicit: a failed run must not leave a claim pe
 
 ### Success criteria
 
-- [ ] Starting a run returns `202` with run/thread IDs before a controlled stub finishes, and read endpoints remain responsive while it runs.
-- [ ] Polling events while a stub run is paused returns already-completed steps; completion adds ordered terminal events and updates the claim state.
-- [ ] Repeated/concurrent start requests invoke the agent once for the claim. Different claims retain distinct run/thread histories.
-- [ ] Stub failures before decision produce a visible failed run and a retryable claim; failures after decision preserve the recorded decision and payment restrictions.
-- [ ] Restart tests preserve decisions, sign-offs, payments and events, and recover interrupted runs according to the stated policy.
-- [ ] Progress-event tests confirm that API keys and hidden reasoning are not exposed.
-- [ ] `npm run check:python` passes.
+- [x] Starting a run returns `202` with run/thread IDs before a controlled stub finishes, and read endpoints remain responsive while it runs.
+- [x] Polling events while a stub run is paused returns already-completed steps; completion adds ordered terminal events and updates the claim state.
+- [x] Repeated/concurrent start requests invoke the agent once for the claim. Different claims retain distinct run/thread histories.
+- [x] Stub failures before decision produce a visible failed run and a retryable claim; failures after decision preserve the recorded decision and payment restrictions.
+- [x] Restart tests preserve decisions, sign-offs, payments and events, and recover interrupted runs according to the stated policy.
+- [x] Progress-event tests confirm that API keys and hidden reasoning are not exposed.
+- [x] `npm run check:python` passes.
 
 ## Phase 5 — Handler dashboard
 
