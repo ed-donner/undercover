@@ -18,6 +18,7 @@ The local claims pilot is implemented across all six phases of `docs/PLAN.md`.
 4. Select a claim and choose **Process claim**. For above-limit approvals, choose a signing handler, **Sign off payout**, then **Record simulated payment**. All payments are simulated.
 
 5. Optional, from a second terminal while `npm run dev` runs: `uv run -m agent` processes every waiting claim in queue order, one at a time; `uv run -m agent CLM-1001` processes the claims named. It starts runs through the backend (`POST /api/claims/{id}/runs`), polls until each finishes and prints a line such as `CLM-1001: approve, $420.00, paid`. It exits with status 1 if any claim failed or could not start, and says so if the backend is not running.
+6. Optional: `uv run -m backend.seed` resets the database. It deletes the file in `DATABASE_PATH` (default `undercover.db`) and seeds it again, so all 25 claims are waiting and every decision, sign-off, payment and activity record is gone. Run it when no claim is in progress.
 
 The git-ignored local database is `undercover.db`; optional `DATABASE_PATH` changes its location. One local backend process owns the database. Optional `BACKEND_URL` changes the agent's API address from `http://127.0.0.1:8000`.
 
