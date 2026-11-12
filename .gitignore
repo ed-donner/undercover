@@ -72,3 +72,4 @@ labs/*_desk/
 *.swp
 .DS_Store
 Thumbs.db
+customer_notes/

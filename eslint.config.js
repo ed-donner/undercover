@@ -39,7 +39,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["**/*.js"],
+    files: ["**/*.js", "scripts/*.mjs", "e2e/*.mjs"],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: globals.node },
   },
@@ -51,6 +51,16 @@ export default defineConfig(
       reactRefresh.configs.vite,
     ],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ["dashboard/src/**/*.{ts,tsx}"],
+    ignores: ["dashboard/src/api.ts", "dashboard/src/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { name: "fetch", message: "Call the backend through src/api.ts." },
+      ],
+    },
   },
   {
     files: ["dashboard/src/**/*.test.tsx"],

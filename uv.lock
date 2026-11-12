@@ -2382,6 +2382,9 @@ wheels = [
 binary = [
     { name = "psycopg-binary", marker = "implementation_name != 'pypy'" },
 ]
+pool = [
+    { name = "psycopg-pool" },
+]
 
 [[package]]
 name = "psycopg-binary"
@@ -3458,9 +3461,10 @@ dependencies = [
     { name = "openrouter" },
     { name = "pandas" },
     { name = "plotly" },
-    { name = "psycopg", extra = ["binary"] },
+    { name = "psycopg", extra = ["binary", "pool"] },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "sqlalchemy" },
     { name = "tqdm" },
     { name = "uvicorn" },
 ]
@@ -3505,9 +3509,10 @@ requires-dist = [
     { name = "openrouter", specifier = ">=1.2.1" },
     { name = "pandas", specifier = ">=3.0.6" },
     { name = "plotly", specifier = ">=7.1.0" },
-    { name = "psycopg", extras = ["binary"], specifier = ">=3.3.6" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.6" },
     { name = "python-dotenv", specifier = ">=1.2.3" },
     { name = "requests", specifier = ">=2.34.2" },
+    { name = "sqlalchemy", specifier = ">=2.1.3" },
     { name = "tqdm", specifier = ">=4.70.1" },
     { name = "uvicorn", specifier = ">=0.54.0" },
 ]
