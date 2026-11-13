@@ -2,14 +2,17 @@ import { useState } from "react";
 import { api, useResource } from "./api";
 import { ClaimWorkspace, Instructions } from "./ClaimWorkspace";
 import { money, statuses, words } from "./display";
-import type { QueueEntry, QueueStatus } from "./types";
+import type { AgentRun, QueueEntry, QueueStatus } from "./types";
+import { QueueRunPanel } from "./QueueRunPanel";
 import "./styles.css";
 
 const loadQueue = () => api<QueueEntry[]>("/claims");
+const loadRuns = () => api<AgentRun[]>("/agent-runs");
 const stateKeys = Object.keys(statuses) as QueueStatus[];
 
 export function App() {
   const queue = useResource(loadQueue);
+  const runs = useResource(loadRuns);
   const [view, setView] = useState<"claims" | "instructions">("claims");
   const [selected, setSelected] = useState<string>();
   const [search, setSearch] = useState("");
@@ -60,23 +63,22 @@ export function App() {
         <span className="nav-note">Every claim. A considered decision.</span>
       </nav>
       <main id="main">
-        <div className="page-heading">
-          <div>
-            <span className="eyebrow">The claims desk</span>
-            <h1>
-              A clearer path to <em>a decision.</em>
-            </h1>
-          </div>
-          <p>
-            Review the evidence. Follow the agent.
-            <br />
-            Keep judgment in the right hands.
-          </p>
-        </div>
+        <PageHeading />
         {view === "instructions" ? (
           <Instructions />
         ) : (
           <>
+            <QueueRunPanel
+              runs={runs.data}
+              error={runs.error}
+              eligible={
+                claims.filter(
+                  (claim) => claim.status === "waiting" && !claim.needs_handler,
+                ).length
+              }
+              reload={runs.reload}
+              select={setSelected}
+            />
             <section className="stats" aria-label="Queue overview">
               {stateKeys.map((status) => (
                 <div className={`stat ${status}`} key={status}>
@@ -151,6 +153,11 @@ export function App() {
                           <span className={`status ${claim.status}`}>
                             {statuses[claim.status]}
                           </span>
+                          {claim.needs_handler && (
+                            <span className="handler-label">
+                              Handler review
+                            </span>
+                          )}
                         </span>
                         <strong>{claim.customer_name}</strong>
                         <span className="claim-summary">{claim.summary}</span>
@@ -179,6 +186,7 @@ export function App() {
                     key={activeId}
                     id={activeId}
                     onChange={queue.reload}
+                    runActive={runs.data?.[0]?.status === "running"}
                   />
                 ) : (
                   <div className="panel empty-state">
@@ -194,6 +202,24 @@ export function App() {
         UnderCover Travel Insurance
         <span>Local pilot · No real payments · No customer messages</span>
       </footer>
+    </div>
+  );
+}
+
+function PageHeading() {
+  return (
+    <div className="page-heading">
+      <div>
+        <span className="eyebrow">The claims desk</span>
+        <h1>
+          A clearer path to <em>a decision.</em>
+        </h1>
+      </div>
+      <p>
+        Review the evidence. Follow the agent.
+        <br />
+        Keep judgment in the right hands.
+      </p>
     </div>
   );
 }

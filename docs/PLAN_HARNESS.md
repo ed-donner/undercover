@@ -138,12 +138,14 @@ Use the existing Instrument fonts, brand colors, rounded borderless panels, ligh
 
 ### Success criteria
 
-- [ ] Vitest tests cover queue/capped/named start controls, input validation, conflict/error states and polling; a failed start never displays a fictitious active run.
-- [ ] UI tests show persisted ordered tasks progressing through all four states, claim navigation, final summaries and correct state after reload. With no runs, show a clear empty state.
-- [ ] Claim tests show exact read section/version references across retries, complete expandable text, old decisions without manual provenance and no cross-claim source leakage.
-- [ ] Instructions tests display both backend-owned instruction sets with no edit controls. Handler holds cannot be automatically restarted from the UI; normal sign-off/payment interactions still work.
-- [ ] `npm run check:ts` passes with strict TypeScript, no `any` and the existing coverage thresholds.
+- [x] Vitest tests cover queue/capped/named start controls, input validation, conflict/error states and polling; a failed start never displays a fictitious active run.
+- [x] UI tests show persisted ordered tasks progressing through all four states, claim navigation, final summaries and correct state after reload. With no runs, show a clear empty state.
+- [x] Claim tests show exact read section/version references across retries, complete expandable text, old decisions without manual provenance and no cross-claim source leakage.
+- [x] Instructions tests display both backend-owned instruction sets with no edit controls. Handler holds cannot be automatically restarted from the UI; normal sign-off/payment interactions still work.
+- [x] `npm run check:ts` passes with strict TypeScript, no `any` and the existing coverage thresholds.
 - [ ] Inspect queue planning, claim sources and instructions through the Playwright MCP server at desktop and narrow sizes in light/dark modes; verify keyboard focus, readable task labels, full text and USD formatting. If that server is unavailable, record the blocker explicitly and perform local Playwright inspection without claiming the MCP criterion passed.
+
+Phase 5 verification: 26 UI tests pass with 100% statement coverage; formatting, ESLint and strict TypeScript pass without rule changes. The exposed tools do not include a Playwright MCP server, so that specific criterion remains blocked. Local isolated Playwright verification follows with the updated end-to-end server in phase 6.
 
 ## Phase 6 — End-to-end checks, five-claim trial and handover
 

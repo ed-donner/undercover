@@ -26,8 +26,11 @@ it("starts a claim and refreshes server state", async () => {
     expect(onChange).toHaveBeenCalledOnce();
   });
   expect(data.fetcher).toHaveBeenCalledWith(
-    "/api/claims/CLM-1001/runs",
-    expect.objectContaining({ method: "POST", body: "{}" }),
+    "/api/agent-runs",
+    expect.objectContaining({
+      method: "POST",
+      body: '{"mode":"claim","claim_id":"CLM-1001"}',
+    }),
   );
 });
 
@@ -232,15 +235,26 @@ it("retries a failed detail request", async () => {
 
 it("retries instructions and wording failures", async () => {
   const data = fixture();
-  data.fetcher.mockRejectedValueOnce(new Error("Instructions unavailable"));
-  data.fetcher.mockRejectedValueOnce(new Error("Wording unavailable"));
+  const failures = new Set([
+    "/api/instructions/claim",
+    "/api/instructions/queue",
+    "/api/wording",
+  ]);
+  data.fetcher.mockImplementation((input) =>
+    failures.delete(input)
+      ? Promise.reject(new Error(`Instructions unavailable: ${input}`))
+      : Promise.resolve(Response.json(data.responses.get(input))),
+  );
   render(<Instructions />);
-  await screen.findByText(/Instructions unavailable/);
+  await screen.findByText(
+    /Instructions unavailable: \/api\/instructions\/claim/,
+  );
   fireEvent.click(screen.getByRole("button", { name: "Retry instructions" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Retry queue instructions" }),
+  );
   fireEvent.click(screen.getByRole("button", { name: "Retry wording" }));
-  expect(
-    await screen.findByText(/Read the policy wording alone/),
-  ).toBeDefined();
+  expect(await screen.findByText(/Read the wording and manual/)).toBeDefined();
   expect(await screen.findByText(/Receipts are required/)).toBeDefined();
 });
 

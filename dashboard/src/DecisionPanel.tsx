@@ -26,6 +26,11 @@ export function DecisionPanel({ claim }: { readonly claim: Claim }) {
             Policy sections {decision.policy_sections.join(", ")} · Recorded{" "}
             {decision.recorded_at}
           </p>
+          <p className="muted">
+            {decision.manual_version
+              ? `Claims manual ${decision.manual_version}, sections ${decision.manual_sections.join(", ")}`
+              : "Historical decision: manual provenance not recorded."}
+          </p>
           {claim.sign_off && (
             <p>
               Signed off by{" "}
@@ -49,11 +54,27 @@ export function DecisionPanel({ claim }: { readonly claim: Claim }) {
           </span>
           <p>No decision yet.</p>
           <small>
-            The agent will check the evidence against the policy wording.
+            The agent will check the evidence against the wording and claims
+            manual.
           </small>
         </div>
       )}
     </section>
+  );
+}
+
+async function performAction(claimId: string, suffix: string, body: object) {
+  return post(
+    suffix === "runs" ? "/agent-runs" : `/claims/${claimId}/${suffix}`,
+    suffix === "runs" ? { mode: "claim", claim_id: claimId } : body,
+  );
+}
+
+function needsPayment(claim: Claim) {
+  return (
+    claim.status === "decided" &&
+    claim.decision?.outcome === "approve" &&
+    !claim.payment
   );
 }
 
@@ -62,22 +83,23 @@ export function ClaimActions({
   handlers,
   runs,
   onChange,
+  runActive = false,
 }: {
   readonly claim: Claim;
   readonly handlers: Handler[];
   readonly runs: Run[];
   readonly onChange: () => void;
+  readonly runActive?: boolean;
 }) {
   const [handler, setHandler] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const path = `/claims/${claim.claim_id}`;
   const failed = runs.at(-1)?.status === "failed";
   async function act(suffix: string, body: object = {}) {
     setBusy(true);
     setError(undefined);
     try {
-      await post(`${path}/${suffix}`, body);
+      await performAction(claim.claim_id, suffix, body);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Action failed.");
     } finally {
@@ -97,10 +119,15 @@ export function ClaimActions({
             : "All payments in this pilot are simulated."}
         </p>
       </div>
-      {claim.status === "waiting" && (
+      {claim.needs_handler && (
+        <p className="handler-label">
+          Left for a handler: {claim.handler_reason}
+        </p>
+      )}
+      {claim.status === "waiting" && !claim.needs_handler && (
         <button
           className="primary"
-          disabled={busy}
+          disabled={busy || runActive}
           onClick={() => void act("runs")}
         >
           {failed ? "Retry claim" : "Process claim"}
@@ -141,19 +168,17 @@ export function ClaimActions({
           </button>
         </div>
       )}
-      {claim.status === "decided" &&
-        claim.decision?.outcome === "approve" &&
-        !claim.payment && (
-          <button
-            className="primary"
-            disabled={busy}
-            onClick={() =>
-              void act("payment", { amount: claim.decision?.payout })
-            }
-          >
-            Record simulated payment
-          </button>
-        )}
+      {needsPayment(claim) && (
+        <button
+          className="primary"
+          disabled={busy}
+          onClick={() =>
+            void act("payment", { amount: claim.decision?.payout })
+          }
+        >
+          Record simulated payment
+        </button>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}

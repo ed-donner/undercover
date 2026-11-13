@@ -8,6 +8,9 @@ export interface QueueEntry {
   summary: string;
   amount_claimed: number;
   status: QueueStatus;
+  needs_handler: boolean;
+  handler_reason: string;
+  failures: number;
 }
 
 export interface Decision {
@@ -17,6 +20,8 @@ export interface Decision {
   calculation: string;
   explanation: string;
   policy_sections: number[];
+  manual_version: string | null;
+  manual_sections: number[];
   recorded_at: string;
 }
 
@@ -34,6 +39,9 @@ export interface Claim {
   amount_claimed: number;
   documents: { name: string; type: string; content: string }[];
   status: QueueStatus;
+  needs_handler: boolean;
+  handler_reason: string;
+  failures: number;
   decision: Decision | null;
   sign_off: { handler_id: string; signed_at: string } | null;
   payment: { amount: number; paid_at: string } | null;
@@ -115,4 +123,41 @@ export interface Workspace {
   handlers: Handler[];
   runs: Run[];
   events: ActivityEvent[];
+  reads: SourceRead[];
+}
+
+export type TaskState = "todo" | "in_progress" | "done" | "needs_handler";
+
+export interface AgentTask {
+  task_id: string;
+  claim_id: string;
+  state: TaskState;
+  reason: string;
+  admitted: boolean;
+}
+
+export interface AgentRun {
+  run_id: string;
+  status: "running" | "completed" | "failed";
+  max_claims: number;
+  summary: string;
+  error: string | null;
+  tasks: AgentTask[];
+}
+
+export interface SectionInfo {
+  document_id: string;
+  version: string;
+  section: number;
+  title: string;
+}
+
+export interface SectionText extends SectionInfo {
+  text: string;
+}
+
+export interface SourceRead extends SectionText {
+  sequence: number;
+  run_id: string;
+  read_at: string;
 }

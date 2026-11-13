@@ -35,6 +35,9 @@ export function fixture() {
     decision: null,
     sign_off: null,
     payment: null,
+    failures: 0,
+    needs_handler: false,
+    handler_reason: "",
   };
   const queue: QueueEntry[] = [
     {
@@ -44,6 +47,9 @@ export function fixture() {
       summary: claim.summary,
       amount_claimed: claim.amount_claimed,
       status: claim.status,
+      failures: 0,
+      needs_handler: false,
+      handler_reason: "",
     },
   ];
   const policy: Policy = {
@@ -126,9 +132,36 @@ export function fixture() {
     ["/api/handlers", handlers],
     ["/api/claims/CLM-1001/runs", []],
     ["/api/claims/CLM-1001/events", []],
+    ["/api/claims/CLM-1001/reads", []],
+    ["/api/agent-runs", []],
     [
-      "/api/instructions",
-      { text: "Read the policy wording alone. Record a decision." },
+      "/api/documents",
+      [
+        {
+          document_id: "manual",
+          version: "2026.2",
+          section: 9,
+          title: "Repeat claims",
+        },
+      ],
+    ],
+    [
+      "/api/documents/manual/sections/9",
+      {
+        document_id: "manual",
+        version: "2026.2",
+        section: 9,
+        title: "Repeat claims",
+        text: "A third claim is referred for review.",
+      },
+    ],
+    [
+      "/api/instructions/queue",
+      { text: "Plan the queue and delegate fresh helpers." },
+    ],
+    [
+      "/api/instructions/claim",
+      { text: "Read the wording and manual. Record a decision." },
     ],
     [
       "/api/wording",
@@ -163,6 +196,8 @@ export function approve(claim: Claim, amount = 420) {
     explanation:
       "The receipts support the covered costs. The delay meets the waiting period.",
     policy_sections: [3, 10],
+    manual_version: "2026.2",
+    manual_sections: [4, 9],
     recorded_at: "2026-11-10T09:01:00Z",
   };
 }

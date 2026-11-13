@@ -697,6 +697,86 @@ dd {
   margin-left: 10px;
   font-size: 0.75rem;
 }
+.run-panel {
+  margin-bottom: 24px;
+}
+.run-panel h2 {
+  margin-top: 7px;
+}
+.run-controls,
+.run-heading,
+.todo-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.run-controls {
+  margin-bottom: 14px;
+}
+.run-controls label {
+  font-size: 0.8rem;
+}
+.run-controls input {
+  width: 90px;
+}
+.run-heading {
+  justify-content: space-between;
+  margin: 22px 0 12px;
+}
+.run-heading .mono {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+.todo-list {
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+.todo-list li {
+  padding: 10px 0;
+}
+.todo-link {
+  background: var(--soft);
+  padding: 10px 12px;
+  min-height: 44px;
+}
+.task-state,
+.handler-label {
+  font-size: 0.74rem;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #fff0cb;
+  color: #795000;
+}
+.task-state.todo,
+.task-state.done {
+  background: #dcf8ed;
+  color: #00644c;
+}
+.task-state.needs_handler {
+  background: #ffe4da;
+  color: #8c3415;
+}
+.source-catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+.source-catalog button {
+  background: var(--soft);
+  text-align: left;
+  font-size: 0.76rem;
+  padding: 10px;
+  min-height: 44px;
+}
+.source-catalog button[aria-pressed="true"] {
+  background: var(--green-wash);
+}
+.card-top {
+  flex-wrap: wrap;
+}
 .instructions-view {
   max-width: 1050px;
   margin: 10px auto;

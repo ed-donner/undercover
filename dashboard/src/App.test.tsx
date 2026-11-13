@@ -69,6 +69,7 @@ it("selects another claim without showing stale details", async () => {
   });
   data.responses.set("/api/claims/CLM-1002/runs", []);
   data.responses.set("/api/claims/CLM-1002/events", []);
+  data.responses.set("/api/claims/CLM-1002/reads", []);
   render(<App />);
   await screen.findByRole("heading", { name: "Maya Patel", level: 2 });
   fireEvent.click(screen.getByRole("button", { name: /CLM-1002/ }));
@@ -109,9 +110,7 @@ it("displays instructions and wording without edit controls", async () => {
   render(<App />);
   fireEvent.click(screen.getByRole("button", { name: "Agent instructions" }));
   expect(
-    await screen.findByText(
-      "Read the policy wording alone. Record a decision.",
-    ),
+    await screen.findByText("Read the wording and manual. Record a decision."),
   ).toBeDefined();
   expect(screen.getByText(/Receipts are required/)).toBeDefined();
   expect(screen.queryByRole("textbox")).toBeNull();
