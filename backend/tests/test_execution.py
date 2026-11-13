@@ -59,7 +59,7 @@ def test_background_run_is_responsive_and_observable(tmp_path):
         workflow.pay(claim_id, PaymentInput(amount=Decimal("420")))
         return "Done"
 
-    with TestClient(create_app(db.path, runner=runner)) as client:
+    with TestClient(create_app(db.path, runner=runner, queue_runner=None)) as client:
         try:
             response = start(client)
             assert response.status_code == 202
@@ -93,7 +93,9 @@ def test_concurrent_starts_and_distinct_threads(tmp_path):
         assert release.wait(3)
         return "No decision"
 
-    with TestClient(create_app(tmp_path / "concurrent.db", runner=runner)) as client:
+    with TestClient(
+        create_app(tmp_path / "concurrent.db", runner=runner, queue_runner=None)
+    ) as client:
         harness = Harness(Store(tmp_path / "concurrent.db"))
         parent_id = harness.create(QueueStart(mode="queue", max_claims=None)).run_id
         harness.plan(parent_id, [Task(claim_id="CLM-1001", state="todo")])
@@ -133,7 +135,7 @@ def test_failed_run_preserves_committed_state(tmp_path, after_decision):
             record(workflow, claim_id, "1200")
         raise RuntimeError("secret-key and hidden model reasoning must not escape")
 
-    with TestClient(create_app(db.path, runner=runner)) as client:
+    with TestClient(create_app(db.path, runner=runner, queue_runner=None)) as client:
         start(client)
         run = wait_for_finish(client, "CLM-1001")
         assert run["status"] == "failed"
@@ -170,7 +172,7 @@ def test_restart_recovers_runs_and_preserves_records(tmp_path):
     workflow.finish(workflow.runs("CLM-1002")[-1].run_id, None)
     interrupted = start_workflow(workflow, "CLM-1001")
     before = workflow.detail("CLM-1002")
-    with TestClient(create_app(db.path, runner=None)) as client:
+    with TestClient(create_app(db.path, runner=None, queue_runner=None)) as client:
         assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
         assert (
             "interrupted" in client.get("/api/claims/CLM-1001/runs").json()[0]["error"]

@@ -75,6 +75,37 @@ def task_result(claim: sqlite3.Row) -> tuple[str, str]:
     )
 
 
+def result_counts(connection: sqlite3.Connection, run_id: str) -> str:
+    rows = connection.execute(
+        "SELECT c.status, c.needs_handler, d.outcome, p.claim_id AS paid "
+        "FROM todos t JOIN claims c ON c.id = t.claim_id "
+        "LEFT JOIN decisions d ON d.claim_id = c.id "
+        "LEFT JOIN payments p ON p.claim_id = c.id "
+        "WHERE t.parent_run_id = ? AND t.admitted = 1",
+        (run_id,),
+    ).fetchall()
+    outcomes = {
+        key: sum(r["outcome"] == key for r in rows)
+        for key in ("approve", "decline", "refer")
+    }
+    paid = sum(bool(r["paid"]) for r in rows)
+    signoff = sum(r["status"] == "waiting_for_sign_off" for r in rows)
+    technical = sum(
+        bool(r["needs_handler"])
+        or (
+            r["outcome"] == "approve"
+            and not r["paid"]
+            and r["status"] != "waiting_for_sign_off"
+        )
+        for r in rows
+    )
+    return (
+        f"{outcomes['approve']} approved, {outcomes['decline']} declined, "
+        f"{outcomes['refer']} referred; {paid} paid, {signoff} waiting for sign-off, "
+        f"{technical} technical issues."
+    )
+
+
 class Harness:
     def __init__(self, store: Store):
         self.store = store
@@ -205,6 +236,7 @@ class Harness:
         summary = (
             f"{len(admitted)} claims worked: {done} done, {handler} left for a handler."
         )
+        summary += " " + result_counts(connection, run_id)
         return Completion(ready=not missing, missing=sorted(missing), summary=summary)
 
     def check(self, run_id: str) -> Completion:

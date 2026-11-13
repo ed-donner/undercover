@@ -18,7 +18,9 @@ from backend.workflow import Workflow
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
-    with TestClient(create_app(tmp_path / "recovery.db", runner=None)) as test_client:
+    with TestClient(
+        create_app(tmp_path / "recovery.db", runner=None, queue_runner=None)
+    ) as test_client:
         monkeypatch.setattr(main, "backend", lambda: http_backend(test_client))
         yield test_client
 

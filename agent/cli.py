@@ -1,7 +1,7 @@
-"""Command line for processing claims through the running backend."""
+"""Start one agent-led run and poll its persisted result."""
 
+import argparse
 import time
-from urllib.parse import quote
 
 import httpx
 
@@ -10,67 +10,56 @@ from agent.main import backend
 POLL_SECONDS = 1
 
 
-def wait_for(client: httpx.Client, path: str, run_id: str) -> dict:
+def wait_for(client: httpx.Client, run_id: str) -> dict:
     while True:
-        runs = client.get(f"{path}/runs").json()
-        run = next(item for item in runs if item["run_id"] == run_id)
+        response = client.get(f"/api/agent-runs/{run_id}")
+        response.raise_for_status()
+        run = response.json()
         if run["status"] != "running":
             return run
         time.sleep(POLL_SECONDS)
 
 
-def summary(claim: dict) -> str:
-    decision = claim["decision"]
-    if decision["outcome"] != "approve":
-        return decision["outcome"]
-    paid = "paid" if claim["payment"] else "waiting for sign-off"
-    return f"approve, ${decision['payout']:,.2f}, {paid}"
+def positive(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("Cap must be a positive integer")
+    return number
 
 
-def process(client: httpx.Client, claim_id: str) -> tuple[str, bool]:
-    path = f"/api/claims/{quote(claim_id, safe='')}"
-    parent = client.post(
-        "/api/agent-runs", json={"mode": "claim", "claim_id": claim_id}
+def process(client: httpx.Client, request: dict) -> bool:
+    response = client.post("/api/agent-runs", json=request)
+    if response.is_error:
+        print(f"Not started ({response.status_code}): {response.json()['detail']}")
+        return False
+    result = wait_for(client, response.json()["run_id"])
+    print(result["summary"], flush=True)
+    if result["error"]:
+        print(result["error"], flush=True)
+    return result["status"] == "completed" and not any(
+        "failed" in task["reason"].lower() or "unresolved" in task["reason"].lower()
+        for task in result["tasks"]
     )
-    if parent.is_error:
-        return f"not started ({parent.status_code})", False
-    parent_id = parent.json()["run_id"]
-    client.put(
-        f"/api/agent-runs/{parent_id}/tasks",
-        json={"tasks": [{"claim_id": claim_id, "state": "todo"}]},
-    )
-    started = client.post(f"{path}/runs", json={"parent_run_id": parent_id})
-    if started.is_error:
-        return f"not started ({started.status_code})", False
-    run = wait_for(client, path, started.json()["run_id"])
-    client.post(f"/api/agent-runs/{parent_id}/check")
-    client.post(
-        f"/api/agent-runs/{parent_id}/finish",
-        json={
-            "error": "Agent could not finish." if run["status"] == "failed" else None
-        },
-    )
-    if run["status"] == "failed":
-        return f"failed, {run['error']}", False
-    return summary(client.get(path).json()), True
 
 
-def main(claim_ids: list[str]) -> None:
-    """Process the named claims, or every waiting claim, one at a time."""
+def main(arguments: list[str]) -> None:
+    """Start the queue once, a capped trial, or explicit named-claim runs."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("claim_ids", nargs="*")
+    parser.add_argument("--max-claims", type=positive)
+    args = parser.parse_args(arguments)
+    if args.claim_ids and args.max_claims is not None:
+        parser.error("--max-claims is only for queue runs")
+    requests = (
+        [{"mode": "claim", "claim_id": key} for key in args.claim_ids]
+        if args.claim_ids
+        else [{"mode": "queue", "max_claims": args.max_claims}]
+    )
     failed = False
     try:
         with backend() as client:
-            ids = claim_ids or [
-                claim["claim_id"]
-                for claim in client.get("/api/claims").json()
-                if claim["status"] == "waiting"
-            ]
-            if not ids:
-                print("No waiting claims.")
-            for claim_id in ids:
-                line, ok = process(client, claim_id)
-                failed = failed or not ok
-                print(f"{claim_id}: {line}", flush=True)
+            for request in requests:
+                failed = not process(client, request) or failed
     except httpx.ConnectError:
         raise SystemExit("Backend not reachable. Start it with npm run dev.") from None
     if failed:

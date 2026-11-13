@@ -11,6 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 
 from agent.main import run as run_agent
+from agent.queue import run_queue
 from backend.agent_payment import AgentPaymentInput
 from backend.documents import (
     Documents,
@@ -21,7 +22,7 @@ from backend.documents import (
     SectionInfo,
     SectionText,
 )
-from backend.execution import Runner, execute
+from backend.execution import Runner, execute, execute_queue
 from backend.harness import Harness
 from backend.harness_models import (
     AgentRun,
@@ -61,7 +62,9 @@ Database = Annotated[Store, Depends(store)]
 
 
 def create_app(
-    database_path: Path | None = None, runner: Runner | None = run_agent
+    database_path: Path | None = None,
+    runner: Runner | None = run_agent,
+    queue_runner: Runner | None = run_queue,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -77,6 +80,7 @@ def create_app(
         database_path or Path(os.getenv("DATABASE_PATH", "undercover.db"))
     )
     application.state.runner = runner
+    application.state.queue_runner = queue_runner
     application.include_router(router)
     return application
 
@@ -208,9 +212,14 @@ def record_activity(run_id: str, activity: ActivityInput, db: Database) -> TextD
 
 
 @router.post("/agent-runs", operation_id="start_agent_run", status_code=202)
-def start_agent_run(start: Start, db: Database) -> AgentRun:
+def start_agent_run(start: Start, db: Database, request: Request) -> AgentRun:
     """Start a queue or named-claim run with an explicit claim cap."""
-    return Harness(db).create(start)
+    run = Harness(db).create(start)
+    if request.app.state.queue_runner is not None:
+        request.app.state.executor.submit(
+            execute_queue, db, run, request.app.state.queue_runner
+        )
+    return run
 
 
 @router.get("/agent-runs", operation_id="list_agent_runs")
@@ -285,6 +294,23 @@ def agent_pay_claim(claim_id: str, payment: AgentPaymentInput, db: Database) -> 
         if exc.status_code == HTTPStatus.CONFLICT:
             workflow.payment_blocked(claim_id)
         raise
+
+
+@router.post("/runs/{run_id}/finish", operation_id="finish_claim_attempt")
+def finish_claim_attempt(
+    run_id: str, finish: FinishInput, db: Database
+) -> TextDocument:
+    """Close and fence a child attempt after a delegation deadline or failure."""
+    with db.connect() as connection:
+        if (
+            connection.execute(
+                "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            is None
+        ):
+            raise HTTPException(404, "Run not found")
+    Workflow(db).finish(run_id, finish.error)
+    return TextDocument(text="Attempt finished")
 
 
 app = create_app()

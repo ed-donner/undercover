@@ -41,7 +41,7 @@ Enforce scope, distinct-claim cap, the two-failure budget and active ownership t
 
 ### Success criteria
 
-- [ ] API tests show valid queue/named creation returns `202` with run/thread IDs before a controlled worker finishes; malformed requests, zero/negative/fractional caps and unknown named claims return `422`/`404` as appropriate.
+- [x] API tests show valid queue/named creation returns `202` with run/thread IDs before a controlled worker finishes; malformed requests, zero/negative/fractional caps and unknown named claims return `422`/`404` as appropriate.
 - [x] Concurrent top-level starts yield one `202` and one `409`; scope/cap/ownership tests reject out-of-scope claims, a sixth distinct claim under cap five and competing attempts without changing records.
 - [x] To-do order, all four states, child links, cap usage and final summaries persist across reopening the database. Invalid task transitions and attempts to hide incomplete work are rejected.
 - [x] Migration tests open an existing pilot database twice and preserve its financial/activity records; a new database still seeds exactly 25 business claims. No evaluation files are opened.
@@ -113,14 +113,16 @@ Connect background execution and `agent/cli.py` to one top-level API start follo
 
 ### Success criteria
 
-- [ ] A scripted supervisor selects claims in an order different from API queue order, persists its plan, delegates fresh helpers and completes the queue with a short summary verified against stored results.
-- [ ] Cap tests cover one, five, fewer-than-cap and uncapped runs. A cap-five run admits exactly five distinct eligible claims; retries do not add slots and all other claims remain untouched and waiting.
-- [ ] A first-attempt failure visibly returns to waiting, is retried automatically and can succeed; another claim finishes despite that failure. Two failures produce a persisted handler hold and no third attempt, even in a later run.
-- [ ] A scripted supervisor that omits an eligible claim cannot finish successfully: reconciliation returns it, the supervisor processes it within the cap and the final check passes. A supervisor that ignores the check terminates as failed rather than looping indefinitely.
-- [ ] Premature prose, false task completion, duplicate delegation and concurrent finalization cannot bypass the backend's completion/cap checks or duplicate a decision/payment.
-- [ ] Supervisor-error and backend-restart tests preserve completed work and audit history, release/fence undecided attempts and leave no orphan `in_progress` claim. No restart automatically makes a model call.
-- [ ] CLI tests verify a single queue start request, cap/named request bodies, polling, summaries, empty queue, invalid arguments, unreachable backend and exit codes without provider calls.
-- [ ] `npm run check:python` passes; requests and activity polling remain responsive while a controlled queue run is paused.
+- [x] A scripted supervisor selects claims in an order different from API queue order, persists its plan, delegates fresh helpers and completes the queue with a short summary verified against stored results.
+- [x] Cap tests cover one, five, fewer-than-cap and uncapped runs. A cap-five run admits exactly five distinct eligible claims; retries do not add slots and all other claims remain untouched and waiting.
+- [x] A first-attempt failure visibly returns to waiting, is retried automatically and can succeed; another claim finishes despite that failure. Two failures produce a persisted handler hold and no third attempt, even in a later run.
+- [x] A scripted supervisor that omits an eligible claim cannot finish successfully: reconciliation returns it, the supervisor processes it within the cap and the final check passes. A supervisor that ignores the check terminates as failed rather than looping indefinitely.
+- [x] Premature prose, false task completion, duplicate delegation and concurrent finalization cannot bypass the backend's completion/cap checks or duplicate a decision/payment.
+- [x] Supervisor-error and backend-restart tests preserve completed work and audit history, release/fence undecided attempts and leave no orphan `in_progress` claim. No restart automatically makes a model call.
+- [x] CLI tests verify a single queue start request, cap/named request bodies, polling, summaries, empty queue, invalid arguments, unreachable backend and exit codes without provider calls.
+- [x] `npm run check:python` passes; requests and activity polling remain responsive while a controlled queue run is paused.
+
+Phase 4 verification: 112 Python tests, 99.03% coverage, ruff and pyright pass. Controlled background-run responsiveness also completes phase 1's deferred scheduling check. Queue delegation uses the API and waits for backend-managed children; a 490-second delegation deadline fences late attempts. Supervisor recovery gets one fresh invocation, while the backend alone certifies completion and constructs the summary. No model-provider calls were made.
 
 ## Phase 5 — Visible queue plan and claim sources
 

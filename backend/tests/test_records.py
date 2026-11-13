@@ -75,7 +75,7 @@ def test_seed_allowlist_and_persistence(tmp_path, monkeypatch):
         ).fetchone()["body"]
         assert json.loads(body)["amount_claimed"] == 42000
     opened.clear()
-    with TestClient(create_app(db.path)) as reopened:
+    with TestClient(create_app(db.path, queue_runner=None)) as reopened:
         assert reopened.get("/api/claims/CLM-1001").json()["status"] == "decided"
         assert len(reopened.get("/api/claims").json()) == 25
     assert not opened
