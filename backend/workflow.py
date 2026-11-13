@@ -174,15 +174,27 @@ class Workflow:
             self._event(connection, decision["run_id"], "sign_off_recorded")
         return self.detail(claim_id)
 
-    def pay(self, claim_id: str, payment: PaymentInput) -> Claim:
+    def pay(
+        self, claim_id: str, payment: PaymentInput, run_id: str | None = None
+    ) -> Claim:
         self.store.claim(claim_id)
         limit = Decimal(
             str(self.store.get("company", "company")["payout_approval_limit"])
         )
         with self.store.transaction() as connection:
+            if run_id is not None:
+                run = active_attempt(connection, run_id)
+                require(run["claim_id"] == claim_id, "Payment belongs to another claim")
             decision = connection.execute(
                 "SELECT * FROM decisions WHERE claim_id = ?", (claim_id,)
             ).fetchone()
+            if decision is None:
+                raise HTTPException(409, "Record a decision before payment")
+            if run_id is not None:
+                require(
+                    decision["run_id"] == run_id,
+                    "Payment must use this attempt's decision",
+                )
             self._check_payment(connection, claim_id, decision, payment)
             signed = connection.execute(
                 "SELECT 1 FROM sign_offs WHERE claim_id = ?", (claim_id,)
@@ -216,12 +228,7 @@ class Workflow:
 
     def event(self, run_id: str, activity: Activity) -> None:
         with self.store.transaction() as connection:
-            run = connection.execute(
-                "SELECT status FROM runs WHERE run_id = ?", (run_id,)
-            ).fetchone()
-            if run is None:
-                raise HTTPException(404, "Run not found")
-            require(run["status"] == "running", "Run is no longer active")
+            active_attempt(connection, run_id)
             self._event(connection, run_id, activity)
 
     def events(self, claim_id: str) -> list[ActivityEvent]:
@@ -274,7 +281,6 @@ class Workflow:
 
     @staticmethod
     def _check_payment(connection, claim_id, decision, payment: PaymentInput) -> None:
-        require(decision is not None, "Record a decision before payment")
         require(decision["outcome"] == "approve", "Only approved claims can be paid")
         require(
             int(payment.amount * 100) == decision["payout_cents"],

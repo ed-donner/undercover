@@ -11,6 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 
 from agent.main import run as run_agent
+from backend.agent_payment import AgentPaymentInput
 from backend.documents import (
     Documents,
     ReadInput,
@@ -30,7 +31,7 @@ from backend.harness_models import (
     PlanInput,
     Start,
 )
-from backend.instructions import INSTRUCTIONS
+from backend.instructions import CLAIM_INSTRUCTIONS, INSTRUCTIONS, QUEUE_INSTRUCTIONS
 from backend.models import (
     ActivityEvent,
     ActivityInput,
@@ -154,6 +155,15 @@ def start_claim(
     return run
 
 
+@router.get("/instructions/{role}", operation_id="get_role_instructions")
+def role_instructions(role: str) -> TextDocument:
+    """Read the backend-owned instructions for the queue agent or claim helper."""
+    instructions = {"queue": QUEUE_INSTRUCTIONS, "claim": CLAIM_INSTRUCTIONS}
+    if role not in instructions:
+        raise HTTPException(404, "Instruction set not found")
+    return TextDocument(text=instructions[role])
+
+
 @router.get("/claims/{claim_id}/runs", operation_id="list_runs")
 def list_runs(claim_id: str, db: Database) -> list[Run]:
     """Read a claim's run history."""
@@ -263,6 +273,18 @@ def read_claim_source(claim_id: str, read: ReadInput, db: Database) -> SectionTe
 def claim_source_reads(claim_id: str, db: Database) -> list[ReadRecord]:
     """Read the exact source sections delivered on this claim's attempts."""
     return Documents(db).reads(claim_id)
+
+
+@router.post("/claims/{claim_id}/agent-payment", operation_id="agent_pay_claim")
+def agent_pay_claim(claim_id: str, payment: AgentPaymentInput, db: Database) -> Claim:
+    """Request simulated payment with the active claim attempt's authority."""
+    workflow = Workflow(db)
+    try:
+        return workflow.pay(claim_id, payment, payment.run_id)
+    except HTTPException as exc:
+        if exc.status_code == HTTPStatus.CONFLICT:
+            workflow.payment_blocked(claim_id)
+        raise
 
 
 app = create_app()

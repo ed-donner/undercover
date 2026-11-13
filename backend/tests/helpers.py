@@ -1,5 +1,7 @@
 """Explicit queue contracts shared by workflow tests."""
 
+import httpx
+
 from backend.documents import Documents, ReadInput
 from backend.harness import Harness
 from backend.harness_models import QueueStart, Task
@@ -43,3 +45,23 @@ def read_sources(store, run_id, claim_id="CLM-1001"):
                 claim_id,
                 ReadInput(run_id=run_id, document_id=document_id, section=section),
             )
+
+
+def http_backend(client):
+    def forward(request):
+        response = client.request(
+            request.method,
+            str(request.url),
+            content=request.content,
+            headers=request.headers,
+        )
+        return httpx.Response(
+            response.status_code,
+            content=response.content,
+            headers=response.headers,
+            request=request,
+        )
+
+    return httpx.Client(
+        base_url="http://testserver", transport=httpx.MockTransport(forward)
+    )

@@ -1,6 +1,6 @@
 # Status
 
-Harness implementation is in progress (`docs/PLAN_HARNESS.md`). Phases 1–2 add persistent top-level runs, ordered tasks, transactional caps/ownership, two-failure handler holds, additive schema migrations and allowlisted manual/wording section search/read with per-attempt provenance. Python checks pass: 77 tests, 99.80% coverage. Queue-worker scheduling and dashboard integration are not yet connected; the claim-start API requires a parent-run ID. The pilot below describes the starting build.
+Harness implementation is in progress (`docs/PLAN_HARNESS.md`). Phases 1–3 add persistent runs/tasks, caps/ownership, two-failure handler holds, additive migrations, auditable manual/wording lookup, fresh helpers, bounded transient retries, expired-attempt write fencing and lost-write-response reconciliation. Queue and claim instructions are backend-owned; the default is now `deepseek/deepseek-v4.1-flash` with low reasoning effort. Python checks pass: 89 tests, 99.08% coverage. Queue-worker scheduling and dashboard integration are not yet connected; the claim-start API requires a parent-run ID. The pilot below describes the starting build.
 
 The local claims pilot is implemented across all six phases of `docs/PLAN.md`.
 

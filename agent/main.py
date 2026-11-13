@@ -14,10 +14,12 @@ from langchain_core.tools import BaseTool, tool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, SecretStr
 
+from agent.middleware import claim_middleware, transient
+
 load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "openai/gpt-6-luna"
+DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash"
 
 
 class DecisionDraft(BaseModel):
@@ -46,7 +48,7 @@ def model() -> ChatOpenAI:
         api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
         reasoning_effort=None if name else "low",
         timeout=60,
-        max_retries=1,
+        max_retries=0,
     )
 
 
@@ -83,6 +85,47 @@ class ClaimTools:
             f"/api/runs/{self.run_id}/events", json={"activity": activity}
         )
         response.raise_for_status()
+
+    def write_decision(self, decision: DecisionDraft) -> str:
+        existing = self.get(self.path)
+        if existing["decision"] is not None:
+            return json.dumps(existing)
+        try:
+            response = self.client.post(
+                f"{self.path}/decision",
+                json={"run_id": self.run_id, **decision.model_dump()},
+            )
+            response.raise_for_status()
+            return response.text
+        except (httpx.TransportError, httpx.HTTPStatusError):
+            final = self.get(self.path)
+            if final["decision"] is not None:
+                return json.dumps(final)
+            raise
+
+    def payment(self, amount: str) -> str:
+        for attempt in range(2):
+            final = self.get(self.path)
+            if final["payment"] is not None:
+                return json.dumps(final)
+            try:
+                response = self.client.post(
+                    f"{self.path}/agent-payment",
+                    json={"amount": amount, "run_id": self.run_id},
+                )
+                if response.status_code == HTTPStatus.CONFLICT:
+                    return json.dumps(
+                        {"paid": False, "reason": response.json()["detail"]}
+                    )
+                response.raise_for_status()
+                return response.text
+            except (httpx.TransportError, httpx.HTTPStatusError) as error:
+                final = self.get(self.path)
+                if final["payment"] is not None:
+                    return json.dumps(final)
+                if attempt or not transient(error):
+                    raise
+        raise RuntimeError("Payment could not be reconciled")
 
     def tools(self) -> list[BaseTool]:
         @tool
@@ -129,22 +172,13 @@ class ClaimTools:
             if not self.context_read or self.documents_read != {"wording", "manual"}:
                 raise RuntimeError("Read context, wording and manual before deciding")
             self.event("decision_started")
-            response = self.client.post(
-                f"{self.path}/decision",
-                json={"run_id": self.run_id, **decision.model_dump()},
-            )
-            response.raise_for_status()
-            return response.text
+            return self.write_decision(decision)
 
         @tool
         def request_payment(amount: str) -> str:
             """Request a separate simulated USD payment; sign-off may block it."""
             self.event("payment_started")
-            response = self.client.post(f"{self.path}/payment", json={"amount": amount})
-            if response.status_code == HTTPStatus.CONFLICT:
-                return json.dumps({"paid": False, "reason": response.json()["detail"]})
-            response.raise_for_status()
-            return response.text
+            return self.payment(amount)
 
         return [
             read_context,
@@ -160,7 +194,7 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     """Decide one claim through the backend API using the supplied thread."""
     path = f"/api/claims/{quote(claim_id, safe='')}"
     with backend() as client:
-        instructions = client.get("/api/instructions")
+        instructions = client.get("/api/instructions/claim")
         instructions.raise_for_status()
         runs = client.get(f"{path}/runs")
         runs.raise_for_status()
@@ -176,10 +210,11 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
             llm or model(),
             tools=tools.tools(),
             system_prompt=instructions.json()["text"],
+            middleware=claim_middleware(tools.event),
         )
         result = agent.invoke(
             {"messages": [{"role": "user", "content": f"Process claim {claim_id}."}]},
-            config={"configurable": {"thread_id": thread_id}, "recursion_limit": 40},
+            config={"configurable": {"thread_id": thread_id}, "recursion_limit": 80},
         )
         final = tools.get(path)
         if final["decision"] is None:
@@ -190,5 +225,9 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
             and final["decision"]["payout"] <= limit
             and final["payment"] is None
         ):
-            raise RuntimeError("Agent finished without paying a below-limit approval")
+            tools.payment(str(final["decision"]["payout"]))
+            if tools.get(path)["payment"] is None:
+                raise RuntimeError(
+                    "Agent finished without paying a below-limit approval"
+                )
         return result["messages"][-1].text

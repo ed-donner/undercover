@@ -30,7 +30,7 @@ def test_queue_and_details(client):
     wording = client.get("/api/wording").json()
     assert wording["version"] == "2026.1"
     assert "## 10. How we work out your payment" in wording["text"]
-    assert "policy wording alone" in client.get("/api/instructions").json()["text"]
+    assert "claims manual" in client.get("/api/instructions").json()["text"]
 
 
 @pytest.mark.parametrize(

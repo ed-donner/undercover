@@ -1,5 +1,4 @@
 import json
-from contextlib import nullcontext
 from unittest.mock import Mock
 
 import pytest
@@ -9,7 +8,7 @@ from langchain_core.messages import AIMessage
 
 from agent import main
 from backend.main import create_app
-from backend.tests.helpers import start
+from backend.tests.helpers import http_backend, start
 
 
 class StubModel(GenericFakeChatModel):
@@ -22,7 +21,7 @@ class StubModel(GenericFakeChatModel):
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     with TestClient(create_app(tmp_path / "agent.db", runner=None)) as test_client:
-        monkeypatch.setattr(main, "backend", lambda: nullcontext(test_client))
+        monkeypatch.setattr(main, "backend", lambda: http_backend(test_client))
         yield test_client
 
 
@@ -155,7 +154,10 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
     monkeypatch.setattr(main, "create_agent", capture)
     active = start(client).json()
     main.run("CLM-1001", active["thread_id"], scripted_model())
-    assert captured["system_prompt"] == client.get("/api/instructions").json()["text"]
+    assert (
+        captured["system_prompt"]
+        == client.get("/api/instructions/claim").json()["text"]
+    )
     assert captured["agent"].invoke.call_args.kwargs["config"]["configurable"] == {
         "thread_id": active["thread_id"]
     }
@@ -165,22 +167,21 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
     )
 
 
-def test_missing_payment_is_not_a_completed_approval(client):
+def test_missing_payment_is_reconciled_without_redeciding(client):
     active = start(client).json()
     replies = list(scripted_model().messages)
     without_payment = StubModel(messages=iter([*replies[:-2], replies[-1]]))
-    with pytest.raises(RuntimeError, match="without paying"):
-        main.run("CLM-1001", active["thread_id"], without_payment)
+    main.run("CLM-1001", active["thread_id"], without_payment)
     claim = client.get("/api/claims/CLM-1001").json()
     assert claim["decision"]["outcome"] == "approve"
-    assert claim["payment"] is None
+    assert claim["payment"]["amount"] == 420
 
 
 def test_backend_tool_failure_does_not_record_a_decision(client):
     active = start(client).json()
     with client.app.state.store.transaction() as connection:
         connection.execute("DELETE FROM records WHERE kind = 'policies'")
-    with pytest.raises(Exception, match="404 Not Found"):
+    with pytest.raises(RuntimeError, match="Read context"):
         main.run("CLM-1001", active["thread_id"], scripted_model())
     assert client.get("/api/claims/CLM-1001").json()["decision"] is None
 
@@ -189,7 +190,7 @@ def test_model_configuration(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.delenv("MODEL_NAME", raising=False)
     default = main.model()
-    assert default.model_name == "openai/gpt-6-luna"
+    assert default.model_name == "deepseek/deepseek-v4.1-flash"
     assert default.reasoning_effort == "low"
     assert default.openai_api_base == main.OPENROUTER_BASE_URL
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")

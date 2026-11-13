@@ -85,13 +85,15 @@ Write separate backend-owned queue and claim instructions from the wording/manua
 
 ### Success criteria
 
-- [ ] Scripted-model tests complete approve/decline/refer/above-limit flows using context plus selected manual/wording sections; no full document is injected automatically and the backend receives the correct provenance.
-- [ ] Tests built from synthetic facts and the source rules cover third-claim referral by filing dates, wild-animal interpretation and receipt-free meal calculation. They neither read evaluator answers nor claim to measure model accuracy.
-- [ ] Tool isolation tests reject another claim's mutation, expired-attempt writes and sign-off attempts; two child attempts have distinct threads and contain no other claim's messages/evidence.
-- [ ] Injected timeout, rate-limit/provider and recoverable tool failures have finite retries. Invalid business requests are not blindly retried, and public errors contain no credentials, hidden reasoning or raw sensitive payloads.
-- [ ] Lost-response tests for decision and payment commits retain exactly one decision/payment. A post-decision failure preserves sign-off/payment state; unresolved payment is visibly distinct from successful completion.
-- [ ] Model-construction tests assert `deepseek/deepseek-v4.1-flash`, low default reasoning effort, OpenRouter configuration and `MODEL_NAME` override without making a provider call.
-- [ ] `npm run check:python` passes using stub models only.
+- [x] Scripted-model tests complete approve/decline/refer/above-limit flows using context plus selected manual/wording sections; no full document is injected automatically and the backend receives the correct provenance.
+- [x] Tests built from synthetic facts and the source rules cover third-claim referral by filing dates, wild-animal interpretation and receipt-free meal calculation. They neither read evaluator answers nor claim to measure model accuracy.
+- [x] Tool isolation tests reject another claim's mutation, expired-attempt writes and sign-off attempts; two child attempts have distinct threads and contain no other claim's messages/evidence.
+- [x] Injected timeout, rate-limit/provider and recoverable tool failures have finite retries. Invalid business requests are not blindly retried, and public errors contain no credentials, hidden reasoning or raw sensitive payloads.
+- [x] Lost-response tests for decision and payment commits retain exactly one decision/payment. A post-decision failure preserves sign-off/payment state; unresolved payment is visibly distinct from successful completion.
+- [x] Model-construction tests assert `deepseek/deepseek-v4.1-flash`, low default reasoning effort, OpenRouter configuration and `MODEL_NAME` override without making a provider call.
+- [x] `npm run check:python` passes using stub models only.
+
+Phase 3 verification: 89 Python tests passed with 99.08% coverage; ruff and pyright pass. Provider requests have a 60-second timeout, one transient middleware retry and no extra SDK retries. Claim attempts have an eight-minute backend-enforced write deadline and an 80-step agent limit. Agent payments are separately attempt-fenced. Scripted rule examples test source/decision plumbing, not model interpretation accuracy.
 
 ## Phase 4 — Agent-led queue processing and completion checks
 
