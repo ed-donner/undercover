@@ -10,7 +10,8 @@ import uvicorn
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
-from agent.main import backend, run
+from agent import api
+from agent.main import run
 from agent.queue import run_queue
 from backend.main import create_app
 
@@ -64,12 +65,10 @@ def scripted_model(claim_id: str) -> StubModel:
 
 
 def supervisor_model(run_id: str) -> StubModel:
-    path = f"/api/agent-runs/{run_id}"
-
     def messages():
-        with backend() as client:
+        with api.connect() as client:
             yield call("read_queue", {})
-            state = client.get(path).json()
+            state = client.run(run_id)
             selected = list(reversed(state["scope"][: state["max_claims"]]))
             initial = selected[:-1] if len(selected) > 1 else selected
             yield call(
@@ -80,7 +79,7 @@ def supervisor_model(run_id: str) -> StubModel:
                 yield from work(client, claim_id)
             yield call("check_completion", {})
             if initial != selected:
-                state = client.get(path).json()
+                state = client.run(run_id)
                 tasks = [
                     {"claim_id": task["claim_id"], "state": task["state"]}
                     for task in state["tasks"]
@@ -97,7 +96,7 @@ def supervisor_model(run_id: str) -> StubModel:
 def work(client, claim_id):
     yield call("delegate_claim", {"claim_id": claim_id})
     yield call("read_queue", {})
-    claim = client.get(f"/api/claims/{claim_id}").json()
+    claim = client.claim(claim_id)
     if claim["decision"] is None and not claim["needs_handler"]:
         yield call("delegate_claim", {"claim_id": claim_id})
         yield call("read_queue", {})

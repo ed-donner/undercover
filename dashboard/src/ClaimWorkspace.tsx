@@ -1,34 +1,10 @@
 import { useCallback } from "react";
-import { api, useResource } from "./api";
+import { claimsApi } from "./api";
 import { ClaimEvidence, CustomerPanel, PolicyPanel } from "./ClaimEvidence";
 import { ActivityPanel, ClaimActions, DecisionPanel } from "./DecisionPanel";
 import { money, words } from "./display";
-import { ClaimSources, SourceLibrary } from "./Sources";
-import type {
-  ActivityEvent,
-  Claim,
-  Customer,
-  Handler,
-  PlanDetails,
-  Policy,
-  Run,
-  Workspace,
-  SourceRead,
-} from "./types";
-
-async function loadWorkspace(id: string): Promise<Workspace> {
-  const claim = await api<Claim>(`/claims/${id}`);
-  const [policy, customer, handlers, runs, events, reads] = await Promise.all([
-    api<Policy>(`/policies/${claim.policy_id}`),
-    api<Customer>(`/customers/${claim.customer_id}`),
-    api<Handler[]>("/handlers"),
-    api<Run[]>(`/claims/${id}/runs`),
-    api<ActivityEvent[]>(`/claims/${id}/events`),
-    api<SourceRead[]>(`/claims/${id}/reads`),
-  ]);
-  const plan = await api<PlanDetails>(`/plans/${policy.plan}`);
-  return { claim, policy, customer, handlers, runs, events, plan, reads };
-}
+import { ClaimSources } from "./Sources";
+import { useResource } from "./useResource";
 
 export function ClaimWorkspace({
   id,
@@ -39,14 +15,14 @@ export function ClaimWorkspace({
   readonly onChange: () => void;
   readonly runActive?: boolean;
 }) {
-  const load = useCallback(() => loadWorkspace(id), [id]);
+  const load = useCallback(() => claimsApi.workspace(id), [id]);
   const resource = useResource(load);
   const data = resource.data;
   return (
     <div className="workspace" aria-label="Claim workspace">
       {resource.error && (
         <div className="error" role="alert">
-          {resource.error}{" "}
+          {resource.error}
           <button onClick={resource.reload}>Retry details</button>
         </div>
       )}
@@ -91,78 +67,6 @@ export function ClaimWorkspace({
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-const loadInstructions = () => api<{ text: string }>("/instructions/claim");
-const loadQueueInstructions = () =>
-  api<{ text: string }>("/instructions/queue");
-const loadWording = () => api<{ text: string; version: string }>("/wording");
-
-export function Instructions() {
-  const instructions = useResource(loadInstructions, 30000);
-  const queueInstructions = useResource(loadQueueInstructions, 30000);
-  const wording = useResource(loadWording, 30000);
-  return (
-    <div className="instructions-view">
-      <header className="claim-header">
-        <div>
-          <span className="eyebrow">UnderCover Agent</span>
-          <h2>Agent instructions & sources</h2>
-          <p>
-            Read only. The same instructions and wording the agent reads through
-            the API.
-          </p>
-        </div>
-      </header>
-      <section className="panel">
-        <h3>Queue instructions</h3>
-        {queueInstructions.error && (
-          <p className="error" role="alert">
-            {queueInstructions.error}
-            <button onClick={queueInstructions.reload}>
-              Retry queue instructions
-            </button>
-          </p>
-        )}
-        {queueInstructions.data ? (
-          <pre className="wording">{queueInstructions.data.text}</pre>
-        ) : (
-          !queueInstructions.error && (
-            <p role="status">Loading queue instructions…</p>
-          )
-        )}
-      </section>
-      {instructions.error && (
-        <p className="error" role="alert">
-          {instructions.error}{" "}
-          <button onClick={instructions.reload}>Retry instructions</button>
-        </p>
-      )}
-      <section className="panel">
-        <h3>Claim instructions</h3>
-        {instructions.data ? (
-          <pre className="wording">{instructions.data.text}</pre>
-        ) : (
-          <p role="status">Loading instructions…</p>
-        )}
-      </section>
-      <SourceLibrary />
-      {wording.error && (
-        <p className="error" role="alert">
-          {wording.error}{" "}
-          <button onClick={wording.reload}>Retry wording</button>
-        </p>
-      )}
-      <section className="panel">
-        <h3>Policy wording {wording.data?.version}</h3>
-        {wording.data ? (
-          <pre className="wording">{wording.data.text}</pre>
-        ) : (
-          <p role="status">Loading policy wording…</p>
-        )}
-      </section>
     </div>
   );
 }

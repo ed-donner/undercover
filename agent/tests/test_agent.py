@@ -1,14 +1,15 @@
-import json
 from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
+from langchain_core.utils.function_calling import convert_to_openai_tool
 
-from agent import main
+from agent import api, claims, harness, main, model, tools
+from agent.context import RunContext, RunState
 from backend.main import create_app
-from backend.tests.helpers import http_backend, start
+from backend.tests.helpers import agent_backend, start
 
 
 class StubModel(GenericFakeChatModel):
@@ -23,7 +24,7 @@ def client(tmp_path, monkeypatch):
     with TestClient(
         create_app(tmp_path / "agent.db", runner=None, queue_runner=None)
     ) as test_client:
-        monkeypatch.setattr(main, "backend", lambda: http_backend(test_client))
+        monkeypatch.setattr(api, "connect", lambda: agent_backend(test_client))
         yield test_client
 
 
@@ -90,8 +91,8 @@ def test_run(client, outcome, payout, paid):
 
 def test_scoped_tools_and_api_context(client):
     active = start(client).json()
-    tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
-    assert [item.name for item in tools] == [
+    assert active["run_id"]
+    assert [item.name for item in tools.CLAIM_TOOLS] == [
         "read_context",
         "list_sections",
         "search_sections",
@@ -99,37 +100,46 @@ def test_scoped_tools_and_api_context(client):
         "record_decision",
         "request_payment",
     ]
-    for item in tools:
-        assert "claim_id" not in item.args
-        assert "url" not in item.args
-        assert "path" not in item.args
-    context = json.loads(tools[0].invoke({}))
+    for item in tools.CLAIM_TOOLS:
+        properties = convert_to_openai_tool(item)["function"]["parameters"][
+            "properties"
+        ]
+        assert not {"claim_id", "url", "path", "runtime", "run_id"} & properties.keys()
+    with agent_backend(client) as backend:
+        context = claims.context(backend, "CLM-1001")
+        section = backend.read_section("CLM-1001", active["run_id"], "wording", 3)
     assert context["claim"]["claim_id"] == "CLM-1001"
     assert context["policy"]["policy_id"] == "POL-2001"
     assert context["customer"]["previous_claims"]
     assert context["plan"]["plan"]["plan"] == "premium"
     assert "repeat_claim_review" not in context["company"]
-    assert "## 3. Trip Delay" in tools[3].invoke(
-        {"document_id": "wording", "section": 3}
-    )
+    assert "## 3. Trip Delay" in section["text"]
 
 
 def test_must_read_before_deciding(client):
     active = start(client).json()
-    tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
     with pytest.raises(RuntimeError, match="Read context"):
-        tools[4].invoke(
-            {
-                "decision": {
-                    "outcome": "refer",
-                    "payout": "0",
-                    "calculation": "No payout.",
-                    "explanation": "Missing evidence. Please review.",
-                    "policy_sections": [11],
-                    "manual_version": "2026.2",
-                    "manual_sections": [4],
-                }
-            }
+        main.run(
+            "CLM-1001",
+            active["thread_id"],
+            StubModel(
+                messages=iter(
+                    [
+                        call(
+                            "record_decision",
+                            {
+                                "outcome": "refer",
+                                "payout": "0",
+                                "calculation": "No payout.",
+                                "explanation": "Missing evidence. Please review.",
+                                "policy_sections": [11],
+                                "manual_version": "2026.2",
+                                "manual_sections": [4],
+                            },
+                        )
+                    ]
+                )
+            ),
         )
     assert client.get("/api/claims/CLM-1001").json()["decision"] is None
 
@@ -145,7 +155,7 @@ def test_failures_are_not_success(client):
 
 
 def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
-    original = main.create_agent
+    original = harness.create_agent
     captured = {}
 
     def capture(*args, **kwargs):
@@ -153,7 +163,7 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
         captured["agent"] = Mock(wraps=original(*args, **kwargs))
         return captured["agent"]
 
-    monkeypatch.setattr(main, "create_agent", capture)
+    monkeypatch.setattr(harness, "create_agent", capture)
     active = start(client).json()
     main.run("CLM-1001", active["thread_id"], scripted_model())
     assert (
@@ -163,6 +173,12 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
     assert captured["agent"].invoke.call_args.kwargs["config"]["configurable"] == {
         "thread_id": active["thread_id"]
     }
+    assert captured["context_schema"] is RunContext
+    assert captured["state_schema"] is RunState
+    context = captured["agent"].invoke.call_args.kwargs["context"]
+    assert isinstance(context, RunContext)
+    assert context.claim_id == "CLM-1001"
+    assert context.run_id == active["run_id"]
     assert (
         client.get("/api/claims/CLM-1001").json()["decision"]["run_id"]
         == active["run_id"]
@@ -179,6 +195,14 @@ def test_missing_payment_is_reconciled_without_redeciding(client):
     assert claim["payment"]["amount"] == 420
 
 
+def test_context_read_state_is_not_shared_between_invocations(client):
+    active = start(client).json()
+    main.run("CLM-1001", active["thread_id"], scripted_model())
+    replies = list(scripted_model().messages)
+    with pytest.raises(RuntimeError, match="Read context"):
+        main.run("CLM-1001", active["thread_id"], StubModel(messages=iter(replies[1:])))
+
+
 def test_backend_tool_failure_does_not_record_a_decision(client):
     active = start(client).json()
     with client.app.state.store.transaction() as connection:
@@ -191,17 +215,17 @@ def test_backend_tool_failure_does_not_record_a_decision(client):
 def test_model_configuration(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     monkeypatch.delenv("MODEL_NAME", raising=False)
-    default = main.model()
+    default = model.model()
     assert default.model_name == "deepseek/deepseek-v4.1-flash"
     assert default.reasoning_effort == "low"
-    assert default.openai_api_base == main.OPENROUTER_BASE_URL
+    assert default.openai_api_base == model.OPENROUTER_BASE_URL
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")
-    custom = main.model()
+    custom = model.model()
     assert custom.model_name == "openrouter/free"
     assert custom.reasoning_effort is None
 
 
 def test_backend_configuration(monkeypatch):
     monkeypatch.setenv("BACKEND_URL", "http://127.0.0.1:8123")
-    with main.backend() as client:
-        assert str(client.base_url) == "http://127.0.0.1:8123"
+    with api.connect() as backend:
+        assert str(backend.client.base_url) == "http://127.0.0.1:8123"

@@ -1,6 +1,8 @@
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { api, useResource } from "./api";
+import { api, claimsApi, documentsApi, runsApi } from "./api";
+import { fixture } from "../test-fixtures";
+import { useResource } from "./useResource";
 
 afterEach(() => {
   cleanup();
@@ -14,6 +16,27 @@ it("handles non-string API validation details", async () => {
     vi.fn().mockResolvedValue(Response.json({ detail: [] }, { status: 422 })),
   );
   await expect(api("/claims")).rejects.toThrow("Request failed (422).");
+});
+
+it("encodes identifiers in named API operations", async () => {
+  const data = fixture();
+  await claimsApi.signOff("CLM/one ?", "HND-01");
+  expect(data.fetcher).toHaveBeenCalledWith(
+    "/api/claims/CLM%2Fone%20%3F/sign-off",
+    expect.objectContaining({ body: '{"handler_id":"HND-01"}' }),
+  );
+  await documentsApi.section("manual/one", 9);
+  expect(data.fetcher).toHaveBeenCalledWith(
+    "/api/documents/manual%2Fone/sections/9",
+    undefined,
+  );
+  await runsApi.startClaim("CLM/one ?");
+  expect(data.fetcher).toHaveBeenCalledWith(
+    "/api/agent-runs",
+    expect.objectContaining({
+      body: '{"mode":"claim","claim_id":"CLM/one ?"}',
+    }),
+  );
 });
 
 it("does not overlap polls or update an unmounted component", async () => {

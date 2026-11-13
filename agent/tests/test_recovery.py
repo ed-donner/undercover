@@ -8,12 +8,12 @@ from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage
 from langgraph.errors import GraphRecursionError
 
-from agent import main
+from agent import api, harness, main
 from agent.middleware import PublicActivity, transient
 from agent.tests.test_agent import StubModel, call, scripted_model
 from backend.harness import Harness
 from backend.main import create_app
-from backend.tests.helpers import http_backend, start
+from backend.tests.helpers import agent_backend, start
 from backend.workflow import Workflow
 
 
@@ -22,7 +22,7 @@ def client(tmp_path, monkeypatch):
     with TestClient(
         create_app(tmp_path / "recovery.db", runner=None, queue_runner=None)
     ) as test_client:
-        monkeypatch.setattr(main, "backend", lambda: http_backend(test_client))
+        monkeypatch.setattr(api, "connect", lambda: agent_backend(test_client))
         yield test_client
 
 
@@ -187,14 +187,14 @@ def test_rejected_step_can_be_corrected_without_sensitive_error(client):
 
 def test_fresh_helpers_never_share_messages(client, monkeypatch):
     captured = []
-    original = main.create_agent
+    original = harness.create_agent
 
     def capture(*args, **kwargs):
         agent = Mock(wraps=original(*args, **kwargs))
         captured.append(agent)
         return agent
 
-    monkeypatch.setattr(main, "create_agent", capture)
+    monkeypatch.setattr(harness, "create_agent", capture)
     first = start(client).json()
     main.run("CLM-1001", first["thread_id"], scripted_model())
     Workflow(client.app.state.store).finish(first["run_id"], None)
@@ -272,8 +272,7 @@ def test_synthetic_manual_workflows(client, story, outcome, payout, section):
 def test_role_instructions_and_retry_classification(client):
     assert client.get("/api/instructions/no").status_code == 404
     assert (
-        "Delegate one claim at a time"
-        in client.get("/api/instructions/queue").json()["text"]
+        "Choose your own order" in client.get("/api/instructions/queue").json()["text"]
     )
     assert not transient(ValueError("invalid"))
     request = httpx.Request("GET", "http://test")

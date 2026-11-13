@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
-import { api, useResource } from "./api";
-import type { SectionInfo, SectionText, SourceRead } from "./types";
+import { documentsApi } from "./api";
+import { useResource } from "./useResource";
+import type { SectionInfo, SourceRead } from "./types";
 
 export function ClaimSources({ reads }: { readonly reads: SourceRead[] }) {
   const attempts = [...new Set(reads.map((read) => read.run_id))];
@@ -38,10 +39,7 @@ export function ClaimSources({ reads }: { readonly reads: SourceRead[] }) {
 
 function LibrarySection({ section }: { readonly section: SectionInfo }) {
   const load = useCallback(
-    () =>
-      api<SectionText>(
-        `/documents/${section.document_id}/sections/${String(section.section)}`,
-      ),
+    () => documentsApi.section(section.document_id, section.section),
     [section.document_id, section.section],
   );
   const resource = useResource(load, 30000);
@@ -62,10 +60,8 @@ function LibrarySection({ section }: { readonly section: SectionInfo }) {
   );
 }
 
-const loadCatalog = () => api<SectionInfo[]>("/documents");
-
 export function SourceLibrary() {
-  const catalog = useResource(loadCatalog, 30000);
+  const catalog = useResource(documentsApi.catalog, 30000);
   const [selected, setSelected] = useState<SectionInfo>();
   return (
     <section className="panel" aria-labelledby="library-title">

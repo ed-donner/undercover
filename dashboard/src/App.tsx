@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { api, useResource } from "./api";
-import { ClaimWorkspace, Instructions } from "./ClaimWorkspace";
-import { money, statuses, words } from "./display";
-import type { AgentRun, QueueEntry, QueueStatus } from "./types";
+import { claimsApi, runsApi } from "./api";
+import { useResource } from "./useResource";
+import { ClaimWorkspace } from "./ClaimWorkspace";
+import { Instructions } from "./Instructions";
+import { statuses } from "./display";
+import { ClaimCard } from "./ClaimCard";
+import type { QueueStatus } from "./types";
 import { QueueRunPanel } from "./QueueRunPanel";
 import "./styles.css";
 
-const loadQueue = () => api<QueueEntry[]>("/claims");
-const loadRuns = () => api<AgentRun[]>("/agent-runs");
 const stateKeys = Object.keys(statuses) as QueueStatus[];
 
 export function App() {
-  const queue = useResource(loadQueue);
-  const runs = useResource(loadRuns);
+  const queue = useResource(claimsApi.list);
+  const runs = useResource(runsApi.list);
   const [view, setView] = useState<"claims" | "instructions">("claims");
   const [selected, setSelected] = useState<string>();
   const [search, setSearch] = useState("");
@@ -140,34 +141,12 @@ export function App() {
                   </select>
                   <div className="queue-list">
                     {visible.map((claim) => (
-                      <button
-                        className={`claim-card ${activeId === claim.claim_id ? "selected" : ""}`}
+                      <ClaimCard
                         key={claim.claim_id}
-                        aria-pressed={activeId === claim.claim_id}
-                        onClick={() => {
-                          setSelected(claim.claim_id);
-                        }}
-                      >
-                        <span className="card-top">
-                          <span className="mono">{claim.claim_id}</span>
-                          <span className={`status ${claim.status}`}>
-                            {statuses[claim.status]}
-                          </span>
-                          {claim.needs_handler && (
-                            <span className="handler-label">
-                              Handler review
-                            </span>
-                          )}
-                        </span>
-                        <strong>{claim.customer_name}</strong>
-                        <span className="claim-summary">{claim.summary}</span>
-                        <span className="card-bottom">
-                          <span>{words(claim.claim_type)}</span>
-                          <span className="mono">
-                            {money(claim.amount_claimed)}
-                          </span>
-                        </span>
-                      </button>
+                        claim={claim}
+                        selected={activeId === claim.claim_id}
+                        select={setSelected}
+                      />
                     ))}
                     {visible.length === 0 && (
                       <p className="empty-queue">

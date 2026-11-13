@@ -4,6 +4,7 @@ import json
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from http import HTTPStatus
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -87,8 +88,11 @@ class Workflow:
             ).rowcount
             require(changed == 1, "Claim is not waiting")
             connection.execute(
-                "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                tuple(run.model_dump().values()),
+                "INSERT INTO runs (run_id, claim_id, thread_id, status, started_at, "
+                "finished_at, error, parent_run_id, deadline) "
+                "VALUES (:run_id, :claim_id, :thread_id, :status, :started_at, "
+                ":finished_at, :error, :parent_run_id, :deadline)",
+                run.model_dump(),
             )
             self._event(connection, run.run_id, "run_started")
         return run
@@ -108,10 +112,7 @@ class Workflow:
         )
         status = "waiting_for_sign_off" if decision.payout > limit else "decided"
         with self.store.transaction() as connection:
-            run = connection.execute(
-                "SELECT * FROM runs WHERE run_id = ?", (decision.run_id,)
-            ).fetchone()
-            active_attempt(connection, decision.run_id)
+            run = active_attempt(connection, decision.run_id)
             validate_references(
                 connection,
                 decision.run_id,
@@ -120,9 +121,7 @@ class Workflow:
                 decision.manual_version,
             )
             require(
-                run is not None
-                and run["claim_id"] == claim_id
-                and run["status"] == "running",
+                run["claim_id"] == claim_id,
                 "Decision must belong to this claim's active run",
             )
             require(
@@ -133,7 +132,10 @@ class Workflow:
                 "Claim already has a decision",
             )
             connection.execute(
-                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO decisions (claim_id, run_id, outcome, payout_cents, "
+                "calculation, explanation, policy_sections, recorded_at, "
+                "manual_version, manual_sections) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     claim_id,
                     decision.run_id,
@@ -165,7 +167,8 @@ class Workflow:
             ).rowcount
             require(changed == 1, "Claim is not waiting for sign-off")
             connection.execute(
-                "INSERT INTO sign_offs VALUES (?, ?, ?)",
+                "INSERT INTO sign_offs (claim_id, handler_id, signed_at) "
+                "VALUES (?, ?, ?)",
                 (claim_id, sign_off.handler_id, now()),
             )
             decision = connection.execute(
@@ -204,7 +207,8 @@ class Workflow:
                 "Handler sign-off required before payment",
             )
             connection.execute(
-                "INSERT INTO payments VALUES (?, ?, ?)",
+                "INSERT INTO payments (claim_id, amount_cents, paid_at) "
+                "VALUES (?, ?, ?)",
                 (claim_id, int(payment.amount * 100), now()),
             )
             self._event(connection, decision["run_id"], "payment_recorded")
@@ -218,6 +222,27 @@ class Workflow:
             ).fetchone()
             if run:
                 self._event(connection, run["run_id"], "payment_blocked")
+
+    def request_payment(
+        self, claim_id: str, payment: PaymentInput, run_id: str | None = None
+    ) -> Claim:
+        try:
+            return self.pay(claim_id, payment, run_id)
+        except HTTPException as error:
+            if error.status_code == HTTPStatus.CONFLICT:
+                self.payment_blocked(claim_id)
+            raise
+
+    def close_attempt(self, run_id: str, error: str | None) -> None:
+        with self.store.connect() as connection:
+            if (
+                connection.execute(
+                    "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+                ).fetchone()
+                is None
+            ):
+                raise HTTPException(404, "Run not found")
+        self.finish(run_id, error)
 
     @staticmethod
     def _event(connection: sqlite3.Connection, run_id: str, kind: str) -> None:

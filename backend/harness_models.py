@@ -2,11 +2,9 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
-
-class Input(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+from backend.contracts import Input
 
 
 class QueueStart(Input):
@@ -61,6 +59,7 @@ class AgentRun(BaseModel):
     error: str | None
     checked: bool
     tasks: list[Todo]
+    technical_issues: int
 
 
 class Completion(BaseModel):

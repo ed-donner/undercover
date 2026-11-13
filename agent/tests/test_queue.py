@@ -5,14 +5,14 @@ import pytest
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage
 
-from agent import main, queue
+from agent import api, delegation, main, queue
 from agent.tests.test_agent import StubModel, call, scripted_model
 from backend.execution import execute_queue
 from backend.harness import Harness
 from backend.harness_models import Task
 from backend.main import create_app
 from backend.store import Store
-from backend.tests.helpers import http_backend
+from backend.tests.helpers import agent_backend
 from backend.workflow import Workflow
 
 
@@ -52,9 +52,8 @@ def setup(tmp_path, monkeypatch):
     with TestClient(
         create_app(tmp_path / "queue.db", runner=child, queue_runner=None)
     ) as client:
-        monkeypatch.setattr(main, "backend", lambda: http_backend(client))
-        monkeypatch.setattr(queue, "backend", lambda: http_backend(client))
-        monkeypatch.setattr(queue, "POLL_SECONDS", 0.001)
+        monkeypatch.setattr(api, "connect", lambda: agent_backend(client))
+        monkeypatch.setattr(delegation, "POLL_SECONDS", 0.001)
         yield client, failures, seen
 
 
@@ -230,10 +229,10 @@ def test_delegation_timeout_fences_child_before_return(tmp_path, monkeypatch):
             f"/api/agent-runs/{run['run_id']}/tasks",
             json={"tasks": [{"claim_id": "CLM-1001", "state": "todo"}]},
         )
-        monkeypatch.setattr(queue, "DELEGATION_SECONDS", -1)
+        monkeypatch.setattr(delegation, "DELEGATION_SECONDS", -1)
         try:
-            with http_backend(client) as backend:
-                line = queue.QueueTools(backend, run["run_id"]).delegate("CLM-1001")
+            with agent_backend(client) as backend:
+                line = delegation.delegate(backend, run["run_id"], "CLM-1001")
             assert "retry available" in line
             assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
             assert (

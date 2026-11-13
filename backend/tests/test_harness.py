@@ -46,6 +46,7 @@ def test_creation_contract(client):
     assert run["max_claims"] == 5
     assert len(run["scope"]) == 25
     assert run["tasks"] == []
+    assert run["technical_issues"] == 0
     assert client.post("/api/claims/CLM-1001/runs").status_code == 422
     assert client.get("/api/health").status_code == 200
     assert client.get("/api/agent-runs/no").status_code == 404
@@ -126,6 +127,7 @@ def test_two_failures_persist_handler_hold(client):
     assert harness.check(run["run_id"]).ready
     completed = harness.finish(run["run_id"], None)
     assert completed.tasks[0].state == "needs_handler"
+    assert completed.technical_issues == 1
     assert "1 left for a handler" in completed.summary
     assert (
         client.post(
@@ -155,6 +157,7 @@ def test_cap_reconciliation_and_persistence(client):
     assert final.checked
     assert final.tasks[0].state == "done"
     assert final.tasks[0].admitted
+    assert final.technical_issues == 0
     reopened = Harness(Store(client.app.state.store.path)).get(key)
     assert reopened == final
     assert (
@@ -179,7 +182,9 @@ def test_named_scope_and_terminal_tasks(client):
     workflow.finish(workflow.runs("CLM-1001")[0].run_id, None)
     harness = Harness(client.app.state.store)
     assert harness.check(key).ready
-    assert harness.finish(key, None).tasks[0].reason == "Referred for business review"
+    final = harness.finish(key, None)
+    assert final.tasks[0].reason == "Referred for business review"
+    assert final.technical_issues == 0
 
 
 def test_migrate_legacy_schema(tmp_path):
@@ -240,6 +245,12 @@ def test_unpaid_task_is_left_for_handler(client, outcome, payout, reason):
     attempt = workflow.runs("CLM-1001")[0]
     workflow.finish(attempt.run_id, None)
     assert attempt.parent_run_id is not None
-    task = Harness(client.app.state.store).get(attempt.parent_run_id).tasks[0]
+    run = Harness(client.app.state.store).get(attempt.parent_run_id)
+    task = run.tasks[0]
     assert task.state == "needs_handler"
     assert reason in task.reason
+    assert run.technical_issues == (1 if reason == "unresolved" else 0)
+    with client.app.state.store.transaction() as connection:
+        connection.execute("UPDATE todos SET reason = 'Changed display wording'")
+    refreshed = client.get(f"/api/agent-runs/{run.run_id}").json()
+    assert refreshed["technical_issues"] == run.technical_issues

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { post } from "./api";
+import { claimsApi, runsApi } from "./api";
 import { money, statuses } from "./display";
 import type { ActivityEvent, Claim, Handler, Run } from "./types";
 
@@ -63,13 +63,6 @@ export function DecisionPanel({ claim }: { readonly claim: Claim }) {
   );
 }
 
-async function performAction(claimId: string, suffix: string, body: object) {
-  return post(
-    suffix === "runs" ? "/agent-runs" : `/claims/${claimId}/${suffix}`,
-    suffix === "runs" ? { mode: "claim", claim_id: claimId } : body,
-  );
-}
-
 function needsPayment(claim: Claim) {
   return (
     claim.status === "decided" &&
@@ -95,11 +88,11 @@ export function ClaimActions({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const failed = runs.at(-1)?.status === "failed";
-  async function act(suffix: string, body: object = {}) {
+  async function act(action: () => Promise<unknown>) {
     setBusy(true);
     setError(undefined);
     try {
-      await performAction(claim.claim_id, suffix, body);
+      await action();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Action failed.");
     } finally {
@@ -128,7 +121,7 @@ export function ClaimActions({
         <button
           className="primary"
           disabled={busy || runActive}
-          onClick={() => void act("runs")}
+          onClick={() => void act(() => runsApi.startClaim(claim.claim_id))}
         >
           {failed ? "Retry claim" : "Process claim"}
           <span aria-hidden="true"> ↗</span>
@@ -162,22 +155,21 @@ export function ClaimActions({
           <button
             className="primary"
             disabled={busy || !handler}
-            onClick={() => void act("sign-off", { handler_id: handler })}
+            onClick={() =>
+              void act(() => claimsApi.signOff(claim.claim_id, handler))
+            }
           >
             Sign off payout
           </button>
         </div>
       )}
-      {needsPayment(claim) && (
-        <button
-          className="primary"
-          disabled={busy}
-          onClick={() =>
-            void act("payment", { amount: claim.decision?.payout })
-          }
-        >
-          Record simulated payment
-        </button>
+      {claim.decision && needsPayment(claim) && (
+        <PaymentButton
+          claimId={claim.claim_id}
+          payout={claim.decision.payout}
+          busy={busy}
+          act={act}
+        />
       )}
       {error && (
         <p role="alert" className="error">
@@ -185,6 +177,28 @@ export function ClaimActions({
         </p>
       )}
     </section>
+  );
+}
+
+function PaymentButton({
+  claimId,
+  payout,
+  busy,
+  act,
+}: {
+  readonly claimId: string;
+  readonly payout: number;
+  readonly busy: boolean;
+  readonly act: (action: () => Promise<unknown>) => Promise<void>;
+}) {
+  return (
+    <button
+      className="primary"
+      disabled={busy}
+      onClick={() => void act(() => claimsApi.pay(claimId, payout))}
+    >
+      Record simulated payment
+    </button>
   );
 }
 

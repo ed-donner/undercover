@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
-from backend.harness_models import Input
+from backend.contracts import Input
 from backend.run_state import active_attempt, now, require
 
 if TYPE_CHECKING:

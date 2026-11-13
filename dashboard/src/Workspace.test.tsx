@@ -8,7 +8,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { approve, fixture } from "../test-fixtures";
-import { ClaimWorkspace, Instructions } from "./ClaimWorkspace";
+import { ClaimWorkspace } from "./ClaimWorkspace";
+import { Instructions } from "./Instructions";
 import { ActivityPanel, ClaimActions, DecisionPanel } from "./DecisionPanel";
 
 afterEach(() => {

@@ -1,7 +1,10 @@
 """Explicit queue contracts shared by workflow tests."""
 
+from contextlib import contextmanager
+
 import httpx
 
+from agent.api import BackendAPI
 from backend.documents import Documents, ReadInput
 from backend.harness import Harness
 from backend.harness_models import QueueStart, Task
@@ -65,3 +68,9 @@ def http_backend(client):
     return httpx.Client(
         base_url="http://testserver", transport=httpx.MockTransport(forward)
     )
+
+
+@contextmanager
+def agent_backend(client):
+    with http_backend(client) as transport:
+        yield BackendAPI(transport)

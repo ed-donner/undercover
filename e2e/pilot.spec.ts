@@ -43,7 +43,9 @@ test("shows full records, instructions and a paid below-limit approval", async (
   await expect(
     page.getByRole("heading", { name: "Claim instructions", exact: true }),
   ).toBeVisible();
-  await expect(page.getByText(/The wording is the contract/)).toBeVisible();
+  await expect(
+    page.getByText(/The policy wording is the contract/),
+  ).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await page.keyboard.press("Shift+Tab");
   await expect(

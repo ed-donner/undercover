@@ -1,14 +1,26 @@
 import json
 import runpy
 import sys
+from contextlib import contextmanager
 
 import httpx
 import pytest
 
-from agent import cli
+from agent import api, cli
 
 
-def setup_backend(monkeypatch, status="completed", tasks=None, error=None):
+def backend_factory(handler):
+    @contextmanager
+    def connect():
+        with httpx.Client(
+            base_url="http://test", transport=httpx.MockTransport(handler)
+        ) as client:
+            yield api.BackendAPI(client)
+
+    return connect
+
+
+def setup_backend(monkeypatch, status="completed", technical_issues=0, error=None):
     calls = []
     reads = []
 
@@ -22,17 +34,15 @@ def setup_backend(monkeypatch, status="completed", tasks=None, error=None):
             json={
                 "status": "running" if len(reads) == 1 else status,
                 "summary": "5 claims worked.",
-                "tasks": tasks or [],
+                "technical_issues": technical_issues,
                 "error": error,
             },
         )
 
     monkeypatch.setattr(
-        cli,
-        "backend",
-        lambda: httpx.Client(
-            base_url="http://test", transport=httpx.MockTransport(handler)
-        ),
+        api,
+        "connect",
+        backend_factory(handler),
     )
     monkeypatch.setattr(cli, "POLL_SECONDS", 0)
     return calls
@@ -83,11 +93,9 @@ def test_cannot_start(monkeypatch, capsys, status):
         return httpx.Response(status, json={"detail": "Not eligible"})
 
     monkeypatch.setattr(
-        cli,
-        "backend",
-        lambda: httpx.Client(
-            base_url="http://test", transport=httpx.MockTransport(handler)
-        ),
+        api,
+        "connect",
+        backend_factory(handler),
     )
     with pytest.raises(SystemExit) as error:
         cli.main(["CLM-1001"])
@@ -101,15 +109,13 @@ def test_technical_failure_exit_code(monkeypatch, capsys):
         cli.main([])
     assert error.value.code == 1
     assert "Agent could not finish." in capsys.readouterr().out
-    setup_backend(
-        monkeypatch, tasks=[{"reason": "Two attempts failed; handler review required"}]
-    )
+    setup_backend(monkeypatch, technical_issues=1)
     with pytest.raises(SystemExit):
         cli.main([])
 
 
 def test_business_referral_is_not_a_technical_failure(monkeypatch):
-    setup_backend(monkeypatch, tasks=[{"reason": "Referred for business review"}])
+    setup_backend(monkeypatch, technical_issues=0)
     cli.main([])
 
 
@@ -118,11 +124,9 @@ def test_unreachable_backend(monkeypatch):
         raise httpx.ConnectError("refused")
 
     monkeypatch.setattr(
-        cli,
-        "backend",
-        lambda: httpx.Client(
-            base_url="http://test", transport=httpx.MockTransport(handler)
-        ),
+        api,
+        "connect",
+        backend_factory(handler),
     )
     with pytest.raises(SystemExit, match="npm run dev"):
         cli.main([])
