@@ -12,12 +12,22 @@ from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool, tool
 from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
+from pydantic import BaseModel, SecretStr
 
 load_dotenv()
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-6-luna"
+
+
+class DecisionDraft(BaseModel):
+    outcome: Literal["approve", "decline", "refer"]
+    payout: str
+    calculation: str
+    explanation: str
+    policy_sections: list[int]
+    manual_sections: list[int]
+    manual_version: str
 
 
 def backend() -> httpx.Client:
@@ -46,7 +56,7 @@ class ClaimTools:
         self.path = f"/api/claims/{quote(claim_id, safe='')}"
         self.run_id = run_id
         self.context_read = False
-        self.wording_read = False
+        self.documents_read: set[str] = set()
 
     def get(self, path: str):
         response = self.client.get(path)
@@ -84,36 +94,44 @@ class ClaimTools:
             return result
 
         @tool
-        def read_wording() -> str:
-            """Read the full policy wording used to decide coverage and payout."""
-            self.event("wording_started")
-            wording = self.get("/api/wording")
-            self.wording_read = True
-            self.event("wording_read")
-            return json.dumps(wording)
+        def list_sections() -> str:
+            """List section titles and versions for the wording and claims manual."""
+            return json.dumps(self.get("/api/documents"))
 
         @tool
-        def record_decision(
-            outcome: Literal["approve", "decline", "refer"],
-            payout: str,
-            calculation: str,
-            explanation: str,
-            policy_sections: list[int],
-        ) -> str:
+        def search_sections(document_id: str, query: str) -> str:
+            """Search wording or manual sections and return short excerpts."""
+            response = self.client.post(
+                "/api/documents/search",
+                json={"document_id": document_id, "query": query},
+            )
+            response.raise_for_status()
+            return response.text
+
+        @tool
+        def read_section(document_id: str, section: int) -> str:
+            """Read and audit a complete numbered wording or manual section."""
+            response = self.client.post(
+                f"{self.path}/reads",
+                json={
+                    "run_id": self.run_id,
+                    "document_id": document_id,
+                    "section": section,
+                },
+            )
+            response.raise_for_status()
+            self.documents_read.add(document_id)
+            return response.text
+
+        @tool
+        def record_decision(decision: DecisionDraft) -> str:
             """Record a decision with a USD payout and policy section numbers."""
-            if not self.context_read or not self.wording_read:
-                raise RuntimeError("Read context and wording before deciding")
+            if not self.context_read or self.documents_read != {"wording", "manual"}:
+                raise RuntimeError("Read context, wording and manual before deciding")
             self.event("decision_started")
             response = self.client.post(
                 f"{self.path}/decision",
-                json={
-                    "run_id": self.run_id,
-                    "outcome": outcome,
-                    "payout": payout,
-                    "calculation": calculation,
-                    "explanation": explanation,
-                    "policy_sections": policy_sections,
-                },
+                json={"run_id": self.run_id, **decision.model_dump()},
             )
             response.raise_for_status()
             return response.text
@@ -128,7 +146,14 @@ class ClaimTools:
             response.raise_for_status()
             return response.text
 
-        return [read_context, read_wording, record_decision, request_payment]
+        return [
+            read_context,
+            list_sections,
+            search_sections,
+            read_section,
+            record_decision,
+            request_payment,
+        ]
 
 
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:

@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from backend.documents import seed_documents
 from backend.migrations import migrate
 from backend.models import Company
 
@@ -119,6 +120,7 @@ class Store:
             """)
             migrate(connection)
         with self.transaction() as connection:
+            seed_documents(connection, DATA_DIR)
             if connection.execute("SELECT 1 FROM records LIMIT 1").fetchone():
                 return
             self._seed(connection)

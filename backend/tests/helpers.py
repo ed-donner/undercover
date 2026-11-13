@@ -1,5 +1,6 @@
 """Explicit queue contracts shared by workflow tests."""
 
+from backend.documents import Documents, ReadInput
 from backend.harness import Harness
 from backend.harness_models import QueueStart, Task
 
@@ -32,3 +33,13 @@ def start_workflow(workflow, claim_id="CLM-1001"):
         tasks.append(Task(claim_id=claim_id, state="todo"))
     Harness(workflow.store).plan(run.run_id, tasks)
     return workflow.start(claim_id, run.run_id)
+
+
+def read_sources(store, run_id, claim_id="CLM-1001"):
+    documents = Documents(store)
+    for document_id, sections in (("wording", [3, 10]), ("manual", [4, 9])):
+        for section in sections:
+            documents.read(
+                claim_id,
+                ReadInput(run_id=run_id, document_id=document_id, section=section),
+            )

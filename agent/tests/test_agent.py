@@ -27,6 +27,8 @@ def client(tmp_path, monkeypatch):
 
 
 def call(name, args):
+    if name == "record_decision":
+        args = {"decision": args}
     return AIMessage(
         content="",
         tool_calls=[
@@ -42,7 +44,11 @@ def call(name, args):
 def scripted_model(outcome="approve", payout="420.00"):
     messages = [
         call("read_context", {}),
-        call("read_wording", {}),
+        call("list_sections", {}),
+        call("search_sections", {"document_id": "wording", "query": "delay"}),
+        call("read_section", {"document_id": "wording", "section": 3}),
+        call("read_section", {"document_id": "wording", "section": 10}),
+        call("read_section", {"document_id": "manual", "section": 4}),
         call(
             "record_decision",
             {
@@ -51,6 +57,8 @@ def scripted_model(outcome="approve", payout="420.00"):
                 "calculation": "Eligible expenses, less compensation and deductible.",
                 "explanation": "Documents support this decision. See cited wording.",
                 "policy_sections": [3, 10],
+                "manual_version": "2026.2",
+                "manual_sections": [4],
             },
         ),
     ]
@@ -84,7 +92,9 @@ def test_scoped_tools_and_api_context(client):
     tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
     assert [item.name for item in tools] == [
         "read_context",
-        "read_wording",
+        "list_sections",
+        "search_sections",
+        "read_section",
         "record_decision",
         "request_payment",
     ]
@@ -98,20 +108,26 @@ def test_scoped_tools_and_api_context(client):
     assert context["customer"]["previous_claims"]
     assert context["plan"]["plan"]["plan"] == "premium"
     assert "repeat_claim_review" not in context["company"]
-    assert "## 3. Trip Delay" in tools[1].invoke({})
+    assert "## 3. Trip Delay" in tools[3].invoke(
+        {"document_id": "wording", "section": 3}
+    )
 
 
 def test_must_read_before_deciding(client):
     active = start(client).json()
     tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
     with pytest.raises(RuntimeError, match="Read context"):
-        tools[2].invoke(
+        tools[4].invoke(
             {
-                "outcome": "refer",
-                "payout": "0",
-                "calculation": "No payout.",
-                "explanation": "Missing evidence. Please review.",
-                "policy_sections": [11],
+                "decision": {
+                    "outcome": "refer",
+                    "payout": "0",
+                    "calculation": "No payout.",
+                    "explanation": "Missing evidence. Please review.",
+                    "policy_sections": [11],
+                    "manual_version": "2026.2",
+                    "manual_sections": [4],
+                }
             }
         )
     assert client.get("/api/claims/CLM-1001").json()["decision"] is None
@@ -152,7 +168,7 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
 def test_missing_payment_is_not_a_completed_approval(client):
     active = start(client).json()
     replies = list(scripted_model().messages)
-    without_payment = StubModel(messages=iter([*replies[:3], replies[-1]]))
+    without_payment = StubModel(messages=iter([*replies[:-2], replies[-1]]))
     with pytest.raises(RuntimeError, match="without paying"):
         main.run("CLM-1001", active["thread_id"], without_payment)
     claim = client.get("/api/claims/CLM-1001").json()

@@ -31,7 +31,14 @@ def runner(claim_id: str, thread_id: str) -> str:
             "calculation": "Calculation.",
             "explanation": "Explanation. Second sentence.",
             "policy_sections": [1],
+            "manual_version": "2026.2",
+            "manual_sections": [4],
         }
+        for document_id, section in (("wording", 1), ("manual", 4)):
+            client.post(
+                f"{path}/reads",
+                json={"run_id": run_id, "document_id": document_id, "section": section},
+            )
         client.post(f"{path}/decision", json=decision)
         if pay:
             client.post(f"{path}/payment", json={"amount": payout})

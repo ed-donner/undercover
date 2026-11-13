@@ -25,6 +25,10 @@ class DecisionInput(BaseModel):
     calculation: NonEmpty
     explanation: NonEmpty
     policy_sections: Annotated[list[Section], Field(min_length=1)]
+    manual_version: NonEmpty | None
+    manual_sections: Annotated[
+        list[Annotated[int, Field(ge=1, le=14)]], Field(min_length=1)
+    ]
 
     @model_validator(mode="after")
     def consistent_payout(self) -> "DecisionInput":
@@ -34,6 +38,8 @@ class DecisionInput(BaseModel):
 
 
 class Decision(DecisionInput):
+    manual_version: NonEmpty | None = None
+    manual_sections: list[int] = Field(default_factory=list)
     recorded_at: str
 
 

@@ -11,6 +11,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 
 from agent.main import run as run_agent
+from backend.documents import (
+    Documents,
+    ReadInput,
+    ReadRecord,
+    SearchHit,
+    SearchInput,
+    SectionInfo,
+    SectionText,
+)
 from backend.execution import Runner, execute
 from backend.harness import Harness
 from backend.harness_models import (
@@ -222,6 +231,38 @@ def check_agent_run(run_id: str, db: Database) -> Completion:
 def finish_agent_run(run_id: str, finish: FinishInput, db: Database) -> AgentRun:
     """Finalize a checked run or record a sanitized terminal failure."""
     return Harness(db).finish(run_id, finish.error)
+
+
+@router.get("/documents", operation_id="list_document_sections")
+def document_catalog(db: Database) -> list[SectionInfo]:
+    """List section titles and versions of the two approved source documents."""
+    return Documents(db).catalog()
+
+
+@router.post("/documents/search", operation_id="search_document_sections")
+def search_documents(search: SearchInput, db: Database) -> list[SearchHit]:
+    """Find source sections by keyword without sending complete documents."""
+    return Documents(db).search(search)
+
+
+@router.get(
+    "/documents/{document_id}/sections/{section}", operation_id="get_document_section"
+)
+def get_document_section(document_id: str, section: int, db: Database) -> SectionText:
+    """Read a complete source section for a handler without claiming agent access."""
+    return Documents(db).section(document_id, section)
+
+
+@router.post("/claims/{claim_id}/reads", operation_id="read_claim_source")
+def read_claim_source(claim_id: str, read: ReadInput, db: Database) -> SectionText:
+    """Read and audit one source section for an active claim attempt."""
+    return Documents(db).read(claim_id, read)
+
+
+@router.get("/claims/{claim_id}/reads", operation_id="list_claim_source_reads")
+def claim_source_reads(claim_id: str, db: Database) -> list[ReadRecord]:
+    """Read the exact source sections delivered on this claim's attempts."""
+    return Documents(db).reads(claim_id)
 
 
 app = create_app()

@@ -9,6 +9,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from backend.activity import LABELS, Activity
+from backend.documents import validate_references
 from backend.harness import Harness, sync_tasks
 from backend.models import (
     ActivityEvent,
@@ -49,6 +50,8 @@ class Workflow:
                 calculation=decision["calculation"],
                 explanation=decision["explanation"],
                 policy_sections=json.loads(decision["policy_sections"]),
+                manual_version=decision["manual_version"],
+                manual_sections=json.loads(decision["manual_sections"]),
                 recorded_at=decision["recorded_at"],
             )
         if sign_off:
@@ -109,6 +112,13 @@ class Workflow:
                 "SELECT * FROM runs WHERE run_id = ?", (decision.run_id,)
             ).fetchone()
             active_attempt(connection, decision.run_id)
+            validate_references(
+                connection,
+                decision.run_id,
+                decision.policy_sections,
+                decision.manual_sections,
+                decision.manual_version,
+            )
             require(
                 run is not None
                 and run["claim_id"] == claim_id
@@ -123,7 +133,7 @@ class Workflow:
                 "Claim already has a decision",
             )
             connection.execute(
-                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     claim_id,
                     decision.run_id,
@@ -133,6 +143,8 @@ class Workflow:
                     decision.explanation,
                     json.dumps(decision.policy_sections),
                     now(),
+                    decision.manual_version,
+                    json.dumps(decision.manual_sections),
                 ),
             )
             connection.execute(

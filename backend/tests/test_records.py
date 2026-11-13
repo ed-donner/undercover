@@ -60,6 +60,7 @@ def test_seed_allowlist_and_persistence(tmp_path, monkeypatch):
         "handlers.json",
         "claims.json",
         "policy_wording.md",
+        "claims_manual.md",
     }
     assert set(db.get("company", "company")) == {
         "name",

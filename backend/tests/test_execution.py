@@ -12,7 +12,7 @@ from backend.harness_models import QueueStart, Task
 from backend.main import create_app
 from backend.models import DecisionInput, PaymentInput, SignOffInput
 from backend.store import Store
-from backend.tests.helpers import start, start_workflow
+from backend.tests.helpers import read_sources, start, start_workflow
 from backend.workflow import Workflow
 
 
@@ -28,6 +28,7 @@ def wait_for_finish(client, claim_id):
 
 def record(workflow, claim_id, payout="420"):
     active = workflow.runs(claim_id)[-1]
+    read_sources(workflow.store, active.run_id, claim_id)
     return workflow.decide(
         claim_id,
         DecisionInput(
@@ -37,6 +38,8 @@ def record(workflow, claim_id, payout="420"):
             calculation="Eligible costs total the payout.",
             explanation="Costs are covered. Receipts support the amount.",
             policy_sections=[3, 10],
+            manual_version="2026.2",
+            manual_sections=[4, 9],
         ),
     )
 

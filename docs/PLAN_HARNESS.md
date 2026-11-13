@@ -62,12 +62,14 @@ Persist read references in claim activity, and extend decision records with manu
 
 ### Success criteria
 
-- [ ] Catalog tests find all 12 wording sections and 14 manual sections with the correct versions; reading a section preserves its full text and does not return neighboring sections or the complete document.
-- [ ] Search fixtures find repeat claims, wild animals and meals without receipts; empty/no-match results are explicit, and the catalog lets the agent find a section even when keywords differ.
-- [ ] Unknown documents/sections return `404`; path traversal and arbitrary paths/URLs are rejected. Seed/access tests extend the allowlist only to the manual, never evaluation or security data.
-- [ ] A successful read is persisted with claim, child attempt, document, version and section; a failed read/search cannot falsely appear as a successful section read. A terminal or wrong-claim attempt cannot append reads.
-- [ ] Decision tests reject missing/invalid/unread new references and accept valid wording/manual provenance. Old decisions retain their original fields and render without invented manual citations.
-- [ ] `npm run check:python` passes, including startup on an already-populated pilot database.
+- [x] Catalog tests find all 12 wording sections and 14 manual sections with the correct versions; reading a section preserves its full text and does not return neighboring sections or the complete document.
+- [x] Search fixtures find repeat claims, wild animals and meals without receipts; empty/no-match results are explicit, and the catalog lets the agent find a section even when keywords differ.
+- [x] Unknown documents/sections return `404`; path traversal and arbitrary paths/URLs are rejected. Seed/access tests extend the allowlist only to the manual, never evaluation or security data.
+- [x] A successful read is persisted with claim, child attempt, document, version and section; a failed read/search cannot falsely appear as a successful section read. A terminal or wrong-claim attempt cannot append reads.
+- [x] Decision tests reject missing/invalid/unread new references and accept valid wording/manual provenance. Old decisions retain their original fields and render without invented manual citations.
+- [x] `npm run check:python` passes, including startup on an already-populated pilot database.
+
+Phase 2 verification: 77 Python tests, 99.80% coverage, ruff and pyright pass. Agent tools now search/read selected sections instead of fetching the whole wording. Historical decisions and exact source text survive reopening; no evaluator data was accessed. UI rendering is checked in phase 5.
 
 ## Phase 3 — Fresh claim helpers, instructions and bounded recovery
 

@@ -2,11 +2,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from backend.tests.helpers import start
+from backend.tests.helpers import read_sources, start
 
 
 def decide(client, claim_id="CLM-1001", outcome="approve", payout=420):
     run = start(client, claim_id).json()
+    read_sources(client.app.state.store, run["run_id"], claim_id)
     return client.post(
         f"/api/claims/{claim_id}/decision",
         json={
@@ -16,6 +17,8 @@ def decide(client, claim_id="CLM-1001", outcome="approve", payout=420):
             "calculation": "Eligible expenses total the approved amount.",
             "explanation": "The evidence supports this decision. See cited sections.",
             "policy_sections": [3, 10],
+            "manual_version": "2026.2",
+            "manual_sections": [4, 9],
         },
     )
 
@@ -159,6 +162,8 @@ def test_run_cannot_decide_another_claim(client):
                 "calculation": "No payout.",
                 "explanation": "Evidence is missing. Please review.",
                 "policy_sections": [11],
+                "manual_version": "2026.2",
+                "manual_sections": [4],
             },
         ).status_code
         == 409
