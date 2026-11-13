@@ -9,6 +9,7 @@ from langchain_core.messages import AIMessage
 
 from agent import main
 from backend.main import create_app
+from backend.tests.helpers import start
 
 
 class StubModel(GenericFakeChatModel):
@@ -69,7 +70,7 @@ def scripted_model(outcome="approve", payout="420.00"):
     ],
 )
 def test_run(client, outcome, payout, paid):
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     assert main.run(
         "CLM-1001", active["thread_id"], scripted_model(outcome, payout)
     ) == ("Decision recorded.")
@@ -79,7 +80,7 @@ def test_run(client, outcome, payout, paid):
 
 
 def test_scoped_tools_and_api_context(client):
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
     assert [item.name for item in tools] == [
         "read_context",
@@ -101,7 +102,7 @@ def test_scoped_tools_and_api_context(client):
 
 
 def test_must_read_before_deciding(client):
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     tools = main.ClaimTools(client, "CLM-1001", active["run_id"]).tools()
     with pytest.raises(RuntimeError, match="Read context"):
         tools[2].invoke(
@@ -121,7 +122,7 @@ def test_failures_are_not_success(client):
         main.run("no", "no", scripted_model())
     with pytest.raises(RuntimeError, match="No active run"):
         main.run("CLM-1001", "no", scripted_model())
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     with pytest.raises(RuntimeError, match="without recording"):
         main.run("CLM-1001", active["thread_id"], StubModel(messages=iter(["Done"])))
 
@@ -136,7 +137,7 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
         return captured["agent"]
 
     monkeypatch.setattr(main, "create_agent", capture)
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     main.run("CLM-1001", active["thread_id"], scripted_model())
     assert captured["system_prompt"] == client.get("/api/instructions").json()["text"]
     assert captured["agent"].invoke.call_args.kwargs["config"]["configurable"] == {
@@ -149,7 +150,7 @@ def test_entry_point_uses_backend_instructions_and_thread(client, monkeypatch):
 
 
 def test_missing_payment_is_not_a_completed_approval(client):
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     replies = list(scripted_model().messages)
     without_payment = StubModel(messages=iter([*replies[:3], replies[-1]]))
     with pytest.raises(RuntimeError, match="without paying"):
@@ -160,7 +161,7 @@ def test_missing_payment_is_not_a_completed_approval(client):
 
 
 def test_backend_tool_failure_does_not_record_a_decision(client):
-    active = client.post("/api/claims/CLM-1001/runs").json()
+    active = start(client).json()
     with client.app.state.store.transaction() as connection:
         connection.execute("DELETE FROM records WHERE kind = 'policies'")
     with pytest.raises(Exception, match="404 Not Found"):

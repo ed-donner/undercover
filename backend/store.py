@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from backend.migrations import migrate
 from backend.models import Company
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
@@ -116,6 +117,7 @@ class Store:
                     kind TEXT NOT NULL, label TEXT NOT NULL, created_at TEXT NOT NULL
                 );
             """)
+            migrate(connection)
         with self.transaction() as connection:
             if connection.execute("SELECT 1 FROM records LIMIT 1").fetchone():
                 return
@@ -127,7 +129,8 @@ class Store:
                 self._insert(connection, kind, record[key], record)
                 if kind == "claims":
                     connection.execute(
-                        "INSERT INTO claims VALUES (?, 'waiting')", (record[key],)
+                        "INSERT INTO claims (id, status) VALUES (?, 'waiting')",
+                        (record[key],),
                     )
         company = Company.model_validate(
             json.loads((DATA_DIR / "company.json").read_text())
@@ -172,9 +175,12 @@ class Store:
         claim = self.get("claims", claim_id)
         with self.connect() as connection:
             row = connection.execute(
-                "SELECT status FROM claims WHERE id = ?", (claim_id,)
+                "SELECT status, failures, needs_handler, handler_reason "
+                "FROM claims WHERE id = ?",
+                (claim_id,),
             ).fetchone()
         claim["status"] = row["status"]
+        claim.update(dict(row))
         return claim
 
     def queue(self) -> list[dict[str, Any]]:

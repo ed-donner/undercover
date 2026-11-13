@@ -1,5 +1,7 @@
 # Status
 
+Harness implementation is in progress (`docs/PLAN_HARNESS.md`). Phase 1 adds persistent top-level runs, ordered tasks, transactional caps/ownership, two-failure handler holds and additive schema migrations. Python checks pass above the existing coverage threshold. Queue-worker scheduling and dashboard integration are not yet connected; the claim-start API now requires a parent-run ID. The pilot below describes the starting build.
+
 The local claims pilot is implemented across all six phases of `docs/PLAN.md`.
 
 ## Built

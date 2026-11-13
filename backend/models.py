@@ -63,6 +63,8 @@ class Run(BaseModel):
     started_at: str
     finished_at: str | None
     error: str | None
+    parent_run_id: str | None = None
+    deadline: str | None = None
 
 
 class ActivityInput(BaseModel):
@@ -114,6 +116,9 @@ class Claim(BaseModel):
     decision: Decision | None = None
     sign_off: SignOff | None = None
     payment: Payment | None = None
+    failures: int = 0
+    needs_handler: bool = False
+    handler_reason: str = ""
 
 
 class QueueEntry(BaseModel):
@@ -123,6 +128,9 @@ class QueueEntry(BaseModel):
     summary: str
     amount_claimed: Money
     status: QueueStatus
+    failures: int = 0
+    needs_handler: bool = False
+    handler_reason: str = ""
 
 
 class Trip(BaseModel):

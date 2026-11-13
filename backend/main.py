@@ -12,6 +12,15 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 
 from agent.main import run as run_agent
 from backend.execution import Runner, execute
+from backend.harness import Harness
+from backend.harness_models import (
+    AgentRun,
+    AttemptInput,
+    Completion,
+    FinishInput,
+    PlanInput,
+    Start,
+)
 from backend.instructions import INSTRUCTIONS
 from backend.models import (
     ActivityEvent,
@@ -48,6 +57,7 @@ def create_app(
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         application.state.store.initialize()
         Workflow(application.state.store).recover()
+        Harness(application.state.store).recover()
         application.state.executor = ThreadPoolExecutor(max_workers=4)
         yield
         application.state.executor.shutdown(wait=True)
@@ -125,9 +135,11 @@ def get_instructions() -> TextDocument:
 
 
 @router.post("/claims/{claim_id}/runs", operation_id="start_claim", status_code=202)
-def start_claim(claim_id: str, db: Database, request: Request) -> Run:
+def start_claim(
+    claim_id: str, attempt: AttemptInput, db: Database, request: Request
+) -> Run:
     """Start processing a waiting claim."""
-    run = Workflow(db).start(claim_id)
+    run = Workflow(db).start(claim_id, attempt.parent_run_id)
     if request.app.state.runner is not None:
         request.app.state.executor.submit(execute, db, run, request.app.state.runner)
     return run
@@ -174,6 +186,42 @@ def record_activity(run_id: str, activity: ActivityInput, db: Database) -> TextD
     """Record an allowlisted agent activity without sensitive payloads."""
     Workflow(db).event(run_id, activity.activity)
     return TextDocument(text="Activity recorded")
+
+
+@router.post("/agent-runs", operation_id="start_agent_run", status_code=202)
+def start_agent_run(start: Start, db: Database) -> AgentRun:
+    """Start a queue or named-claim run with an explicit claim cap."""
+    return Harness(db).create(start)
+
+
+@router.get("/agent-runs", operation_id="list_agent_runs")
+def list_agent_runs(db: Database) -> list[AgentRun]:
+    """Read agent runs newest first, including the current run."""
+    return Harness(db).history()
+
+
+@router.get("/agent-runs/{run_id}", operation_id="get_agent_run")
+def get_agent_run(run_id: str, db: Database) -> AgentRun:
+    """Read an agent run and its persisted ordered to-do list."""
+    return Harness(db).get(run_id)
+
+
+@router.put("/agent-runs/{run_id}/tasks", operation_id="plan_agent_run")
+def plan_agent_run(run_id: str, plan: PlanInput, db: Database) -> AgentRun:
+    """Persist the agent's plan without changing recorded work outcomes."""
+    return Harness(db).plan(run_id, plan.tasks)
+
+
+@router.post("/agent-runs/{run_id}/check", operation_id="check_agent_run")
+def check_agent_run(run_id: str, db: Database) -> Completion:
+    """Reconcile claim outcomes and find missed work within the cap."""
+    return Harness(db).check(run_id)
+
+
+@router.post("/agent-runs/{run_id}/finish", operation_id="finish_agent_run")
+def finish_agent_run(run_id: str, finish: FinishInput, db: Database) -> AgentRun:
+    """Finalize a checked run or record a sanitized terminal failure."""
+    return Harness(db).finish(run_id, finish.error)
 
 
 app = create_app()

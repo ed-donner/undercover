@@ -2,13 +2,14 @@
 
 import json
 import sqlite3
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
 from fastapi import HTTPException
 
 from backend.activity import LABELS, Activity
+from backend.harness import Harness, sync_tasks
 from backend.models import (
     ActivityEvent,
     Claim,
@@ -20,16 +21,8 @@ from backend.models import (
     SignOff,
     SignOffInput,
 )
+from backend.run_state import active_attempt, now, require
 from backend.store import Store
-
-
-def now() -> str:
-    return datetime.now(UTC).isoformat()
-
-
-def require(condition: bool, message: str) -> None:
-    if not condition:
-        raise HTTPException(409, message)
 
 
 class Workflow:
@@ -69,7 +62,7 @@ class Workflow:
             )
         return claim
 
-    def start(self, claim_id: str) -> Run:
+    def start(self, claim_id: str, parent_run_id: str) -> Run:
         self.store.claim(claim_id)
         run = Run(
             run_id=str(uuid4()),
@@ -79,8 +72,11 @@ class Workflow:
             started_at=now(),
             finished_at=None,
             error=None,
+            parent_run_id=parent_run_id,
+            deadline=(datetime.now(UTC) + timedelta(minutes=8)).isoformat(),
         )
         with self.store.transaction() as connection:
+            Harness.admit(connection, parent_run_id, claim_id)
             changed = connection.execute(
                 "UPDATE claims SET status = 'in_progress' "
                 "WHERE id = ? AND status = 'waiting'",
@@ -88,7 +84,7 @@ class Workflow:
             ).rowcount
             require(changed == 1, "Claim is not waiting")
             connection.execute(
-                "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO runs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 tuple(run.model_dump().values()),
             )
             self._event(connection, run.run_id, "run_started")
@@ -112,6 +108,7 @@ class Workflow:
             run = connection.execute(
                 "SELECT * FROM runs WHERE run_id = ?", (decision.run_id,)
             ).fetchone()
+            active_attempt(connection, decision.run_id)
             require(
                 run is not None
                 and run["claim_id"] == claim_id
@@ -238,7 +235,11 @@ class Workflow:
             if decision is None:
                 error = error or "Agent finished without recording a decision."
                 connection.execute(
-                    "UPDATE claims SET status = 'waiting' WHERE id = ?",
+                    "UPDATE claims SET status = 'waiting', failures = failures + 1, "
+                    "needs_handler = (failures + 1 >= 2), "
+                    "handler_reason = CASE WHEN failures + 1 >= 2 "
+                    "THEN 'Two attempts failed; handler review required' ELSE '' END "
+                    "WHERE id = ?",
                     (run["claim_id"],),
                 )
             status = "failed" if error else "completed"
@@ -248,6 +249,8 @@ class Workflow:
                 (status, now(), error, run_id),
             )
             self._event(connection, run_id, f"run_{status}")
+            if run["parent_run_id"]:
+                sync_tasks(connection, run["parent_run_id"])
 
     def recover(self) -> None:
         with self.store.connect() as connection:

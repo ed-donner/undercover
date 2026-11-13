@@ -29,10 +29,27 @@ def summary(claim: dict) -> str:
 
 def process(client: httpx.Client, claim_id: str) -> tuple[str, bool]:
     path = f"/api/claims/{quote(claim_id, safe='')}"
-    started = client.post(f"{path}/runs")
+    parent = client.post(
+        "/api/agent-runs", json={"mode": "claim", "claim_id": claim_id}
+    )
+    if parent.is_error:
+        return f"not started ({parent.status_code})", False
+    parent_id = parent.json()["run_id"]
+    client.put(
+        f"/api/agent-runs/{parent_id}/tasks",
+        json={"tasks": [{"claim_id": claim_id, "state": "todo"}]},
+    )
+    started = client.post(f"{path}/runs", json={"parent_run_id": parent_id})
     if started.is_error:
         return f"not started ({started.status_code})", False
     run = wait_for(client, path, started.json()["run_id"])
+    client.post(f"/api/agent-runs/{parent_id}/check")
+    client.post(
+        f"/api/agent-runs/{parent_id}/finish",
+        json={
+            "error": "Agent could not finish." if run["status"] == "failed" else None
+        },
+    )
     if run["status"] == "failed":
         return f"failed, {run['error']}", False
     return summary(client.get(path).json()), True

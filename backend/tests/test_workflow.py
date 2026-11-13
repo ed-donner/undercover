@@ -2,9 +2,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from backend.tests.helpers import start
+
 
 def decide(client, claim_id="CLM-1001", outcome="approve", payout=420):
-    run = client.post(f"/api/claims/{claim_id}/runs").json()
+    run = start(client, claim_id).json()
     return client.post(
         f"/api/claims/{claim_id}/decision",
         json={
@@ -19,13 +21,13 @@ def decide(client, claim_id="CLM-1001", outcome="approve", payout=420):
 
 
 def test_start_once(client):
-    run = client.post("/api/claims/CLM-1001/runs")
+    run = start(client)
     assert run.status_code == 202
     assert run.json()["thread_id"]
     assert client.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
-    assert client.post("/api/claims/CLM-1001/runs").status_code == 409
+    assert start(client).status_code == 409
     assert len(client.get("/api/claims/CLM-1001/runs").json()) == 1
-    assert client.post("/api/claims/no/runs").status_code == 404
+    assert start(client, "no").status_code == 404
 
 
 @pytest.mark.parametrize(
@@ -146,7 +148,7 @@ def test_concurrent_payments(client):
 
 
 def test_run_cannot_decide_another_claim(client):
-    run = client.post("/api/claims/CLM-1001/runs").json()
+    run = start(client).json()
     assert (
         client.post(
             "/api/claims/CLM-1002/decision",

@@ -7,9 +7,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.execution import execute
+from backend.harness import Harness
+from backend.harness_models import QueueStart, Task
 from backend.main import create_app
 from backend.models import DecisionInput, PaymentInput, SignOffInput
 from backend.store import Store
+from backend.tests.helpers import start, start_workflow
 from backend.workflow import Workflow
 
 
@@ -55,14 +58,14 @@ def test_background_run_is_responsive_and_observable(tmp_path):
 
     with TestClient(create_app(db.path, runner=runner)) as client:
         try:
-            response = client.post("/api/claims/CLM-1001/runs")
+            response = start(client)
             assert response.status_code == 202
             assert entered.wait(3)
             assert client.get("/api/health").status_code == 200
             assert client.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
             events = client.get("/api/claims/CLM-1001/events").json()
             assert [item["kind"] for item in events] == ["run_started", "context_read"]
-            assert client.post("/api/claims/CLM-1001/runs").status_code == 409
+            assert start(client).status_code == 409
         finally:
             release.set()
         assert wait_for_finish(client, "CLM-1001")["status"] == "completed"
@@ -88,17 +91,27 @@ def test_concurrent_starts_and_distinct_threads(tmp_path):
         return "No decision"
 
     with TestClient(create_app(tmp_path / "concurrent.db", runner=runner)) as client:
+        harness = Harness(Store(tmp_path / "concurrent.db"))
+        parent_id = harness.create(QueueStart(mode="queue", max_claims=None)).run_id
+        harness.plan(parent_id, [Task(claim_id="CLM-1001", state="todo")])
         try:
             with ThreadPoolExecutor(max_workers=2) as pool:
                 responses = list(
                     pool.map(
-                        lambda _: client.post("/api/claims/CLM-1001/runs"), range(2)
+                        lambda _: client.post(
+                            "/api/claims/CLM-1001/runs",
+                            json={"parent_run_id": parent_id},
+                        ),
+                        range(2),
                     )
                 )
             assert sorted(response.status_code for response in responses) == [202, 409]
             assert entered.wait(3)
             assert len(calls) == 1
-            other = client.post("/api/claims/CLM-1002/runs").json()
+            assert start(client, "CLM-1002").status_code == 409
+            release.set()
+            wait_for_finish(client, "CLM-1001")
+            other = start(client, "CLM-1002").json()
             first = client.get("/api/claims/CLM-1001/runs").json()[0]
             assert other["thread_id"] != first["thread_id"]
         finally:
@@ -118,7 +131,7 @@ def test_failed_run_preserves_committed_state(tmp_path, after_decision):
         raise RuntimeError("secret-key and hidden model reasoning must not escape")
 
     with TestClient(create_app(db.path, runner=runner)) as client:
-        client.post("/api/claims/CLM-1001/runs")
+        start(client)
         run = wait_for_finish(client, "CLM-1001")
         assert run["status"] == "failed"
         assert "secret-key" not in str(run)
@@ -129,7 +142,7 @@ def test_failed_run_preserves_committed_state(tmp_path, after_decision):
         if after_decision:
             assert claim["status"] == "waiting_for_sign_off"
             assert claim["decision"]["payout"] == 1200
-            assert client.post("/api/claims/CLM-1001/runs").status_code == 409
+            assert start(client).status_code == 409
             assert (
                 client.post(
                     "/api/claims/CLM-1001/payment", json={"amount": 1200}
@@ -138,7 +151,7 @@ def test_failed_run_preserves_committed_state(tmp_path, after_decision):
             )
         else:
             assert claim["status"] == "waiting"
-            client.post("/api/claims/CLM-1001/runs")
+            start(client)
             wait_for_finish(client, "CLM-1001")
             assert len(client.get("/api/claims/CLM-1001/runs").json()) == 2
 
@@ -147,11 +160,12 @@ def test_restart_recovers_runs_and_preserves_records(tmp_path):
     db = Store(tmp_path / "restart.db")
     db.initialize()
     workflow = Workflow(db)
-    interrupted = workflow.start("CLM-1001")
-    workflow.start("CLM-1002")
+    start_workflow(workflow, "CLM-1002")
     record(workflow, "CLM-1002", "1500")
     workflow.sign_off("CLM-1002", SignOffInput(handler_id="HND-01"))
     workflow.pay("CLM-1002", PaymentInput(amount=Decimal("1500")))
+    workflow.finish(workflow.runs("CLM-1002")[-1].run_id, None)
+    interrupted = start_workflow(workflow, "CLM-1001")
     before = workflow.detail("CLM-1002")
     with TestClient(create_app(db.path, runner=None)) as client:
         assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
@@ -162,15 +176,16 @@ def test_restart_recovers_runs_and_preserves_records(tmp_path):
             mode="json"
         )
         assert (
-            client.get("/api/claims/CLM-1002/events").json()[-1]["kind"] == "run_failed"
+            client.get("/api/claims/CLM-1002/events").json()[-1]["kind"]
+            == "run_completed"
         )
-        assert client.post("/api/claims/CLM-1001/runs").status_code == 202
+        assert start(client).status_code == 202
     workflow.finish(interrupted.run_id, None)
     assert workflow.runs("CLM-1001")[0].status == "failed"
 
 
 def test_activity_contract(client):
-    run = client.post("/api/claims/CLM-1001/runs").json()
+    run = start(client).json()
     path = f"/api/runs/{run['run_id']}/events"
     assert client.post(path, json={"activity": "context_started"}).status_code == 200
     assert (
@@ -190,7 +205,7 @@ def test_activity_contract(client):
 
 def test_completed_execution_does_not_lose_decision(client):
     workflow = Workflow(client.app.state.store)
-    run = workflow.start("CLM-1001")
+    run = start_workflow(workflow, "CLM-1001")
 
     def runner(claim_id, thread_id):
         record(workflow, claim_id)
