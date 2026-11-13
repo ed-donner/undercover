@@ -11,6 +11,7 @@ from langgraph.errors import GraphRecursionError
 from agent import main
 from agent.middleware import PublicActivity, transient
 from agent.tests.test_agent import StubModel, call, scripted_model
+from backend.harness import Harness
 from backend.main import create_app
 from backend.tests.helpers import http_backend, start
 from backend.workflow import Workflow
@@ -102,6 +103,50 @@ def test_transient_payment_failure_retries_only_the_payment(client, monkeypatch)
     main.run("CLM-1001", attempt["thread_id"], scripted_model())
     assert len(writes) == 2
     assert client.get("/api/claims/CLM-1001").json()["payment"]["amount"] == 420
+
+
+def test_exhausted_payment_recovery_preserves_the_decision(client, monkeypatch):
+    attempt = start(client).json()
+    original = client.request
+    calls = []
+
+    def refuse_payment(method, url, **kwargs):
+        if url.endswith("/agent-payment"):
+            calls.append(url)
+            raise httpx.ConnectError("Synthetic payment outage")
+        return original(method, url, **kwargs)
+
+    monkeypatch.setattr(client, "request", refuse_payment)
+    with pytest.raises(httpx.ConnectError):
+        main.run("CLM-1001", attempt["thread_id"], scripted_model())
+    assert len(calls) == 2
+    store = client.app.state.store
+    workflow = Workflow(store)
+    workflow.finish(attempt["run_id"], "Agent could not finish.")
+    claim = workflow.detail("CLM-1001")
+    assert claim.decision
+    assert claim.decision.outcome == "approve"
+    assert claim.status == "decided"
+    assert claim.payment is None
+    task = Harness(store).get(attempt["parent_run_id"]).tasks[0]
+    assert task.state == "needs_handler"
+    assert "unresolved" in task.reason
+    assert workflow.runs("CLM-1001")[0].status == "failed"
+
+
+def test_failed_decision_write_does_not_invent_a_commit(client, monkeypatch):
+    attempt = start(client).json()
+    original = client.request
+
+    def refuse_decision(method, url, **kwargs):
+        if url.endswith("/decision"):
+            raise httpx.ConnectError("Synthetic decision outage")
+        return original(method, url, **kwargs)
+
+    monkeypatch.setattr(client, "request", refuse_decision)
+    with pytest.raises(httpx.ConnectError):
+        main.run("CLM-1001", attempt["thread_id"], scripted_model())
+    assert client.get("/api/claims/CLM-1001").json()["decision"] is None
 
 
 def test_expired_attempt_cannot_write_or_read_sources(client):

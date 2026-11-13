@@ -161,16 +161,22 @@ Use the actual default model with `MODEL_NAME` unset in the smoke process and an
 
 ### Success criteria
 
-- [ ] Playwright covers a five-claim capped run and visible to-do updates, named-claim processing, first-failure retry, twice-failed handler hold, missed-claim recovery and final summary, using stub models only.
-- [ ] End-to-end tests verify per-claim source reads and progress, persistence after reload, all decision outcomes, below-limit payment and above-limit payment blocked until handler sign-off. Direct API bypass attempts remain rejected.
-- [ ] All automated tests run without an OpenRouter key or provider requests and leave local development records untouched. Production has no test reset/release/failure-injection endpoints.
-- [ ] `uv sync` and root `npm install` succeed; `npm run dev` serves the backend and dashboard. Review new scripts for Windows compatibility and use only `uv run` commands or `.mjs` helpers.
-- [ ] `npm run check` exits `0`: ruff formatting/lint, pyright, pytest with at least 80% coverage, Prettier, ESLint, strict TypeScript, Vitest with at least 80% coverage and Playwright. No thresholds, rules or coverage scope are weakened.
-- [ ] After reseeding the dedicated smoke database, the default-model cap-five run works five distinct claims without manual intervention. Observe tasks filling/completing and per-claim section reads; the other 20 claims remain waiting, with no attempts, decisions or payments. Report any failures or handler holds honestly rather than claiming five successful decisions.
-- [ ] Live inspection confirms no duplicate decision/payment and unpaid above-limit approvals remain waiting for sign-off. Record model, cap, run result and observed limits without asserting evaluator-measured decision accuracy.
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/STATUS.md`, README and `.env.example` describe what actually shipped, including cap/retry semantics, handler holds, manual lookup, costs and no automatic restart resumption. `docs/PLAN.md` is unchanged.
-- [ ] Tick only verified criteria, record blockers and report automated/live results separately. Every implementation-phase commit passes its hook; nothing is pushed.
+- [x] Playwright covers a five-claim capped run and visible to-do updates, named-claim processing, first-failure retry, twice-failed handler hold, missed-claim recovery and final summary, using stub models only.
+- [x] End-to-end tests verify per-claim source reads and progress, persistence after reload, all decision outcomes, below-limit payment and above-limit payment blocked until handler sign-off. Direct API bypass attempts remain rejected.
+- [x] All automated tests run without an OpenRouter key or provider requests and leave local development records untouched. Production has no test reset/release/failure-injection endpoints.
+- [x] `uv sync` and root `npm install` succeed; `npm run dev` serves the backend and dashboard. Review new scripts for Windows compatibility and use only `uv run` commands or `.mjs` helpers.
+- [x] `npm run check` exits `0`: ruff formatting/lint, pyright, pytest with at least 80% coverage, Prettier, ESLint, strict TypeScript, Vitest with at least 80% coverage and Playwright. No thresholds, rules or coverage scope are weakened.
+- [x] After reseeding the dedicated smoke database, the default-model cap-five run works five distinct claims without manual intervention. Observe tasks filling/completing and per-claim section reads; the other 20 claims remain waiting, with no attempts, decisions or payments. Report any failures or handler holds honestly rather than claiming five successful decisions.
+- [x] Live inspection confirms no duplicate decision/payment and unpaid above-limit approvals remain waiting for sign-off. Record model, cap, run result and observed limits without asserting evaluator-measured decision accuracy.
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md`, `docs/STATUS.md`, README and `.env.example` describe what actually shipped, including cap/retry semantics, handler holds, manual lookup, costs and no automatic restart resumption. `docs/PLAN.md` is unchanged.
+- [x] Tick only verified criteria, record blockers and report automated/live results separately. Every implementation-phase commit passes its hook; nothing is pushed.
 
-## Review gate
+Phase 6 evidence: `npm run check` passed with 112 Python tests before the live trial; two added recovery edge tests then passed in a 114-test Python run (99.19% coverage). UI tests: 26, 100% statement coverage; Playwright: 11; production dashboard build passed. Installation succeeded. Existing services occupied the usual ports; `npm run dev` was subsequently verified against the smoke database with a free `UVICORN_PORT` and Vite's next available port. Its API returned `200 {"status":"ok"}` and its dashboard returned `200`; restart preserved the completed trial and did not resume work. Existing services were left alone. Scripts remain cross-platform and check rules are unchanged.
 
-Planning ends here. No product implementation, seed reset or live-model run is part of this planning request. Await approval to implement all six phases.
+Final verification: `npm run check` exited `0` with all 114 Python tests, 26 UI tests and 11 Playwright tests. Python coverage is 99.19% and UI statement coverage is 100%. No acceptance threshold or lint rule changed.
+
+The single live trial used a freshly seeded temporary database, the default model with low reasoning effort, and cap five: run `a1164190-db88-494b-a1d8-14a8e75442c1`. Five attempts produced five approvals, four simulated payments, one $3,750 approval awaiting sign-off, zero technical failures and 76 audited source reads. The other 20 claims stayed waiting without attempts; direct unsigned above-limit payment was rejected with `409`. No evaluator files were opened or accuracy claims made. Live task progress, completed state after reload, desktop/narrow source and instruction views, keyboard focus and 9.68:1 dark task-link contrast were inspected through local Playwright. Playwright MCP remains unavailable.
+
+## Handover
+
+Implementation followed the user's approval. All six phases are built; only the tool-specific Playwright MCP inspection remains unavailable, with automated and locally inspected Playwright evidence recorded instead. The final checks and per-phase pre-commit hooks pass. Temporary preview services were stopped. No evaluator access, infrastructure changes, pushes or reseeding of the developer's database occurred.

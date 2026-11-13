@@ -41,11 +41,9 @@ test("shows full records, instructions and a paid below-limit approval", async (
   ).toBeVisible();
   await page.getByRole("button", { name: "Agent instructions" }).click();
   await expect(
-    page.getByRole("heading", { name: "Agent instructions", exact: true }),
+    page.getByRole("heading", { name: "Claim instructions", exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText(/Base coverage decisions on the policy wording alone/),
-  ).toBeVisible();
+  await expect(page.getByText(/The wording is the contract/)).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await page.keyboard.press("Shift+Tab");
   await expect(
@@ -59,7 +57,10 @@ test("blocks above-limit payment even through a direct API call", async ({
   request,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /CLM-1003/ }).click();
+  await page
+    .locator(".queue-list")
+    .getByRole("button", { name: /CLM-1003/ })
+    .click();
   await page.getByRole("button", { name: /Process claim/ }).click();
   await request.post(`${backend}/__test__/release`);
   await expect(
@@ -89,7 +90,10 @@ test("blocks above-limit payment even through a direct API call", async ({
   );
   expect(duplicate.status()).toBe(409);
   await page.reload();
-  await page.getByRole("button", { name: /CLM-1003/ }).click();
+  await page
+    .locator(".queue-list")
+    .getByRole("button", { name: /CLM-1003/ })
+    .click();
   await expect(
     page.getByText("Simulated payment recorded: $1,200.00"),
   ).toBeVisible();
@@ -129,11 +133,9 @@ test("retries a failed undecided run and retains the failure history", async ({
   await page.getByRole("button", { name: /CLM-1005/ }).click();
   await page.getByRole("button", { name: /Process claim/ }).click();
   await request.post(`${backend}/__test__/release`);
-  await expect(page.getByRole("button", { name: /Retry claim/ })).toBeVisible();
   await expect(
     page.getByText("Agent run failed", { exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Retry claim/ }).click();
   await expect(page.getByText("refer", { exact: true })).toBeVisible();
   await expect(
     page.getByText("Agent completed", { exact: true }),
@@ -144,6 +146,9 @@ test("retries a failed undecided run and retains the failure history", async ({
   await expect(page.getByRole("button", { name: /Retry claim/ })).toHaveCount(
     0,
   );
+  const response = await request.get(`${backend}/api/claims/CLM-1005/runs`);
+  const runs = (await response.json()) as { status: string }[];
+  expect(runs.map((run) => run.status)).toEqual(["failed", "completed"]);
 });
 
 for (const colorScheme of ["light", "dark"] as const) {

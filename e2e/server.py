@@ -10,7 +10,8 @@ import uvicorn
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 
-from agent.main import run
+from agent.main import backend, run
+from agent.queue import run_queue
 from backend.main import create_app
 
 
@@ -20,6 +21,8 @@ class StubModel(GenericFakeChatModel):
 
 
 def call(name: str, args: dict) -> AIMessage:
+    if name == "record_decision":
+        args = {"decision": args}
     return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": name}])
 
 
@@ -33,7 +36,11 @@ def scripted_model(claim_id: str) -> StubModel:
     }.get(claim_id, ("refer", "0"))
     messages = [
         call("read_context", {}),
-        call("read_wording", {}),
+        call("list_sections", {}),
+        call("read_section", {"document_id": "wording", "section": 3}),
+        call("read_section", {"document_id": "wording", "section": 10}),
+        call("read_section", {"document_id": "manual", "section": 4}),
+        call("read_section", {"document_id": "manual", "section": 9}),
         call(
             "record_decision",
             {
@@ -45,6 +52,8 @@ def scripted_model(claim_id: str) -> StubModel:
                     "It does not measure policy accuracy."
                 ),
                 "policy_sections": [3, 10],
+                "manual_version": "2026.2",
+                "manual_sections": [4, 9],
             },
         ),
     ]
@@ -52,6 +61,46 @@ def scripted_model(claim_id: str) -> StubModel:
         messages.append(call("request_payment", {"amount": payout}))
     messages.append(AIMessage(content="Scripted decision recorded."))
     return StubModel(messages=iter(messages))
+
+
+def supervisor_model(run_id: str) -> StubModel:
+    path = f"/api/agent-runs/{run_id}"
+
+    def messages():
+        with backend() as client:
+            yield call("read_queue", {})
+            state = client.get(path).json()
+            selected = list(reversed(state["scope"][: state["max_claims"]]))
+            initial = selected[:-1] if len(selected) > 1 else selected
+            yield call(
+                "write_todos",
+                {"tasks": [{"claim_id": key, "state": "todo"} for key in initial]},
+            )
+            for claim_id in initial:
+                yield from work(client, claim_id)
+            yield call("check_completion", {})
+            if initial != selected:
+                state = client.get(path).json()
+                tasks = [
+                    {"claim_id": task["claim_id"], "state": task["state"]}
+                    for task in state["tasks"]
+                ]
+                tasks.append({"claim_id": selected[-1], "state": "todo"})
+                yield call("write_todos", {"tasks": tasks})
+                yield from work(client, selected[-1])
+                yield call("check_completion", {})
+            yield call("finish_run", {})
+
+    return StubModel(messages=messages())
+
+
+def work(client, claim_id):
+    yield call("delegate_claim", {"claim_id": claim_id})
+    yield call("read_queue", {})
+    claim = client.get(f"/api/claims/{claim_id}").json()
+    if claim["decision"] is None and not claim["needs_handler"]:
+        yield call("delegate_claim", {"claim_id": claim_id})
+        yield call("read_queue", {})
 
 
 def main() -> None:
@@ -66,10 +115,17 @@ def main() -> None:
         attempts[claim_id] = attempts.get(claim_id, 0) + 1
         if claim_id == "CLM-1005" and attempts[claim_id] == 1:
             raise RuntimeError("Synthetic first-run failure")
+        if claim_id == "CLM-1006":
+            raise RuntimeError("Synthetic persistent failure")
         return run(claim_id, thread_id, llm=scripted_model(claim_id))
 
+    def queue_runner(run_id: str, thread_id: str) -> str:
+        return run_queue(run_id, thread_id, llm=supervisor_model(run_id))
+
     with TemporaryDirectory(prefix="undercover-e2e-") as directory:
-        app = create_app(Path(directory) / "claims.db", runner=runner)
+        app = create_app(
+            Path(directory) / "claims.db", runner=runner, queue_runner=queue_runner
+        )
 
         @app.post("/__test__/reset", operation_id="test_reset")
         def reset() -> dict[str, str]:
@@ -79,11 +135,14 @@ def main() -> None:
             with app.state.store.connect() as connection:
                 connection.executescript("""
                     BEGIN IMMEDIATE;
+                    DELETE FROM document_reads;
                     DELETE FROM events;
                     DELETE FROM payments;
                     DELETE FROM sign_offs;
                     DELETE FROM decisions;
                     DELETE FROM runs;
+                    DELETE FROM todos;
+                    DELETE FROM agent_runs;
                     DELETE FROM claims;
                     DELETE FROM records;
                     COMMIT;
