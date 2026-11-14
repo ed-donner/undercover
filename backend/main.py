@@ -5,10 +5,13 @@ import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal, Self
+from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from pydantic import BaseModel, Field, model_validator
 
+import agent.main as agent
 from backend import db
 
 INSTRUCTIONS = Path(__file__).parent / "instructions.md"
@@ -124,3 +127,188 @@ def list_handlers(database: Db) -> list[dict[str, Any]]:
     rows = database.execute("SELECT record FROM handlers ORDER BY id").fetchall()
     keys = ["handler_id", "name", "role", "can_approve_over_limit"]
     return [{key: json.loads(row[0])[key] for key in keys} for row in rows]
+
+
+class Decision(BaseModel):
+    """The agent's decision on a claim."""
+
+    decision: Literal["approve", "decline", "refer"]
+    payout: float = Field(ge=0)
+    reason: str
+    policy_section: str
+
+    @model_validator(mode="after")
+    def only_approvals_pay(self) -> Self:
+        """Check that a decline or a referral pays nothing."""
+        if self.decision != "approve" and self.payout != 0:
+            raise ValueError("A decline or a referral has a payout of 0")
+        return self
+
+
+class Payment(BaseModel):
+    """A payment of an approved claim."""
+
+    amount: float
+
+
+class SignOff(BaseModel):
+    """A handler's sign-off of a large payout."""
+
+    handler_id: str
+
+
+class Step(BaseModel):
+    """One step the agent took on a claim."""
+
+    kind: Literal["tool_call", "tool_result", "message", "error"]
+    content: str
+
+
+def approval_limit(database: sqlite3.Connection) -> float:
+    """Return the payout above which a handler must sign off."""
+    return json.loads(db.setting(database, "company"))["payout_approval_limit"]
+
+
+def require_status(row: sqlite3.Row, status: str) -> None:
+    """Raise 409 unless the claim is in the given status."""
+    if row["status"] != status:
+        raise HTTPException(409, f"{row['id']} is {row['status']}, not {status}")
+
+
+def add_step(database: sqlite3.Connection, claim_id: str, kind: str, text: str) -> None:
+    """Record one step on a claim."""
+    database.execute(
+        "INSERT INTO steps (claim_id, kind, content, created_at) VALUES (?, ?, ?, ?)",
+        (claim_id, kind, text, db.now()),
+    )
+
+
+def run_in_background(claim_id: str) -> None:
+    """Run the agent on a claim, and put the claim back if no decision results."""
+    try:
+        agent.run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
+        problem = "The agent finished without a decision"
+    except Exception as error:
+        problem = f"The agent stopped with an error: {error}"
+    database = db.connect()
+    if (
+        database.execute(
+            "SELECT status FROM claims WHERE id = ?", (claim_id,)
+        ).fetchone()[0]
+        == "in_progress"
+    ):
+        add_step(database, claim_id, "error", problem)
+        database.execute(
+            "UPDATE claims SET status = 'waiting' WHERE id = ?", (claim_id,)
+        )
+    database.commit()
+    database.close()
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
+def run_agent(
+    claim_id: str, database: Db, background: BackgroundTasks
+) -> dict[str, str]:
+    """Start the UnderCover Agent on a waiting claim."""
+    require_status(find(database, "claims", claim_id), "waiting")
+    background.add_task(run_in_background, claim_id)
+    return {"status": "started"}
+
+
+@app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
+def start_claim(claim_id: str, database: Db) -> dict[str, Any]:
+    """Mark a waiting claim as in progress."""
+    require_status(find(database, "claims", claim_id), "waiting")
+    database.execute("DELETE FROM steps WHERE claim_id = ?", (claim_id,))
+    database.execute(
+        "UPDATE claims SET status = 'in_progress' WHERE id = ?", (claim_id,)
+    )
+    return claim_view(find(database, "claims", claim_id))
+
+
+@app.post("/api/claims/{claim_id}/steps", operation_id="record_step")
+def record_step(claim_id: str, step: Step, database: Db) -> dict[str, str]:
+    """Record a step the agent took on a claim."""
+    find(database, "claims", claim_id)
+    add_step(database, claim_id, step.kind, step.content)
+    return {"status": "recorded"}
+
+
+@app.get("/api/claims/{claim_id}/steps", operation_id="list_steps")
+def list_steps(claim_id: str, database: Db) -> list[dict[str, Any]]:
+    """List the steps the agent took on a claim, in order."""
+    find(database, "claims", claim_id)
+    rows = database.execute(
+        "SELECT kind, content, created_at FROM steps WHERE claim_id = ? ORDER BY id",
+        (claim_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+@app.post("/api/claims/{claim_id}/decision", operation_id="record_decision")
+def record_decision(claim_id: str, decision: Decision, database: Db) -> dict[str, Any]:
+    """Record the decision on a claim in progress."""
+    require_status(find(database, "claims", claim_id), "in_progress")
+    over_limit = decision.payout > approval_limit(database)
+    status = "awaiting_signoff" if over_limit else "decided"
+    database.execute(
+        "UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?, "
+        "policy_section = ?, decided_at = ? WHERE id = ?",
+        (
+            status,
+            decision.decision,
+            decision.payout,
+            decision.reason,
+            decision.policy_section,
+            db.now(),
+            claim_id,
+        ),
+    )
+    return claim_view(find(database, "claims", claim_id))
+
+
+def payment_problem(row: sqlite3.Row, amount: float, limit: float) -> str | None:
+    """Return why a payment can't be made, or None if it can."""
+    if row["decision"] is None:
+        return f"{row['id']} has no decision yet"
+    if row["decision"] != "approve":
+        return f"{row['id']} was not approved, so nothing is paid"
+    if row["paid_at"] is not None:
+        return f"{row['id']} has already been paid"
+    if row["payout"] > limit and row["signed_off_by"] is None:
+        return (
+            f"The payout is over ${limit:,.2f}, so the payment waits for a "
+            "handler's sign-off"
+        )
+    if amount != row["payout"]:
+        return f"The amount must be the approved payout of ${row['payout']:,.2f}"
+    return None
+
+
+@app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
+def pay_claim(claim_id: str, payment: Payment, database: Db) -> dict[str, Any]:
+    """Pay the approved payout on a claim."""
+    row = find(database, "claims", claim_id)
+    problem = payment_problem(row, payment.amount, approval_limit(database))
+    if problem:
+        raise HTTPException(409, problem)
+    database.execute(
+        "UPDATE claims SET paid_amount = ?, paid_at = ? WHERE id = ?",
+        (payment.amount, db.now(), claim_id),
+    )
+    return claim_view(find(database, "claims", claim_id))
+
+
+@app.post("/api/claims/{claim_id}/signoff", operation_id="sign_off")
+def sign_off(claim_id: str, signoff: SignOff, database: Db) -> dict[str, Any]:
+    """Sign off a payout over the approval limit, as a handler with authority."""
+    require_status(find(database, "claims", claim_id), "awaiting_signoff")
+    handler = json.loads(find(database, "handlers", signoff.handler_id)["record"])
+    if not handler["can_approve_over_limit"]:
+        raise HTTPException(403, f"{handler['name']} can't sign off large payouts")
+    database.execute(
+        "UPDATE claims SET status = 'decided', signed_off_by = ?, signed_off_at = ? "
+        "WHERE id = ?",
+        (signoff.handler_id, db.now(), claim_id),
+    )
+    return claim_view(find(database, "claims", claim_id))

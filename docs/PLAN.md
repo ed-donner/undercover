@@ -66,16 +66,16 @@ Build `backend/db.py` (connection, schema and seed), `backend/seed.py` (`uv run 
 
 Build the write operations and the rules, with each rule enforced in the backend and tested on its own.
 
-- [ ] `record_decision` is accepted only for a claim `in_progress`; an approve over $1,000 moves it to `awaiting_signoff`, anything else to `decided`
-- [ ] A decline or refer with a payout other than 0, or an unknown decision value, is rejected with 422
-- [ ] `pay_claim` succeeds for an approved claim up to $1,000 when the amount equals the payout, and records the payment
-- [ ] `pay_claim` returns 409 with a clear message for: an approve over $1,000 without sign-off, an amount that differs from the payout, a decline or refer, a claim with no decision and a claim already paid
-- [ ] `sign_off` needs a handler with `can_approve_over_limit`; it records who signed and when and moves the claim to `decided`; after that `pay_claim` with the payout succeeds
-- [ ] `sign_off` is rejected for a claim not `awaiting_signoff` and for an unknown handler or one without the authority
-- [ ] `record_step` and `list_steps` store and return the steps in order with their time
-- [ ] `start_claim` moves a `waiting` claim to `in_progress` and returns 409 for any other state
-- [ ] `run_agent` starts the agent in the background for a `waiting` claim (stubbed in tests) and returns 409 for any other state; if the run raises, the claim goes back to `waiting` with an error step
-- [ ] `npm run check:python` passes with coverage of at least 80%
+- [x] `record_decision` is accepted only for a claim `in_progress`; an approve over $1,000 moves it to `awaiting_signoff`, anything else to `decided`
+- [x] A decline or refer with a payout other than 0, or an unknown decision value, is rejected with 422
+- [x] `pay_claim` succeeds for an approved claim up to $1,000 when the amount equals the payout, and records the payment
+- [x] `pay_claim` returns 409 with a clear message for: an approve over $1,000 without sign-off, an amount that differs from the payout, a decline or refer, a claim with no decision and a claim already paid
+- [x] `sign_off` needs a handler with `can_approve_over_limit`; it records who signed and when and moves the claim to `decided`; after that `pay_claim` with the payout succeeds
+- [x] `sign_off` is rejected for a claim not `awaiting_signoff` and for an unknown handler or one without the authority
+- [x] `record_step` and `list_steps` store and return the steps in order with their time
+- [x] `start_claim` moves a `waiting` claim to `in_progress` and returns 409 for any other state
+- [x] `run_agent` starts the agent in the background for a `waiting` claim (stubbed in tests) and returns 409 for any other state; if the run raises, the claim goes back to `waiting` with an error step
+- [x] `npm run check:python` passes with coverage of at least 80%
 
 ## Phase 3: the UnderCover Agent
 
