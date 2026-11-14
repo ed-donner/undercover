@@ -93,13 +93,13 @@ Rewrite `agent/main.py` around the claims API: tools for `get_claim`, `get_polic
 
 Set up the brand: Instrument Sans, Instrument Serif and JetBrains Mono from Google Fonts, the colors as CSS variables, light and dark mode from the system setting, rounded panels with no outlines. Add a header with two views, Queue and Instructions, using hash links (`#/`, `#/claims/CLM-1001`, `#/instructions`) so no router library is needed. Add a small typed API client in `dashboard/src/api.ts`.
 
-- [ ] The queue lists all 25 claims with id, summary, claim type, amount claimed in the form $1,250.00, submitted date and a state chip in the state's color
-- [ ] A count of claims in each state sits above the queue
-- [ ] Clicking a claim opens `#/claims/<id>`
-- [ ] The Instructions view shows the agent's instructions read only
-- [ ] Vitest covers the queue, the state chips, money formatting and the instructions view, with fetch stubbed
-- [ ] Checked in the browser with the Playwright MCP server in light and dark mode: brand fonts and colors, no borders on one edge, readable Marigold and Sea Green text
-- [ ] `npm run check:ts` passes with coverage of at least 80%
+- [x] The queue lists all 25 claims with id, summary, claim type, amount claimed in the form $1,250.00, submitted date and a state chip in the state's color
+- [x] A count of claims in each state sits above the queue
+- [x] Clicking a claim opens `#/claims/<id>`
+- [x] The Instructions view shows the agent's instructions read only
+- [x] Vitest covers the queue, the state chips, money formatting and the instructions view, with fetch stubbed
+- [x] Checked in the browser with the Playwright MCP server in light and dark mode: brand fonts and colors, no borders on one edge, readable Marigold and Sea Green text
+- [x] `npm run check:ts` passes with coverage of at least 80%
 
 ## Phase 5: the claim view, live steps and sign-off
 
