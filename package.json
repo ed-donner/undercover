@@ -10,6 +10,7 @@
     "dev": "concurrently -k -n backend,dashboard npm:dev:backend npm:dev:dashboard",
     "dev:backend": "uv run -m uvicorn backend.main:app --reload --reload-dir backend",
     "dev:dashboard": "vite dashboard",
+    "seed": "uv run -m backend.seed",
     "format": "uv run ruff format && prettier --write -u dashboard e2e *.config.*",
     "check": "npm run check:python && npm run check:ts && npm run e2e",
     "check:python": "uv run ruff format --check && uv run ruff check && pyright && uv run pytest -q",
