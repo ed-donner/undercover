@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ClaimView } from "./ClaimView";
 import { Instructions } from "./Instructions";
 import { Queue } from "./Queue";
 
@@ -30,7 +31,7 @@ function useHealth() {
 function Page({ hash }: Readonly<{ hash: string }>) {
   if (hash === "#/instructions") return <Instructions />;
   const claim = /^#\/claims\/(.+)$/.exec(hash);
-  if (claim) return <h1 className="mono">{claim[1]}</h1>;
+  if (claim?.[1]) return <ClaimView key={claim[1]} claimId={claim[1]} />;
   return <Queue />;
 }
 

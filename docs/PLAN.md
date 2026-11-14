@@ -105,14 +105,14 @@ Set up the brand: Instrument Sans, Instrument Serif and JetBrains Mono from Goog
 
 The claim view shows the claim in full: the story, the items, the documents, the policy and plan, the customer's claim history and, once decided, the decision, the payout, the reason and the policy section, with that section's text from the wording. A Run agent button appears on a `waiting` claim. While the claim is `in_progress`, the view polls every second and shows each step as it arrives. On a claim `awaiting_signoff`, a handler with the authority is chosen from a list and Sign off and pay calls `sign_off` and then `pay_claim`.
 
-- [ ] The claim view shows the story, items, documents, policy, plan and history for CLM-1001
-- [ ] Run agent calls `run_agent`; the steps appear one by one while the claim is in progress and polling stops when it leaves that state
-- [ ] A decided claim shows the decision, payout, reason, policy section and payment status
-- [ ] A claim waiting for sign-off explains that the payout is over $1,000, lists only handlers with the authority, and after Sign off and pay shows it decided and paid
-- [ ] Errors from the backend show as a short message in plain English
-- [ ] Vitest covers each state of the claim view, the polling and the sign-off, with fetch stubbed
-- [ ] Checked in the browser with the Playwright MCP server: run the agent on a claim with a real model, watch the steps arrive, and sign off a claim over $1,000
-- [ ] `npm run check:ts` passes
+- [x] The claim view shows the story, items, documents, policy, plan and history for CLM-1001
+- [x] Run agent calls `run_agent`; the steps appear one by one while the claim is in progress and polling stops when it leaves that state
+- [x] A decided claim shows the decision, payout, reason, policy section and payment status
+- [x] A claim waiting for sign-off explains that the payout is over $1,000, lists only handlers with the authority, and after Sign off and pay shows it decided and paid
+- [x] Errors from the backend show as a short message in plain English
+- [x] Vitest covers each state of the claim view, the polling and the sign-off, with fetch stubbed
+- [x] Checked in the browser with the Playwright MCP server: run the agent on a claim with a real model, watch the steps arrive, and sign off a claim over $1,000
+- [x] `npm run check:ts` passes
 
 ## Phase 6: end-to-end tests and handover
 

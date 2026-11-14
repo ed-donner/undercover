@@ -28,3 +28,10 @@ export const STATUS_LABELS: Record<Status, string> = {
 };
 
 export const STATUSES = Object.keys(STATUS_LABELS) as Status[];
+
+export function section(wording: string, reference: string) {
+  const number = /\d+/.exec(reference)?.[0];
+  if (number === undefined) return undefined;
+  const part = wording.split(/^## /m).find((p) => p.startsWith(`${number}.`));
+  return part === undefined ? undefined : `## ${part.trim()}`;
+}

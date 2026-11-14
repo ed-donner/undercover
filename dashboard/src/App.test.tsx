@@ -2,7 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { date, label, money } from "./format";
-import { fakeFetch, summary } from "./testing";
+import { claim, fakeFetch, summary } from "./testing";
 
 afterEach(() => {
   cleanup();
@@ -22,6 +22,8 @@ function routes() {
     "GET /api/health": { status: "ok" },
     "GET /api/claims": CLAIMS,
     "GET /api/instructions": { instructions: "You are the UnderCover Agent." },
+    "GET /api/claims/CLM-1001": claim(),
+    "GET /api/claims/CLM-1001/steps": [],
   });
 }
 
@@ -93,7 +95,9 @@ it("follows the hash to a claim", async () => {
     window.location.hash = "#/claims/CLM-1001";
     window.dispatchEvent(new HashChangeEvent("hashchange"));
   });
-  expect(screen.getByRole("heading", { name: "CLM-1001" })).toBeDefined();
+  expect(
+    await screen.findByRole("heading", { name: "CLM-1001" }),
+  ).toBeDefined();
 });
 
 it("formats money, dates and labels", () => {
