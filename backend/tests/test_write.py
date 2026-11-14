@@ -200,24 +200,19 @@ def test_run_agent_needs_a_waiting_claim(client):
     assert client.post("/api/claims/CLM-1001/run").status_code == 409
 
 
-def test_failed_run_puts_the_claim_back(client, monkeypatch):
-    def failing_run(claim_id, thread_id):
-        client.post(f"/api/claims/{claim_id}/start")
-        raise RuntimeError("model unavailable")
-
-    monkeypatch.setattr(agent, "run", failing_run)
-    client.post("/api/claims/CLM-1001/run")
-    assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
+def test_release_claim(client):
+    start(client)
+    response = client.post(
+        "/api/claims/CLM-1001/release", json={"problem": "No decision recorded"}
+    )
+    assert response.json()["status"] == "waiting"
     steps = client.get("/api/claims/CLM-1001/steps").json()
     assert steps[-1]["kind"] == "error"
-    assert steps[-1]["content"] == "The agent stopped with an error: model unavailable"
+    assert steps[-1]["content"] == "No decision recorded"
 
 
-def test_run_without_decision_puts_the_claim_back(client, monkeypatch):
-    monkeypatch.setattr(
-        agent, "run", lambda claim_id, _: client.post(f"/api/claims/{claim_id}/start")
+def test_release_needs_a_claim_in_progress(client):
+    response = client.post(
+        "/api/claims/CLM-1001/release", json={"problem": "No decision recorded"}
     )
-    client.post("/api/claims/CLM-1001/run")
-    assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
-    steps = client.get("/api/claims/CLM-1001/steps").json()
-    assert steps[-1]["content"] == "The agent finished without a decision"
+    assert response.status_code == 409

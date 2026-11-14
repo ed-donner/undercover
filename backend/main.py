@@ -184,25 +184,8 @@ def add_step(database: sqlite3.Connection, claim_id: str, kind: str, text: str) 
 
 
 def run_in_background(claim_id: str) -> None:
-    """Run the agent on a claim, and put the claim back if no decision results."""
-    try:
-        agent.run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
-        problem = "The agent finished without a decision"
-    except Exception as error:
-        problem = f"The agent stopped with an error: {error}"
-    database = db.connect()
-    if (
-        database.execute(
-            "SELECT status FROM claims WHERE id = ?", (claim_id,)
-        ).fetchone()[0]
-        == "in_progress"
-    ):
-        add_step(database, claim_id, "error", problem)
-        database.execute(
-            "UPDATE claims SET status = 'waiting' WHERE id = ?", (claim_id,)
-        )
-    database.commit()
-    database.close()
+    """Run the agent on a claim, with a new thread id."""
+    agent.run(claim_id, f"{claim_id}-{uuid4().hex[:8]}")
 
 
 @app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
@@ -223,6 +206,21 @@ def start_claim(claim_id: str, database: Db) -> dict[str, Any]:
     database.execute(
         "UPDATE claims SET status = 'in_progress' WHERE id = ?", (claim_id,)
     )
+    return claim_view(find(database, "claims", claim_id))
+
+
+class Release(BaseModel):
+    """Why a claim in progress goes back to the queue."""
+
+    problem: str
+
+
+@app.post("/api/claims/{claim_id}/release", operation_id="release_claim")
+def release_claim(claim_id: str, release: Release, database: Db) -> dict[str, Any]:
+    """Put a claim in progress back to waiting, recording the problem as a step."""
+    require_status(find(database, "claims", claim_id), "in_progress")
+    add_step(database, claim_id, "error", release.problem)
+    database.execute("UPDATE claims SET status = 'waiting' WHERE id = ?", (claim_id,))
     return claim_view(find(database, "claims", claim_id))
 
 

@@ -122,13 +122,10 @@ def steps(message: BaseMessage) -> Iterator[tuple[str, str]]:
             yield "tool_call", f"{call_['name']}({json.dumps(call_['args'])})"
 
 
-def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
-    """Run the agent on one claim, reporting each step, and return its final reply."""
-    started = call("POST", f"/api/claims/{claim_id}/start")
-    if started.startswith("Refused"):
-        return started
+def work(claim_id: str, thread_id: str, llm: BaseChatModel) -> str:
+    """Let the agent work on a started claim, reporting each step."""
     instructions = json.loads(call("GET", "/api/instructions"))["instructions"]
-    agent = create_agent(llm or model(), tools=TOOLS, system_prompt=instructions)
+    agent = create_agent(llm, tools=TOOLS, system_prompt=instructions)
     reply = ""
     for update in agent.stream(
         {"messages": [{"role": "user", "content": f"Please decide claim {claim_id}."}]},
@@ -144,4 +141,27 @@ def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
                         {"kind": kind, "content": content},
                     )
                 reply = message.text
+    return reply
+
+
+def release(claim_id: str, problem: str) -> None:
+    """Put the claim back to waiting, with the problem as a step."""
+    call("POST", f"/api/claims/{claim_id}/release", {"problem": problem})
+
+
+def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
+    """Run the agent on one waiting claim and return its final reply.
+
+    If the run fails or ends without a decision, the claim goes back to waiting.
+    """
+    started = call("POST", f"/api/claims/{claim_id}/start")
+    if started.startswith("Refused"):
+        return started
+    try:
+        reply = work(claim_id, thread_id, llm or model())
+    except Exception as error:
+        release(claim_id, f"The agent stopped with an error: {error}")
+        raise
+    if json.loads(call("GET", f"/api/claims/{claim_id}"))["status"] == "in_progress":
+        release(claim_id, "The agent finished without recording a decision")
     return reply

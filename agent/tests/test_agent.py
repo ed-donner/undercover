@@ -126,6 +126,37 @@ def test_run_refused_for_a_claim_not_waiting(client):
     assert llm.seen == []
 
 
+class FailingModel(StubModel):
+    """A chat model that fails the way an unavailable model does."""
+
+    def _generate(self, messages, *args, **kwargs):
+        raise RuntimeError("model unavailable")
+
+
+def test_failed_run_puts_the_claim_back(client):
+    with pytest.raises(RuntimeError, match="model unavailable"):
+        main.run("CLM-1001", "thread-1", FailingModel(messages=iter([])))
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
+    steps = client.get("/api/claims/CLM-1001/steps").json()
+    assert steps[-1]["kind"] == "error"
+    assert steps[-1]["content"] == "The agent stopped with an error: model unavailable"
+
+
+def test_run_without_a_decision_puts_the_claim_back(client):
+    llm = stub(AIMessage(content="Decision: decline, payout $0."))
+    main.run("CLM-1001", "thread-1", llm)
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "waiting"
+    steps = client.get("/api/claims/CLM-1001/steps").json()
+    assert steps[-1]["content"] == "The agent finished without recording a decision"
+
+
+def test_refused_run_leaves_the_other_run_alone(client):
+    client.post("/api/claims/CLM-1001/start")
+    main.run("CLM-1001", "thread-2", stub(AIMessage(content="Done.")))
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "in_progress"
+    assert client.get("/api/claims/CLM-1001/steps").json() == []
+
+
 def test_tools_only_call_the_backend():
     names = [t.name for t in main.TOOLS]
     assert names == [
