@@ -43,7 +43,9 @@ test("a decision made through the API shows on the claim and the queue", async (
   const decision = page.getByLabel("Decision");
   await expect(decision.getByText("Approve $420.00")).toBeVisible();
   await expect(decision.getByText(REASON)).toBeVisible();
-  await expect(decision.getByText("3. Trip Delay")).toBeVisible();
+  await expect(
+    decision.getByText("Policy section: 3. Trip Delay", { exact: true }),
+  ).toBeVisible();
   await page.getByText("The policy wording for this section").click();
   await expect(decision.getByText("## 3. Trip Delay")).toBeVisible();
 
