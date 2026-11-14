@@ -81,13 +81,13 @@ Build the write operations and the rules, with each rule enforced in the backend
 
 Rewrite `agent/main.py` around the claims API: tools for `get_claim`, `get_policy`, `get_claim_history`, `get_policy_wording`, `record_decision` and `pay_claim`, each a thin call to the backend. When the backend refuses (a 4xx), the tool returns the backend's message to the model rather than raising, so the agent learns, for example, that a payment waits for sign-off. Write `backend/instructions.md`: the role, the steps for each claim, how to work out a payout from the wording (limits, deductibles, waiting periods), the $1,000 rule, and the shape of the reason (two or three sentences, naming the policy section). `run(claim_id, thread_id)` calls `start_claim` (and stops if the backend refuses), fetches the instructions, streams the agent and posts each step. Add `uv run -m agent CLM-1001` for a manual run.
 
-- [ ] Tests with a stub model drive a full run on CLM-1001: the agent reads the claim, policy, history and wording, records an approval and pays; the backend shows the claim `decided` and paid, and the steps are recorded in order
-- [ ] A stub run that approves over $1,000 and then tries to pay ends with the claim `awaiting_signoff` and unpaid, and the tool result shows the backend's refusal
-- [ ] The agent's instructions come from `GET /api/instructions`, not from the agent's code (a test changes the served text and sees it in the system prompt)
-- [ ] The agent has no tool or code path that reads files in `data/`; a test checks the tool list
-- [ ] `MODEL_NAME` still selects the model, with `openai/gpt-6-luna` at low reasoning effort by default
-- [ ] With the backend running, `uv run -m agent CLM-1001` on a real model decides the claim with a payout, a two or three sentence reason and a policy section (one manual run, a few cents, or free with `MODEL_NAME=openrouter/free`)
-- [ ] `npm run check:python` passes
+- [x] Tests with a stub model drive a full run on CLM-1001: the agent reads the claim, policy, history and wording, records an approval and pays; the backend shows the claim `decided` and paid, and the steps are recorded in order
+- [x] A stub run that approves over $1,000 and then tries to pay ends with the claim `awaiting_signoff` and unpaid, and the tool result shows the backend's refusal
+- [x] The agent's instructions come from `GET /api/instructions`, not from the agent's code (a test changes the served text and sees it in the system prompt)
+- [x] The agent has no tool or code path that reads files in `data/`; a test checks the tool list
+- [x] `MODEL_NAME` still selects the model, with `openai/gpt-6-luna` at low reasoning effort by default
+- [x] With the backend running, `uv run -m agent CLM-1001` on a real model decides the claim with a payout, a two or three sentence reason and a policy section (one manual run, a few cents, or free with `MODEL_NAME=openrouter/free`)
+- [x] `npm run check:python` passes
 
 ## Phase 4: the dashboard shell, the queue and the instructions
 
