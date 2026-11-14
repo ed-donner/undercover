@@ -1,6 +1,7 @@
 # The UnderCover Copilot (by Sarvjot)
 
-Below is my version of the last build, the UnderCover Copilot: a chat in a sidebar of the dashboard, where a handler asks about the queue, a claim or the pilot, and the Copilot does the work they ask for, as they would on the dashboard. I built the last three days (context layer, runtime and Copilot) locally, with no AWS, so the Gateway, Runtime and memory settings stay empty and the deployed checks are skipped.
+Below is my version of the last build, the UnderCover Copilot: a chat in a sidebar of the dashboard, where a handler asks about the queue, a claim or the pilot, and the Copilot does the work they ask for, as they would on the dashboard.
+I built the last three days (context layer, runtime and Copilot) locally, with no AWS, so the Gateway, Runtime and memory settings stay empty and the deployed checks are skipped.
 
 My build can be checked at: https://github.com/sarvjot23/undercover/tree/week3day5-sarvjot
 
