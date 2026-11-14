@@ -1,0 +1,330 @@
+[
+  {
+    "application_id": "APP-5001",
+    "decision": "approve",
+    "approved_amount": 10000.0,
+    "reason": "Income limit 40% of $72,000 is $28,800. DTI of 12.2% is within 40%. Approve $10,000 (section 9).",
+    "tests": "A routine approval with every document attached",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5002",
+    "decision": "approve",
+    "approved_amount": 25000.0,
+    "reason": "Income limit 50% of $95,000 is $47,500. DTI of 14.5% is within 45%. Approve $25,000 (section 9).",
+    "tests": "A routine car loan approval",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5003",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "The credit score of 560 is below 580 (section 5).",
+    "tests": "A credit score below 580 is a hard decline",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5004",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "A bankruptcy was discharged within the last 24 months (section 5).",
+    "tests": "A bankruptcy discharged 10 months ago is a hard decline",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5005",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Required documents are missing: payslip (section 3).",
+    "tests": "Missing payslips means a referral",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5006",
+    "decision": "approve",
+    "approved_amount": 12000.0,
+    "reason": "Income limit 25% of $48,000 is $12,000. DTI of 14.1% is within 40%. Approve $12,000 (section 9).",
+    "tests": "The income limit at 25% cuts the loan to $12,000",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5007",
+    "decision": "approve",
+    "approved_amount": 12000.0,
+    "reason": "Income limit 40% of $60,000 is $24,000. DTI of 41.9% is over 40%, so the amount is reduced to fit. Approve $12,000 (section 9).",
+    "tests": "DTI over 40% means reducing the loan until it fits",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5008",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "Income limit 40% of $36,000 is $14,400. DTI of 51.9% is over 40%, so the amount is reduced to fit. The most that fits is below the $1,000 minimum (section 9).",
+    "tests": "Existing debts leave no room for any loan above the product minimum",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5009",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Stated income $85,000 is more than 10% above the verified $70,000 (section 4).",
+    "tests": "Stated income 21% above the payslips is a referral",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5010",
+    "decision": "approve",
+    "approved_amount": 31000.0,
+    "reason": "Income limit 50% of $62,000 is $31,000. DTI of 30.6% is within 45%. Approve $31,000 (section 9).",
+    "tests": "Stated income within 10%, but the income limit uses the verified $62,000",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5011",
+    "decision": "approve",
+    "approved_amount": 24000.0,
+    "reason": "Income limit 40% of $60,000 is $24,000. DTI of 25.8% is within 40%. Approve $24,000 (section 9).",
+    "tests": "Self-employed income is the average of two years, not the latest year",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5012",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "Self-employed for 18 months, less than 24 (section 5).",
+    "tests": "Self-employed for 18 months is a hard decline",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5013",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "A credit score of 600 is in the 580 to 619 referral band (section 6).",
+    "tests": "A credit score of 600 is a referral, not a decline",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5014",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Temporary residents are referred (section 6).",
+    "tests": "A temporary resident is referred despite strong numbers",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5015",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "Lending for cryptocurrency is a prohibited purpose (section 2).",
+    "tests": "Buying cryptocurrency is a prohibited purpose",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5016",
+    "decision": "approve",
+    "approved_amount": 24000.0,
+    "reason": "Income limit 40% of $80,000 is $32,000. DTI of 13.9% is within 40%. Approve $24,000 (section 9).",
+    "tests": "A car loan is capped at the vehicle price",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5017",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Required documents are missing: quote (section 3).",
+    "tests": "A car loan without a vehicle quote is referred",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5018",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "3 missed payments in the last 12 months (section 5).",
+    "tests": "Three missed payments is a hard decline despite a good score",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5019",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Only 4 months in the current job (section 6).",
+    "tests": "Four months in the current job is a referral",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5020",
+    "decision": "approve",
+    "approved_amount": 10000.0,
+    "reason": "Income limit 50% of $60,000 is $30,000. DTI of 42.6% is within 45%. Approve $10,000 (section 9).",
+    "tests": "DTI of 42.6% is allowed because the 745 score gets the 45% limit",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5021",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "The bank statement shows a loan repayment that the application does not declare (section 6).",
+    "tests": "The bank statement shows a $650 monthly loan the application does not declare",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5022",
+    "decision": "approve",
+    "approved_amount": 5000.0,
+    "reason": "Income limit 50% of $82,000 is $41,000. DTI of 7.8% is within 45%. Approve $5,000 (section 9).",
+    "tests": "A small routine approval",
+    "difficulty": "routine"
+  },
+  {
+    "application_id": "APP-5023",
+    "decision": "approve",
+    "approved_amount": 9000.0,
+    "reason": "Income limit 25% of $54,000 is $13,500. DTI of 14.4% is within 40%. Approve $9,000 (section 9).",
+    "tests": "A bankruptcy 30 months ago is not a decline, and the 25% income limit applies",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5024",
+    "decision": "approve",
+    "approved_amount": 40000.0,
+    "reason": "Income limit 50% of $150,000 is $75,000. DTI of 15.0% is within 45%. Approve $40,000 (section 9).",
+    "tests": "A request above the $40,000 personal loan maximum",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5025",
+    "decision": "approve",
+    "approved_amount": 7000.0,
+    "reason": "Income limit 40% of $57,000 is $22,800. DTI of 14.3% is within 40%. Approve $7,000 (section 9).",
+    "tests": "Two missed payments is under the limit of three",
+    "difficulty": "hard"
+  },
+  {
+    "application_id": "APP-5026",
+    "decision": "approve",
+    "approved_amount": 11000.0,
+    "reason": "Income limit 25% of $54,000 is $13,500. DTI of 41.0% is over 40%, so the amount is reduced to fit. Approve $11,000 (section 9).",
+    "tests": "The income limit cuts to $13,500, then DTI cuts again to $11,000",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5027",
+    "decision": "approve",
+    "approved_amount": 12500.0,
+    "reason": "Income limit 40% of $72,000 is $28,800. DTI of 43.9% is over 40%, so the amount is reduced to fit. Approve $12,500 (section 9).",
+    "tests": "The DTI limit allows $12,969, which rounds down to $12,500, not up to $13,000",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5028",
+    "decision": "approve",
+    "approved_amount": 10500.0,
+    "reason": "Income limit 40% of $60,000 is $24,000. DTI of 42.9% is over 40%, so the amount is reduced to fit. Approve $10,500 (section 9).",
+    "tests": "A score of 739 gets the 40% DTI limit, not 45%",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5029",
+    "decision": "approve",
+    "approved_amount": 6000.0,
+    "reason": "Income limit 25% of $40,000 is $10,000. DTI of 17.5% is within 40%. Approve $6,000 (section 9).",
+    "tests": "A score of exactly 620 is not a referral",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5030",
+    "decision": "approve",
+    "approved_amount": 10000.0,
+    "reason": "Income limit 40% of $60,000 is $24,000. DTI of 16.6% is within 40%. Approve $10,000 (section 9).",
+    "tests": "Stated income exactly 10% above verified is not more than 10%, so no referral",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5031",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Stated income $75,000 is more than 10% above the verified $68,000 (section 4).",
+    "tests": "Stated income 10.3% above verified is just over the line, a referral",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5032",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Required documents are missing: tax (section 3).",
+    "tests": "Self-employed with only one tax return is a missing document",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5033",
+    "decision": "approve",
+    "approved_amount": 5000.0,
+    "reason": "Income limit 25% of $50,000 is $12,500. DTI of 8.8% is within 40%. Approve $5,000 (section 9).",
+    "tests": "A bankruptcy discharged exactly 24 months ago is not a decline",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5034",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "A bankruptcy was discharged within the last 24 months (section 5).",
+    "tests": "A bankruptcy discharged 22 months ago is a decline",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5035",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "The credit score of 570 is below 580 (section 5).",
+    "tests": "A hard decline comes before the referral for a missing payslip",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5036",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "This is business use on a personal loan, a prohibited purpose (section 2).",
+    "tests": "Stock for an online shop is business use on a personal loan",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5037",
+    "decision": "decline",
+    "approved_amount": 0,
+    "reason": "Income limit 25% of $30,000 is $7,500. DTI of 42.6% is over 40%, so the amount is reduced to fit. The most that fits is below the $5,000 minimum (section 9).",
+    "tests": "The most that fits is $4,500, below the $5,000 car loan minimum",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5038",
+    "decision": "approve",
+    "approved_amount": 26000.0,
+    "reason": "Income limit 40% of $65,000 is $26,000. DTI of 17.9% is within 40%. Approve $26,000 (section 9).",
+    "tests": "Biweekly pay of $2,500 is $65,000 a year (26 paydays), not $60,000",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5039",
+    "decision": "refer",
+    "approved_amount": 0,
+    "reason": "Stated income $90,000 is more than 10% above the verified $60,000 (section 4).",
+    "tests": "Stated income matches the latest year but is far above the two-year average",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5040",
+    "decision": "approve",
+    "approved_amount": 26000.0,
+    "reason": "Income limit 50% of $60,000 is $30,000. DTI of 44.4% is within 45%. Approve $26,000 (section 9).",
+    "tests": "Capped at the vehicle price, and a score of exactly 740 gets the 45% DTI limit",
+    "difficulty": "harder"
+  },
+  {
+    "application_id": "APP-5041",
+    "decision": "approve",
+    "approved_amount": 8000.0,
+    "reason": "Income limit 40% of $58,000 is $23,200. DTI of 11.7% is within 40%. Approve $8,000 (section 9).",
+    "tests": "Exactly 6 months in the job is not a referral",
+    "difficulty": "harder"
+  }
+]
