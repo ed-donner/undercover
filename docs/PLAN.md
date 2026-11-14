@@ -116,12 +116,12 @@ The claim view shows the claim in full: the story, the items, the documents, the
 
 ## Phase 6: end-to-end tests and handover
 
-Playwright starts its own backend on port 8001 with `UNDERCOVER_DB` pointing to a fresh database, and the dashboard on port 5174 with its proxy pointed at that backend, so the e2e tests never touch the development database and never call a model. They play the agent's part by calling the same API the agent uses. Update `docs/STATUS.md` and the README's run instructions.
+Playwright starts its own backend on port 8001 with `UNDERCOVER_DB` pointing to a fresh database, and the dashboard on port 5174 with its proxy pointed at that backend, so the e2e tests never touch the development database and never call a model. They play the agent's part by calling the same API the agent uses. Update `docs/STATUS.md`, which holds the run instructions (`README.md` is the course's own).
 
-- [ ] e2e: the queue shows 25 claims and the state counts
-- [ ] e2e: a claim started and decided through the API (playing the agent) shows on the claim view with its reason and section, and the queue shows the claim decided
-- [ ] e2e: an approval over $1,000 shows as waiting for sign-off; an attempt to pay through the API is refused; a handler signs off in the dashboard and the claim shows decided and paid
-- [ ] e2e: the Instructions view shows the instructions
-- [ ] The health test still passes
-- [ ] `npm run check` passes in full
-- [ ] `docs/STATUS.md` says what's built, how to seed, run, and run the agent on one claim
+- [x] e2e: the queue shows 25 claims and the state counts
+- [x] e2e: a claim started and decided through the API (playing the agent) shows on the claim view with its reason and section, and the queue shows the claim decided
+- [x] e2e: an approval over $1,000 shows as waiting for sign-off; an attempt to pay through the API is refused; a handler signs off in the dashboard and the claim shows decided and paid
+- [x] e2e: the Instructions view shows the instructions
+- [x] The health test still passes
+- [x] `npm run check` passes in full
+- [x] `docs/STATUS.md` says what's built, how to seed, run, and run the agent on one claim
