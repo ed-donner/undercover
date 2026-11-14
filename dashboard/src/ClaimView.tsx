@@ -6,14 +6,12 @@ import { StatusChip } from "./StatusChip";
 import { Steps } from "./Steps";
 
 const POLL_MS = 1000;
-const START_POLLS = 10;
 
 export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
   const [claim, setClaim] = useState<Claim>();
   const [steps, setSteps] = useState<Step[]>([]);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [startPolls, setStartPolls] = useState(0);
 
   const show = (problem: unknown) => {
     setError(message(problem));
@@ -22,7 +20,6 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
   const apply = useCallback(([latest, latestSteps]: [Claim, Step[]]) => {
     setClaim(latest);
     setSteps(latestSteps);
-    if (latest.status !== "waiting") setStartPolls(0);
   }, []);
 
   const refresh = useCallback(
@@ -38,11 +35,11 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
     );
   }, [claimId, apply]);
 
-  const polling = claim?.status === "in_progress" || startPolls > 0;
+  const polling =
+    claim?.status === "waiting" || claim?.status === "in_progress";
   useEffect(() => {
     if (!polling) return;
     const timer = setInterval(() => {
-      setStartPolls((left) => Math.max(0, left - 1));
       refresh().catch(show);
     }, POLL_MS);
     return () => {
@@ -71,11 +68,7 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
     );
   }
 
-  const runAgent = () =>
-    perform(async () => {
-      await api.runAgent(claimId);
-      setStartPolls(START_POLLS);
-    });
+  const runAgent = () => perform(() => api.runAgent(claimId));
   const signOff = (handlerId: string) =>
     perform(async () => {
       await api.signOff(claimId, handlerId);
@@ -91,11 +84,7 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
         <h1 className="mono">{claim.claim_id}</h1>
         <StatusChip status={claim.status} />
         {claim.status === "waiting" && (
-          <button
-            type="button"
-            disabled={busy || polling}
-            onClick={() => void runAgent()}
-          >
+          <button type="button" disabled={busy} onClick={() => void runAgent()}>
             Run agent
           </button>
         )}
@@ -114,7 +103,7 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
             busy={busy}
             onSignOff={(handlerId) => void signOff(handlerId)}
           />
-          <Steps steps={steps} working={polling} />
+          <Steps steps={steps} working={claim.status === "in_progress"} />
         </div>
       </div>
     </>

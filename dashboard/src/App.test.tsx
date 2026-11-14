@@ -69,6 +69,41 @@ it("colors each state chip", async () => {
   expect(chip.className).toBe("chip chip-awaiting_signoff");
 });
 
+it("refreshes the queue as claims change", async () => {
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+  let claims = [summary()];
+  fakeFetch({
+    "GET /api/health": { status: "ok" },
+    "GET /api/claims": () => claims,
+  });
+  render(<App />);
+  expect((await screen.findByLabelText("Decided count")).textContent).toBe("0");
+  claims = [summary({ status: "decided" })];
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2000);
+  });
+  expect(screen.getByLabelText("Decided count").textContent).toBe("1");
+  vi.useRealTimers();
+});
+
+it("keeps the queue on screen if a refresh fails", async () => {
+  vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+  let healthy = true;
+  fakeFetch({
+    "GET /api/health": { status: "ok" },
+    "GET /api/claims": () =>
+      healthy ? [summary()] : new Response("{}", { status: 500 }),
+  });
+  render(<App />);
+  await screen.findByRole("link", { name: "CLM-1001" });
+  healthy = false;
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2000);
+  });
+  expect(screen.getByRole("link", { name: "CLM-1001" })).toBeDefined();
+  vi.useRealTimers();
+});
+
 it("shows an error when the queue fails", async () => {
   fakeFetch({ "GET /api/claims": new Response("{}", { status: 500 }) });
   render(<App />);

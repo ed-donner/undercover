@@ -7,23 +7,28 @@ interface Loaded<T> {
   error?: string;
 }
 
-export function useGet<T>(path: string) {
+export function useGet<T>(path: string, everyMs = 0) {
   const [loaded, setLoaded] = useState<Loaded<T>>({ path });
 
   useEffect(() => {
     let live = true;
-    api.get<T>(path).then(
-      (data) => {
-        if (live) setLoaded({ path, data });
-      },
-      (error: unknown) => {
-        if (live) setLoaded({ path, error: message(error) });
-      },
-    );
+    const load = () => {
+      void api.get<T>(path).then(
+        (data) => {
+          if (live) setLoaded({ path, data });
+        },
+        (error: unknown) => {
+          if (live) setLoaded((last) => ({ ...last, error: message(error) }));
+        },
+      );
+    };
+    load();
+    const timer = everyMs > 0 ? setInterval(load, everyMs) : undefined;
     return () => {
       live = false;
+      clearInterval(timer);
     };
-  }, [path]);
+  }, [path, everyMs]);
 
   return loaded.path === path ? loaded : { path };
 }

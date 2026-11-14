@@ -161,19 +161,21 @@ it("runs the agent and shows its steps as they arrive", async () => {
   expect(fetch.mock.calls).toHaveLength(calls);
 });
 
-it("keeps polling briefly until the run starts", async () => {
+it("picks up a run started elsewhere", async () => {
   let current = claim();
+  let steps: Step[] = [];
   routes(
     () => current,
-    () => [],
-    { "POST /api/claims/CLM-1001/run": { status: "started" } },
+    () => steps,
   );
   render(<ClaimView claimId="CLM-1001" />);
-  fireEvent.click(await screen.findByRole("button", { name: "Run agent" }));
-  expect(await screen.findByText("The agent is working...")).toBeDefined();
+  expect(await screen.findByText("Waiting")).toBeDefined();
   current = claim({ status: "in_progress" });
+  steps = [step('get_claim({"claim_id": "CLM-1001"})')];
   await tick();
   expect(screen.getByText("In progress")).toBeDefined();
+  expect(screen.getByText("The agent is working...")).toBeDefined();
+  expect(screen.getByText('get_claim({"claim_id": "CLM-1001"})')).toBeDefined();
 });
 
 it("shows a decided claim's decision, section and payment", async () => {

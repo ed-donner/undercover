@@ -3,11 +3,21 @@ import { date, label, money, STATUS_LABELS, STATUSES } from "./format";
 import { StatusChip } from "./StatusChip";
 import { useGet } from "./useGet";
 
-export function Queue() {
-  const { data: claims, error } = useGet<ClaimSummary[]>("/api/claims");
+const REFRESH_MS = 2000;
 
-  if (error) return <p className="alert">Could not load the queue.</p>;
-  if (!claims) return <p className="muted">Loading the queue...</p>;
+export function Queue() {
+  const { data: claims, error } = useGet<ClaimSummary[]>(
+    "/api/claims",
+    REFRESH_MS,
+  );
+
+  if (!claims) {
+    return error ? (
+      <p className="alert">Could not load the queue.</p>
+    ) : (
+      <p className="muted">Loading the queue...</p>
+    );
+  }
 
   return (
     <>
