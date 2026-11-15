@@ -62,11 +62,11 @@ Builds the subagent that works one claim, and the model change.
 - Every tool call is recorded as a step on the claim.
 
 Success criteria:
-- [ ] Tests on a stub model (fake chat model emitting scripted tool calls) show: the agent reads sections, decides, and the claim ends `decided` with steps including `read`.
-- [ ] A test shows `model()` returns the DeepSeek default with low effort, and `MODEL_NAME=openrouter/free` overrides it.
-- [ ] A test shows the claim agent's prompt contains no whole document (length under a small bound) and the subagent starts with only one user message.
-- [ ] `grep -r evals agent` finds nothing.
-- [ ] `npm run check:python` is green.
+- [x] Tests on a stub model (fake chat model emitting scripted tool calls) show: the agent reads sections, decides, and the claim ends `decided` with steps including `read`.
+- [x] A test shows `model()` returns the DeepSeek default with low effort, and `MODEL_NAME=openrouter/free` overrides it.
+- [x] A test shows the claim agent's prompt contains no whole document (length under a small bound) and the subagent starts with only one user message.
+- [x] `grep -r evals agent` finds nothing.
+- [x] `npm run check:python` is green.
 
 ## Phase 4: The queue agent
 
@@ -79,14 +79,14 @@ Builds the orchestrator, the to-do list, the cap, delegation and recovery.
 - CLI: `uv run -m agent --limit 5`, `uv run -m agent --claim CLM-1001`, and `npm run agent` scripts. Live runs reseed first.
 
 Success criteria (all on a stub model):
-- [ ] A run with `limit=3` on 25 waiting claims works exactly 3 and leaves 22 `waiting`.
-- [ ] A run on a named claim works only that claim.
-- [ ] The to-do list is stored by `set_todos` and every item ends `done` or `for_handler`.
-- [ ] A subagent that raises does not stop the run: the other claims are decided and the run summary names the failure.
-- [ ] A failed claim returns to `waiting` and is worked again in the same run; a claim that fails twice ends `for_handler`; no claim ends with two decisions or two payments.
-- [ ] The missed-claim check catches a claim left `waiting` within the cap and works it.
-- [ ] No claim is left `in_progress` after any run, including one with failures.
-- [ ] `npm run check:python` is green.
+- [x] A run with `limit=3` on 25 waiting claims works exactly 3 and leaves 22 `waiting`.
+- [x] A run on a named claim works only that claim.
+- [x] The to-do list is stored by `set_todos` and every item ends `done` or `for_handler`.
+- [x] A subagent that raises does not stop the run: the other claims are decided and the run summary names the failure.
+- [x] A failed claim returns to `waiting` and is worked again in the same run; a claim that fails twice ends `for_handler`; no claim ends with two decisions or two payments.
+- [x] The missed-claim check catches a claim left `waiting` within the cap and works it.
+- [x] No claim is left `in_progress` after any run, including one with failures.
+- [x] `npm run check:python` is green.
 
 ## Phase 5: Dashboard
 
