@@ -289,6 +289,18 @@ def pay_claim(claim_id: str, payment: Payment, conn: Db) -> dict[str, float]:
     return {"paid": payment.amount}
 
 
+@app.get("/api/handlers", operation_id="list_handlers")
+def list_handlers(conn: Db) -> list[dict[str, Any]]:
+    """List the handlers who can sign off a payout above the limit."""
+    rows = conn.execute("SELECT body FROM records WHERE kind = 'handler'").fetchall()
+    handlers = [json.loads(r["body"]) for r in rows]
+    return [
+        {"handler_id": h["handler_id"], "name": h["name"]}
+        for h in handlers
+        if h["can_approve_over_limit"]
+    ]
+
+
 @app.post("/api/claims/{claim_id}/sign-off", operation_id="sign_off_claim")
 def sign_off_claim(claim_id: str, sign_off: SignOff, conn: Db) -> dict[str, str]:
     """Let a handler sign off a payout above the approval limit."""

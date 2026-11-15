@@ -1,0 +1,171 @@
+:root {
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --ink: #073b4c;
+  --muted: #4f7280;
+  --sea-green: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  --link: #0b6f8f;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #04232e;
+    --panel: #000000;
+    --ink: #cdd8db;
+    --muted: #8fa9b2;
+    --link: #5cc3e0;
+    color-scheme: dark;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 1rem 2rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+header nav {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+}
+
+main {
+  display: grid;
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+}
+
+a {
+  color: var(--link);
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+}
+
+.panel h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.summary {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+
+.num {
+  text-align: right;
+}
+
+pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+}
+
+.todos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.todos li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+}
+
+.status {
+  border-radius: 999px;
+  padding: 0.1rem 0.7rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.status-waiting,
+.status-todo {
+  background: var(--marigold);
+  color: #073b4c;
+}
+
+.status-in_progress {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.status-awaiting_signoff {
+  background: var(--coral);
+  color: #073b4c;
+}
+
+.status-decided,
+.status-done {
+  background: var(--sea-green);
+  color: #073b4c;
+}
+
+.status-for_handler {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.signoff {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+button {
+  background: var(--sea-green);
+  color: #073b4c;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+}

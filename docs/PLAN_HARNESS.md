@@ -98,8 +98,8 @@ Builds the queue, claim and instructions pages to the brand in `docs/BRAND.md`. 
 - Handler sign-off button for `awaiting_signoff` claims.
 
 Success criteria:
-- [ ] `npm run check:ts` is green (vitest tests for the to-do list component, the sections-read list and status labels).
-- [ ] Playwright e2e passes against a seeded backend with a stub-model run: to-do items appear and change status on the queue page; the claim page lists read sections; instructions page shows both instructions.
+- [x] `npm run check:ts` is green (vitest tests for the to-do list component, the sections-read list and status labels).
+- [x] Playwright e2e passes against a seeded backend with a stub-model run: to-do items appear and change status on the queue page; the claim page lists read sections; instructions page shows both instructions.
 - [ ] In the browser (Playwright MCP), the queue page, a decided claim page and the instructions page look right in light and dark mode: fonts, colors, no one-edge borders.
 
 ## Phase 6: Live run, docs and final check

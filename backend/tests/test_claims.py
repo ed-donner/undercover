@@ -176,3 +176,9 @@ def test_every_operation_follows_the_api_rules():
         assert "\n" not in doc.strip()
         for param in inspect.signature(route.endpoint).parameters.values():  # type: ignore[attr-defined]
             assert param.default is inspect.Parameter.empty or param.name == "conn"
+
+
+def test_only_handlers_with_authority_are_listed(client):
+    names = [h["name"] for h in client.get("/api/handlers").json()]
+    assert names
+    assert "email" not in json.dumps(client.get("/api/handlers").json())

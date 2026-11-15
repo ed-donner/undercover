@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "e2e",
+  workers: 1,
   outputDir: "e2e/test-results",
   reporter: "list",
   use: { baseURL: "http://localhost:5173" },
