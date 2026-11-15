@@ -75,11 +75,17 @@ a {
   font-size: 0.9em;
 }
 
+.mono a,
+td.mono {
+  white-space: nowrap;
+}
+
 .muted {
   color: var(--muted);
 }
 
 .summary {
+  white-space: pre-wrap;
   font-family: "Instrument Serif", Georgia, serif;
   font-size: 1.2rem;
 }

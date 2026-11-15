@@ -19,15 +19,18 @@ Our goal is to handle claims straight through, as accurately as our handlers do.
 
 ## What the team needs to see
 
-- The queue, with where each claim stands: waiting, in progress, waiting for sign-off or decided.
+- The queue, with where each claim stands: waiting, in progress, waiting for sign-off, decided or for a handler (the agent could not finish it).
+- The agent's to-do list for the current run, kept up to date as it works.
 - Each claim in full, with the agent's decision and its reasons.
-- What the agent is doing on a claim while it works, step by step.
-- The agent's instructions, read only.
+- What the agent is doing on a claim while it works, step by step, including the sections of the claims manual and the policy wording it read.
+- The agent's instructions for running the queue and for working a claim, read only.
 
 ## Rules
 
 - A payout over $1,000 needs a handler's sign-off. The agent can approve such a claim, but the payment waits until a handler signs off. The system must block the payment until then, even if the agent tries to pay.
-- Decisions follow the policy wording.
+- Decisions follow the policy wording and the claims manual. The wording comes first.
+- One run works the whole queue, or at most a set number of claims, or one named claim. The agent hands each claim to a fresh helper and looks up the sections of the manual and the wording it needs.
+- A claim that fails before it is decided goes back in the queue to be tried again. A claim that fails twice is left for a handler. No claim is ever decided or paid twice, and a failed claim never stops a run.
 - Our handlers' own decisions on these claims are in `data/evals/`. We use them to check the agent's work. The agent must never see them.
 - Amounts are in US dollars.
 
@@ -37,7 +40,6 @@ Everything is in `data/`, described in `data/README.md`: the claims queue, the p
 
 ## Not for now
 
-- The claims manual. For the pilot, the agent works from the policy wording alone.
 - No sign-in. Everyone who uses the screens sees everything.
 - No real payments.
 - No messages to customers.

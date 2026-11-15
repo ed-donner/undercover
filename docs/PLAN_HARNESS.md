@@ -100,7 +100,7 @@ Builds the queue, claim and instructions pages to the brand in `docs/BRAND.md`. 
 Success criteria:
 - [x] `npm run check:ts` is green (vitest tests for the to-do list component, the sections-read list and status labels).
 - [x] Playwright e2e passes against a seeded backend with a stub-model run: to-do items appear and change status on the queue page; the claim page lists read sections; instructions page shows both instructions.
-- [ ] In the browser (Playwright MCP), the queue page, a decided claim page and the instructions page look right in light and dark mode: fonts, colors, no one-edge borders.
+- [x] In the browser (Playwright MCP), the queue page, a decided claim page and the instructions page look right in light and dark mode: fonts, colors, no one-edge borders.
 
 ## Phase 6: Live run, docs and final check
 
@@ -108,11 +108,11 @@ Success criteria:
 - Reseed, then run `uv run -m agent --limit 5` with the real model and watch the dashboard.
 
 Success criteria:
-- [ ] After reseed, a run capped at five on the default model works five claims, the other 20 stay `waiting`, and none is left `in_progress`.
-- [ ] The dashboard shows the to-do list filling in and being ticked off, and each claim page shows its steps and sections read.
-- [ ] No handler decision from `data/evals/` was opened or used (I do not open that folder in this build).
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` match the product.
-- [ ] `npm run check` is fully green (Python, TypeScript, Playwright, 80% coverage, no thresholds lowered).
+- [x] After reseed, a run capped at five on the default model works five claims, the other 20 stay `waiting`, and none is left `in_progress`.
+- [x] The dashboard shows the to-do list filling in and being ticked off, and each claim page shows its steps and sections read.
+- [x] No handler decision from `data/evals/` was opened or used (I do not open that folder in this build).
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` match the product.
+- [x] `npm run check` is fully green (Python, TypeScript, Playwright, 80% coverage, no thresholds lowered).
 
 ## Notes
 
