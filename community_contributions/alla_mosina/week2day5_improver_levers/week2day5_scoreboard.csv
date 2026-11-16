@@ -1,0 +1,130 @@
+run,experiment,version,set,model,reasoning_effort,hard,wording,sections,control,accuracy,grade,cost_of_mistakes,cost_per_claim,seconds_per_claim,prompt_tokens_per_claim,cached_share,decision_accuracy
+1,wording,1,evaluation,openai/gpt-6-luna,low,,full,all,False,0.64,1.09,,0.00034,14.2,9479,0.9,
+1,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.68,1.24,,0.0003,7,8962,0.91,
+1,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.68,1.28,,0.00024,11.2,9247,0.98,
+1,wording,"1, short, all",evaluation,openai/gpt-6-luna,low,,short,all,True,0.72,0.94,,0.00031,12.9,7053,0.88,
+1,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.76,0.99,,0.00031,12.8,6869,0.88,
+1,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.76,0.94,,0.00021,8.2,6533,0.97,
+1,wording,"1, short_v2, all",evaluation,openai/gpt-6-luna,low,,short_v2,all,True,0.64,1.14,,0.00033,28.1,8513,0.89,
+1,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.84,1.31,,0.0003,24.3,8153,0.9,
+1,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.64,1.32,,0.00024,23.8,8302,0.97,
+1,wording,"1, full, needed",evaluation,openai/gpt-6-luna,low,,full,needed,True,0.72,1.32,,0.00033,7.7,7021,0.84,
+1,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.68,1.19,,0.00029,6.6,6698,0.88,
+1,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.64,1.33,,0.00023,6.8,7247,0.97,
+1,wording,"1, short_v2, needed",evaluation,openai/gpt-6-luna,low,,short_v2,needed,True,0.64,1.13,,0.00033,6.4,6959,0.84,
+1,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.23,,0.0003,7.5,6642,0.87,
+1,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.22,,0.00022,6.5,6417,0.97,
+1,wording,2,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.88,1.48,,0.0004,8.2,8156,0.8,
+1,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.68,1.49,,0.00033,7.4,8174,0.88,
+1,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.37,,0.00024,7.9,8056,0.97,
+1,wording,3,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.88,1.52,,0.0004,7.5,8389,0.81,
+1,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.64,1.3,,0.00032,7.8,8533,0.88,
+1,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.53,,0.00024,7.7,8401,0.97,
+2,wording,1,evaluation,openai/gpt-6-luna,low,,full,all,False,0.64,1.1792,2040,0.000255512,10.4834,9328.32,0.974216,
+2,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.68,1.292,6575,0.000242305,9.64336,9235.64,0.97608,
+2,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.72,1.4448,2581,0.000232798,7.34292,9382.04,0.978124,
+2,wording,"1, short, all",evaluation,openai/gpt-6-luna,low,,short,all,True,0.64,0.8152,2412,0.000232679,10.1834,6937.32,0.969423,
+2,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.68,0.936,4000,0.00022019,6.6757,6752,0.968152,
+2,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.68,0.8972,3265,0.00022668,8.08957,7004.52,0.969528,
+2,wording,"1, short_v2, all",evaluation,openai/gpt-6-luna,low,,short_v2,all,True,0.68,1.176,2129,0.000252526,10.0016,8641.8,0.97357,
+2,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.72,1.2288,2201,0.000244759,13.0964,8425.16,0.972563,
+2,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.72,1.2672,5036,0.00025109,13.4111,8316.52,0.974172,
+2,wording,"1, full, needed",evaluation,openai/gpt-6-luna,low,,full,needed,True,0.68,1.27,2631,0.000223494,7.63336,7020.72,0.969376,
+2,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.72,1.3508,3612,0.000227004,7.58869,6909.16,0.969258,
+2,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.68,1.2664,3675,0.00022521,7.53746,7032.72,0.972722,
+2,wording,"1, short_v2, needed",evaluation,openai/gpt-6-luna,low,,short_v2,needed,True,0.68,1.2644,1864,0.000235006,6.7838,6859.08,0.965348,
+2,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.6,1.04,4006,0.000232472,6.95128,6850.96,0.965149,
+2,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.3784,3635,0.000219478,6.44837,6630.12,0.966746,
+2,wording,2,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.576,1031,0.000403979,11.5697,8453.84,0.816509,
+2,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.3036,6496,0.000313906,9.14727,7709.84,0.875494,
+2,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.4756,2550,0.00026556,9.49131,8722.96,0.970184,
+2,wording,3,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.8,1.302,1533,0.000387717,7.07193,8519.32,0.819878,
+2,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.8,1.5156,1010,0.000324829,6.77222,8176.72,0.880289,
+2,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.5708,3960,0.000234378,6.6668,8160.68,0.970076,
+2,wording,4,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.8,1.422,990,0.000400492,6.1378,8154.8,0.810595,
+2,wording,4,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.68,1.3692,6725,0.000336365,6.33501,7911.32,0.877467,
+2,wording,4,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.4236,6675,0.000276839,7.29352,8285.4,0.970338,
+3,wording,1,evaluation,openai/gpt-6-luna,low,,full,all,False,0.64,1.124,1117,0.000327064,6.07499,9337.44,0.904021,0.68
+3,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.68,1.2016,3840,0.000310477,5.94014,8985.48,0.90543,0.72
+3,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.76,1.406,2489,0.000224238,5.77792,8696.36,0.974845,0.8
+3,wording,"1, short, all",evaluation,openai/gpt-6-luna,low,,short,all,True,0.64,0.822,1985,0.00032268,6.85832,7172.92,0.877372,0.68
+3,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.68,0.8572,5705,0.000284405,6.3475,6869.4,0.879058,0.72
+3,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.64,0.8664,4774,0.000211751,5.98574,6869.04,0.968304,0.72
+3,wording,"1, short_v2, all",evaluation,openai/gpt-6-luna,low,,short_v2,all,True,0.6,1.1204,3495,0.000308308,5.6811,8631.04,0.897741,0.64
+3,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.68,1.3796,4259,0.000293774,5.70358,8164.44,0.899442,0.76
+3,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.76,1.3592,3659,0.000232863,5.89287,8039.2,0.973415,0.8
+3,wording,"1, full, needed",evaluation,openai/gpt-6-luna,low,,full,needed,True,0.8,1.3548,2242,0.000336933,5.80192,7017,0.829027,0.8
+3,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.84,1.4868,1970,0.000288274,5.76846,6475.52,0.875142,0.84
+3,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.56,1.0532,6070,0.000229368,5.77045,6928.24,0.966485,0.6
+3,wording,"1, short_v2, needed",evaluation,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.3756,1022,0.00032965,7.01294,6845.32,0.835888,0.76
+3,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.68,1.198,2675,0.000310519,6.83578,6956.96,0.877837,0.68
+3,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.76,1.35,5009,0.000227097,6.09195,6634,0.966192,0.76
+3,wording,2,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.5388,1013,0.000394491,6.10516,8218.72,0.816409,0.8
+3,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.386,3585,0.00031852,5.80015,7736.44,0.873285,0.76
+3,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.3536,3616,0.000244423,6.36795,7991.56,0.970614,0.76
+3,wording,3,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.424,754,0.000450474,6.35506,8656.8,0.806894,0.76
+3,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.4932,2364,0.000362168,6.30704,8696.12,0.882932,0.72
+3,wording,3,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.5,2275,0.000259959,6.17838,8304.6,0.968273,0.76
+3,wording,4,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.8,1.2356,2198,0.000437821,5.80939,9144.8,0.812956,0.84
+3,wording,4,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.306,2450,0.00036973,7.14862,9058.36,0.888289,0.76
+3,wording,4,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.68,1.1936,4060,0.000274932,6.46704,8645.56,0.971019,0.68
+3,routing,1,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.84,1.3144,861,0.000232953,6.77361,6985.04,0.969621,0.84
+3,routing,1,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.64,1.1652,5410,0.00022635,6.69509,6734.28,0.968109,0.68
+3,routing,1,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.8,1.3724,2085,0.00022185,6.54218,6625.08,0.970361,0.8
+3,routing,"1, medium for every claim",evaluation,openai/gpt-6-luna,medium,,short_v2,needed,True,0.76,1.2644,1002,0.00038758,8.3745,6547.36,0.830484,0.8
+3,routing,"1, medium for every claim",held-out,openai/gpt-6-luna,medium,,short_v2,needed,True,0.72,1.336,2120,0.000367669,9.20004,6337.8,0.871829,0.72
+3,routing,"1, medium for every claim",held-out,openai/gpt-6-luna,medium,,short_v2,needed,True,0.84,1.4812,520,0.000294467,8.12381,6454.52,0.96361,0.84
+3,routing,"1, low routine, medium hard",evaluation,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.76,1.2552,802,0.000296515,8.31935,6653.72,0.968986,0.8
+3,routing,"1, low routine, medium hard",held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.68,1.4372,3770,0.000254933,7.25947,6110.4,0.970869,0.72
+3,routing,"1, low routine, medium hard",held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.8,1.452,2020,0.000264575,7.68244,6215.08,0.968708,0.8
+3,routing,"1, none routine, medium hard",evaluation,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.8,1.352,890,0.000318993,8.18699,6643.08,0.905201,0.8
+3,routing,"1, none routine, medium hard",held-out,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.76,1.3912,3520,0.000304823,8.01369,6583.72,0.926905,0.76
+3,routing,"1, none routine, medium hard",held-out,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.76,1.4448,2070,0.000260086,7.37701,6225.04,0.968302,0.76
+3,routing,2,evaluation,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.8,1.3572,890,0.000294201,8.64804,6783.32,0.971925,0.8
+3,routing,2,held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.76,1.4364,2070,0.000262921,7.7058,6116.04,0.970366,0.76
+3,routing,2,held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.76,1.4448,2109,0.000261735,7.57295,6427.64,0.968617,0.76
+3,routing,3,evaluation,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.72,1.172,1117,0.00261569,4.52484,7083.56,0.288047,0.76
+3,routing,3,held-out,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.68,1.0528,2805,0.00227868,4.47092,6731.96,0.35598,0.72
+3,routing,3,held-out,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.8,1.2552,625,0.00231127,4.76576,6838.76,0.365628,0.8
+4,wording,1,evaluation,openai/gpt-6-luna,low,,full,all,False,0.64,1.1376,2474,0.000253316,5.67083,9483.92,0.975255,0.64
+4,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.8,1.2148,2059,0.000237537,5.8554,9110.12,0.9773,0.8
+4,wording,1,held-out,openai/gpt-6-luna,low,,full,all,False,0.84,1.4056,575,0.000241403,6.19881,9239.16,0.976942,0.84
+4,wording,"1, short, all",evaluation,openai/gpt-6-luna,low,,short,all,True,0.76,0.8792,1858,0.000249176,6.20839,7484.68,0.96538,0.8
+4,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.64,0.8556,4315,0.00021657,5.56014,6862.8,0.970391,0.68
+4,wording,"1, short, all",held-out,openai/gpt-6-luna,low,,short,all,True,0.72,0.9732,2739,0.000224361,6.08021,6774.8,0.96833,0.76
+4,wording,"1, short_v2, all",evaluation,openai/gpt-6-luna,low,,short_v2,all,True,0.72,1.3704,2353,0.00024408,6.21603,8631.4,0.973446,0.72
+4,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.76,1.3952,3698,0.000226539,5.7954,8161.16,0.974925,0.8
+4,wording,"1, short_v2, all",held-out,openai/gpt-6-luna,low,,short_v2,all,True,0.76,1.3172,3585,0.000234679,7.99225,8430.68,0.974868,0.76
+4,wording,"1, full, needed",evaluation,openai/gpt-6-luna,low,,full,needed,True,0.6,1.2028,1292,0.000224993,6.27641,7122.04,0.966145,0.68
+4,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.76,1.3336,2450,0.000217503,5.45425,6919.12,0.967765,0.8
+4,wording,"1, full, needed",held-out,openai/gpt-6-luna,low,,full,needed,True,0.72,1.332,5600,0.000220496,6.14478,6590.76,0.953917,0.76
+4,wording,"1, short_v2, needed",evaluation,openai/gpt-6-luna,low,,short_v2,needed,True,0.68,1.2676,1642,0.000229002,5.96699,6972.44,0.969922,0.72
+4,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.2524,3814,0.000221065,6.10371,6644.6,0.968811,0.72
+4,wording,"1, short_v2, needed",held-out,openai/gpt-6-luna,low,,short_v2,needed,True,0.72,1.2964,2201,0.000224748,6.02217,6843.28,0.968319,0.72
+4,wording,2,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.76,1.4148,548,0.000388171,6.14454,7652.48,0.804304,0.76
+4,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.72,1.3752,3570,0.000319099,6.04439,7547.72,0.872698,0.76
+4,wording,2,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.64,1.3444,5120,0.000235765,5.84046,7452.24,0.970323,0.68
+4,wording,3,evaluation,openai/gpt-6-luna,low,,full,needed,False,0.72,1.3644,1254,0.000402305,5.85214,8239.52,0.815266,0.76
+4,wording,3,held-out,openai/gpt-6-luna,low,,full,needed,False,0.72,1.5424,5630,0.000329371,5.66628,7662,0.872373,0.8
+4,wording,3,held-out,openai/gpt-6-luna,low,,full,needed,False,0.68,1.376,6889,0.000246256,5.7528,7504.16,0.953514,0.76
+4,wording,4,evaluation,openai/gpt-6-luna,low,,full,all,False,0.8,1.2596,682,0.000347285,5.63378,9280.08,0.879242,0.84
+4,wording,4,held-out,openai/gpt-6-luna,low,,full,all,False,0.68,1.3188,4251,0.000331688,5.94651,9337.8,0.894879,0.76
+4,wording,4,held-out,openai/gpt-6-luna,low,,full,all,False,0.64,1.2,5565,0.000245253,5.72394,9213.28,0.972518,0.68
+4,routing,1,evaluation,openai/gpt-6-luna,low,,short_v2,needed,False,0.56,1.1052,1462,0.000368893,6.28221,6839.92,0.79567,0.68
+4,routing,1,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.68,1.3208,3844,0.000305605,6.18737,6834.88,0.85742,0.76
+4,routing,1,held-out,openai/gpt-6-luna,low,,short_v2,needed,False,0.64,1.1044,3956,0.000240577,6.79113,7153.12,0.965291,0.64
+4,routing,"1, medium for every claim",evaluation,openai/gpt-6-luna,medium,,short_v2,needed,True,0.76,1.3592,1002,0.00041804,9.27184,6546.72,0.788902,0.8
+4,routing,"1, medium for every claim",held-out,openai/gpt-6-luna,medium,,short_v2,needed,True,0.76,1.4192,620,0.000360411,8.46578,6119.36,0.846696,0.76
+4,routing,"1, medium for every claim",held-out,openai/gpt-6-luna,medium,,short_v2,needed,True,0.8,1.318,570,0.000296076,8.72956,6225.52,0.966756,0.8
+4,routing,"1, low routine, medium hard",evaluation,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.8,1.3772,890,0.000282753,8.19025,6545.04,0.967511,0.8
+4,routing,"1, low routine, medium hard",held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.8,1.5072,2400,0.000281619,8.29473,6523.92,0.967155,0.84
+4,routing,"1, low routine, medium hard",held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,True,0.68,1.2992,2229,0.000270302,7.39678,6436.52,0.964683,0.72
+4,routing,"1, none routine, medium hard",evaluation,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.8,1.2892,890,0.000338095,8.24189,6673.12,0.888094,0.8
+4,routing,"1, none routine, medium hard",held-out,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.76,1.5692,2070,0.000302771,7.57138,6338.52,0.921837,0.8
+4,routing,"1, none routine, medium hard",held-out,openai/gpt-6-luna,none,openai/gpt-6-luna at medium,short_v2,needed,True,0.72,1.2964,2158,0.000257269,7.10449,6033.12,0.968494,0.72
+4,routing,2,evaluation,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.8,1.3492,890,0.000283401,8.15258,6546.24,0.967328,0.8
+4,routing,2,held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.76,1.3792,2129,0.000261985,8.2119,6428.4,0.9704,0.8
+4,routing,2,held-out,openai/gpt-6-luna,low,openai/gpt-6-luna at medium,short_v2,needed,False,0.8,1.4924,2020,0.000259451,8.07002,6433,0.971429,0.8
+4,routing,3,evaluation,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.72,1.0764,1322,0.0027195,4.87425,7088.52,0.28933,0.76
+4,routing,3,held-out,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.72,1.2744,2755,0.00238806,4.91074,6838.8,0.366427,0.76
+4,routing,3,held-out,openai/gpt-6-luna,low,google/gemini-3.5-flash-lite at low,short_v2,needed,False,0.72,1.2888,2755,0.00233962,5.13537,6840.92,0.365676,0.76
