@@ -29,7 +29,6 @@ dependencies = [
     "requests>=2.34.2",
     "tqdm>=4.70.1",
     "uvicorn>=0.54.0",
-    "whatmodel>=0.0.7",
 ]
 
 [dependency-groups]

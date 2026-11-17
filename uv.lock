@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -3463,7 +3463,6 @@ dependencies = [
     { name = "requests" },
     { name = "tqdm" },
     { name = "uvicorn" },
-    { name = "whatmodel" },
 ]
 
 [package.dev-dependencies]
@@ -3511,7 +3510,6 @@ requires-dist = [
     { name = "requests", specifier = ">=2.34.2" },
     { name = "tqdm", specifier = ">=4.70.1" },
     { name = "uvicorn", specifier = ">=0.54.0" },
-    { name = "whatmodel", specifier = ">=0.0.7" },
 ]
 
 [package.metadata.requires-dev]
@@ -3734,21 +3732,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/49/b2/b6987faf330f5af5c787a2610124c2e8403d51724f9001ec4fff6311fe7a/websockets-16.1.1-cp314-cp314t-win32.whl", hash = "sha256:8483c2096363120eea8b07c06ae7304d520f686665fffd4811fad423930a65d7", size = 179729, upload-time = "2026-07-17T22:50:53.269Z" },
     { url = "https://files.pythonhosted.org/packages/a2/6e/fbac6ed878dd362fbad7d415fa4f84d38e3e33fed8cde45c64e783acf826/websockets-16.1.1-cp314-cp314t-win_amd64.whl", hash = "sha256:bcce07e23e5769375158f5efdcdafa8d5cd014b93c6683865b840ed65b96f231", size = 180072, upload-time = "2026-07-17T22:50:54.969Z" },
     { url = "https://files.pythonhosted.org/packages/be/4d/2d0d67834092e354d2b0498f014a41249a89556bc406cf86f3e1557bb463/websockets-16.1.1-py3-none-any.whl", hash = "sha256:6abbd3e82c731c8e531714466acd5d87b5e88ac3243465337ba71d68e23ae7e3", size = 173814, upload-time = "2026-07-17T22:51:04.184Z" },
-]
-
-[[package]]
-name = "whatmodel"
-version = "0.0.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "pyyaml" },
-    { name = "rich" },
-    { name = "typer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/15/fe/c3464cc84397ccf52d696086361b92c4fb6d34cfdff880dbd7578b0c9484/whatmodel-0.0.7.tar.gz", hash = "sha256:da95da60da21b4fede4c213526f7dd2e4abefc8a704c2533b24648fc9bea0d8c", size = 96971, upload-time = "2026-11-14T22:59:27.029Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8f/75/aaaa27711466daefc86b8131e9baa490f90e26c813677c068eb22566d6c4/whatmodel-0.0.7-py3-none-any.whl", hash = "sha256:0c22f1809f87b973b5a7c4822470c8b39889c538a149bed9e1d0bf55d423123c", size = 65328, upload-time = "2026-11-14T22:59:25.501Z" },
 ]
 
 [[package]]
