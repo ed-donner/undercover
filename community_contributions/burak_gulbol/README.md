@@ -39,4 +39,4 @@ All runs use the lab's agent unchanged (same prompt, tools and scoring). Each mo
 
 ## Running the notebook
 
-[`week1day2_cheapest_agent.ipynb`](week1day2_cheapest_agent.ipynb) keeps the outputs of the runs above. Running it from top to bottom repeats all seven runs: about an hour (the loops pause to stay under OpenRouter's new-account limit of 20 requests a minute per model) and a few cents, and the numbers will differ a little from run to run.
+[`week1day2_cheapest_agent.ipynb`](week1day2_cheapest_agent.ipynb) is saved with its outputs cleared; the results above come from the runs it describes. Running it from top to bottom repeats all seven runs: about an hour (the loops pause to stay under OpenRouter's new-account limit of 20 requests a minute per model) and a few cents, and the numbers will differ a little from run to run.
