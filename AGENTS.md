@@ -32,6 +32,8 @@ The student is also here to learn. Write plans they can review: say what each ph
 
 Each build day has a brief in `labs/`, which the student copies into `docs/` at the start of the day; if the student asks, copy it for them. The build goes in two steps, with the student's review in between. First a request like "Please plan <the work> in docs/<NAME>.md", which writes the plan to `docs/PLAN_<NAME>.md`, then "Please implement the plan for <the work>". The first build, the pilot, works from `docs/SPEC.md` itself: "Please plan the pilot" writes `docs/PLAN.md`, then "Please implement the plan for the pilot".
 
+The pilot's agent runs from the command line, as the lectures show: `uv run -m agent` works every waiting claim in queue order, and `uv run -m agent CLM-1001` works one claim. Both go in `docs/STATUS.md` with the other commands.
+
 | Day | Brief in `labs/` | Copied to | What the build adds |
 |---|---|---|---|
 | Week 1 Day 3 | none | `docs/SPEC.md` is the brief | The pilot: the backend, the dashboard and a first agent |
