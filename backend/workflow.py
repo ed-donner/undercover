@@ -1,0 +1,317 @@
+"""Transactional decision, sign-off and simulated payment rules."""
+
+import json
+import sqlite3
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from http import HTTPStatus
+from uuid import uuid4
+
+from fastapi import HTTPException
+
+from backend.activity import LABELS, Activity
+from backend.documents import validate_references
+from backend.harness import Harness, sync_tasks
+from backend.models import (
+    ActivityEvent,
+    Claim,
+    Decision,
+    DecisionInput,
+    Payment,
+    PaymentInput,
+    Run,
+    SignOff,
+    SignOffInput,
+)
+from backend.run_state import active_attempt, now, require
+from backend.store import Store
+
+
+class Workflow:
+    def __init__(self, store: Store):
+        self.store = store
+
+    def detail(self, claim_id: str) -> Claim:
+        claim = Claim.model_validate(self.store.claim(claim_id))
+        with self.store.connect() as connection:
+            decision = connection.execute(
+                "SELECT * FROM decisions WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            sign_off = connection.execute(
+                "SELECT * FROM sign_offs WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            payment = connection.execute(
+                "SELECT * FROM payments WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+        if decision:
+            claim.decision = Decision(
+                run_id=decision["run_id"],
+                outcome=decision["outcome"],
+                payout=Decimal(decision["payout_cents"]) / 100,
+                calculation=decision["calculation"],
+                explanation=decision["explanation"],
+                policy_sections=json.loads(decision["policy_sections"]),
+                manual_version=decision["manual_version"],
+                manual_sections=json.loads(decision["manual_sections"]),
+                recorded_at=decision["recorded_at"],
+            )
+        if sign_off:
+            claim.sign_off = SignOff(
+                handler_id=sign_off["handler_id"], signed_at=sign_off["signed_at"]
+            )
+        if payment:
+            claim.payment = Payment(
+                amount=Decimal(payment["amount_cents"]) / 100,
+                paid_at=payment["paid_at"],
+            )
+        return claim
+
+    def start(self, claim_id: str, parent_run_id: str) -> Run:
+        self.store.claim(claim_id)
+        run = Run(
+            run_id=str(uuid4()),
+            claim_id=claim_id,
+            thread_id=str(uuid4()),
+            status="running",
+            started_at=now(),
+            finished_at=None,
+            error=None,
+            parent_run_id=parent_run_id,
+            deadline=(datetime.now(UTC) + timedelta(minutes=8)).isoformat(),
+        )
+        with self.store.transaction() as connection:
+            Harness.admit(connection, parent_run_id, claim_id)
+            changed = connection.execute(
+                "UPDATE claims SET status = 'in_progress' "
+                "WHERE id = ? AND status = 'waiting'",
+                (claim_id,),
+            ).rowcount
+            require(changed == 1, "Claim is not waiting")
+            connection.execute(
+                "INSERT INTO runs (run_id, claim_id, thread_id, status, started_at, "
+                "finished_at, error, parent_run_id, deadline) "
+                "VALUES (:run_id, :claim_id, :thread_id, :status, :started_at, "
+                ":finished_at, :error, :parent_run_id, :deadline)",
+                run.model_dump(),
+            )
+            self._event(connection, run.run_id, "run_started")
+        return run
+
+    def runs(self, claim_id: str) -> list[Run]:
+        self.store.claim(claim_id)
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM runs WHERE claim_id = ? ORDER BY started_at", (claim_id,)
+            ).fetchall()
+        return [Run.model_validate(dict(row)) for row in rows]
+
+    def decide(self, claim_id: str, decision: DecisionInput) -> Claim:
+        self.store.claim(claim_id)
+        limit = Decimal(
+            str(self.store.get("company", "company")["payout_approval_limit"])
+        )
+        status = "waiting_for_sign_off" if decision.payout > limit else "decided"
+        with self.store.transaction() as connection:
+            run = active_attempt(connection, decision.run_id)
+            validate_references(
+                connection,
+                decision.run_id,
+                decision.policy_sections,
+                decision.manual_sections,
+                decision.manual_version,
+            )
+            require(
+                run["claim_id"] == claim_id,
+                "Decision must belong to this claim's active run",
+            )
+            require(
+                connection.execute(
+                    "SELECT status FROM claims WHERE id = ?", (claim_id,)
+                ).fetchone()["status"]
+                == "in_progress",
+                "Claim already has a decision",
+            )
+            connection.execute(
+                "INSERT INTO decisions (claim_id, run_id, outcome, payout_cents, "
+                "calculation, explanation, policy_sections, recorded_at, "
+                "manual_version, manual_sections) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    claim_id,
+                    decision.run_id,
+                    decision.outcome,
+                    int(decision.payout * 100),
+                    decision.calculation,
+                    decision.explanation,
+                    json.dumps(decision.policy_sections),
+                    now(),
+                    decision.manual_version,
+                    json.dumps(decision.manual_sections),
+                ),
+            )
+            connection.execute(
+                "UPDATE claims SET status = ? WHERE id = ?", (status, claim_id)
+            )
+            self._event(connection, decision.run_id, "decision_recorded")
+        return self.detail(claim_id)
+
+    def sign_off(self, claim_id: str, sign_off: SignOffInput) -> Claim:
+        self.store.claim(claim_id)
+        handler = self.store.get("handlers", sign_off.handler_id)
+        require(handler["can_approve_over_limit"], "Handler cannot sign off")
+        with self.store.transaction() as connection:
+            changed = connection.execute(
+                "UPDATE claims SET status = 'decided' "
+                "WHERE id = ? AND status = 'waiting_for_sign_off'",
+                (claim_id,),
+            ).rowcount
+            require(changed == 1, "Claim is not waiting for sign-off")
+            connection.execute(
+                "INSERT INTO sign_offs (claim_id, handler_id, signed_at) "
+                "VALUES (?, ?, ?)",
+                (claim_id, sign_off.handler_id, now()),
+            )
+            decision = connection.execute(
+                "SELECT run_id FROM decisions WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            self._event(connection, decision["run_id"], "sign_off_recorded")
+        return self.detail(claim_id)
+
+    def pay(
+        self, claim_id: str, payment: PaymentInput, run_id: str | None = None
+    ) -> Claim:
+        self.store.claim(claim_id)
+        limit = Decimal(
+            str(self.store.get("company", "company")["payout_approval_limit"])
+        )
+        with self.store.transaction() as connection:
+            if run_id is not None:
+                run = active_attempt(connection, run_id)
+                require(run["claim_id"] == claim_id, "Payment belongs to another claim")
+            decision = connection.execute(
+                "SELECT * FROM decisions WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            if decision is None:
+                raise HTTPException(409, "Record a decision before payment")
+            if run_id is not None:
+                require(
+                    decision["run_id"] == run_id,
+                    "Payment must use this attempt's decision",
+                )
+            self._check_payment(connection, claim_id, decision, payment)
+            signed = connection.execute(
+                "SELECT 1 FROM sign_offs WHERE claim_id = ?", (claim_id,)
+            ).fetchone()
+            require(
+                payment.amount <= limit or signed is not None,
+                "Handler sign-off required before payment",
+            )
+            connection.execute(
+                "INSERT INTO payments (claim_id, amount_cents, paid_at) "
+                "VALUES (?, ?, ?)",
+                (claim_id, int(payment.amount * 100), now()),
+            )
+            self._event(connection, decision["run_id"], "payment_recorded")
+        return self.detail(claim_id)
+
+    def payment_blocked(self, claim_id: str) -> None:
+        with self.store.transaction() as connection:
+            run = connection.execute(
+                "SELECT run_id FROM runs WHERE claim_id = ? ORDER BY started_at DESC",
+                (claim_id,),
+            ).fetchone()
+            if run:
+                self._event(connection, run["run_id"], "payment_blocked")
+
+    def request_payment(
+        self, claim_id: str, payment: PaymentInput, run_id: str | None = None
+    ) -> Claim:
+        try:
+            return self.pay(claim_id, payment, run_id)
+        except HTTPException as error:
+            if error.status_code == HTTPStatus.CONFLICT:
+                self.payment_blocked(claim_id)
+            raise
+
+    def close_attempt(self, run_id: str, error: str | None) -> None:
+        with self.store.connect() as connection:
+            if (
+                connection.execute(
+                    "SELECT 1 FROM runs WHERE run_id = ?", (run_id,)
+                ).fetchone()
+                is None
+            ):
+                raise HTTPException(404, "Run not found")
+        self.finish(run_id, error)
+
+    @staticmethod
+    def _event(connection: sqlite3.Connection, run_id: str, kind: str) -> None:
+        connection.execute(
+            "INSERT INTO events (run_id, kind, label, created_at) VALUES (?, ?, ?, ?)",
+            (run_id, kind, LABELS[kind], now()),
+        )
+
+    def event(self, run_id: str, activity: Activity) -> None:
+        with self.store.transaction() as connection:
+            active_attempt(connection, run_id)
+            self._event(connection, run_id, activity)
+
+    def events(self, claim_id: str) -> list[ActivityEvent]:
+        self.store.claim(claim_id)
+        with self.store.connect() as connection:
+            rows = connection.execute(
+                "SELECT events.* FROM events JOIN runs USING (run_id) "
+                "WHERE runs.claim_id = ? ORDER BY sequence",
+                (claim_id,),
+            ).fetchall()
+        return [ActivityEvent.model_validate(dict(row)) for row in rows]
+
+    def finish(self, run_id: str, error: str | None) -> None:
+        with self.store.transaction() as connection:
+            run = connection.execute(
+                "SELECT * FROM runs WHERE run_id = ? AND status = 'running'", (run_id,)
+            ).fetchone()
+            if run is None:
+                return
+            decision = connection.execute(
+                "SELECT 1 FROM decisions WHERE claim_id = ?", (run["claim_id"],)
+            ).fetchone()
+            if decision is None:
+                error = error or "Agent finished without recording a decision."
+                connection.execute(
+                    "UPDATE claims SET status = 'waiting', failures = failures + 1, "
+                    "needs_handler = (failures + 1 >= 2), "
+                    "handler_reason = CASE WHEN failures + 1 >= 2 "
+                    "THEN 'Two attempts failed; handler review required' ELSE '' END "
+                    "WHERE id = ?",
+                    (run["claim_id"],),
+                )
+            status = "failed" if error else "completed"
+            connection.execute(
+                "UPDATE runs SET status = ?, finished_at = ?, error = ? "
+                "WHERE run_id = ?",
+                (status, now(), error, run_id),
+            )
+            self._event(connection, run_id, f"run_{status}")
+            if run["parent_run_id"]:
+                sync_tasks(connection, run["parent_run_id"])
+
+    def recover(self) -> None:
+        with self.store.connect() as connection:
+            runs = connection.execute(
+                "SELECT run_id FROM runs WHERE status = 'running'"
+            ).fetchall()
+        for run in runs:
+            self.finish(run["run_id"], "Run interrupted by backend restart.")
+
+    @staticmethod
+    def _check_payment(connection, claim_id, decision, payment: PaymentInput) -> None:
+        require(decision["outcome"] == "approve", "Only approved claims can be paid")
+        require(
+            int(payment.amount * 100) == decision["payout_cents"],
+            "Payment must equal the approved payout",
+        )
+        paid = connection.execute(
+            "SELECT 1 FROM payments WHERE claim_id = ?", (claim_id,)
+        ).fetchone()
+        require(paid is None, "Claim has already been paid")
