@@ -29,3 +29,9 @@ The container serves the whole repo at `/workspaces/undercover`. The `.env` file
 |---|---|
 | `uv sync` | makes the `.venv` folder with the course packages |
 | `npm install` | installs the dashboard packages and the git pre-commit hook |
+
+## More in this folder
+
+- [CRM_ENGINE.md](CRM_ENGINE.md) — the domain-agnostic CRM engine: one
+  engine, five domain packs, with a captured desk for each. The engine lives
+  on the fork branch the write-up links.
