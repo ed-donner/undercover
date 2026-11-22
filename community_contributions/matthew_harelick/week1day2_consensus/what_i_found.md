@@ -21,15 +21,17 @@ Every model went through Part 4's agent, with the same claims, tools, prompt and
 | ollama/gemma4:e2b | none | 7, 6 (an earlier run) | $0 | no |
 | ollama/llama3 | none | not run | n/a | can't call tools |
 
-I stopped the run during Qwen at medium, after one run (18), because of the time the local runs were taking.
-
 ### Takeaways
 
 - **Luna at low is the cheapest model that passes.** Sol was the most accurate, with 20 both times, but cost more than 20 times as much.
 - **A free local model matched the paid ones on accuracy, but not on speed.** Qwen 3.8 27B, run locally through Ollama, scored 17 and 17. But it took minutes a claim where Luna took seconds, and it needs a machine with about 27 GB of GPU memory. For a claims queue, saving a fraction of a cent a claim isn't worth that, so I ruled local out. The case for local would be keeping claims data on our own machines, which this lab doesn't require.
 - **Running more than once matters.** gpt-oss-120b at medium scored 16 on one run in an earlier test, then 14 and 14, and 15 then 14 here. One run would have called it a pass.
 - **Cheap per token isn't cheap per run.** Through the agent, gpt-oss-120b cost more than Luna at every effort and was less accurate. Gemini Flash Lite was the fastest, but cost about 10 times as much as Luna and only just passed.
-- **Small local models can't do this job.** Gemma 4 E2B scored 3 to 7, and Llama 3 can't call tools, so it couldn't run the agent.
-- **Models can't all be run at the same effort.** Gemma and Llama have no low or medium setting, so they ran at their defaults.
+
+### Consensus
+
+I added the consensus section to see whether the wrong answers follow patterns we could make decisions on. It pools every run's misses and asks a judge model, Claude Sonnet, whether the runs that missed a claim went wrong for the same reason. It judged 20 claims for about $0.13.
+
+It had less value than I expected, but it did explain the accuracy ceiling. Most of the shared reasons were missing information: the handler relied on something the models never saw, such as the claims manual or the customer's history. So a better model or a reworded prompt won't win those claims back, which is why every model tops out around 15 to 20 of 25 and a cheap model gets close to the expensive ones. The fix is giving the models that information.
 
 With Claude's help
