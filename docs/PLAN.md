@@ -118,14 +118,14 @@ Builds the screens in React, TypeScript strict, styled to `docs/BRAND.md`. Hash 
 - The API calls live in one small typed module, so components stay simple and tests can fake it.
 
 Success criteria:
-- [ ] `npm run check:ts` passes: ESLint, Prettier, tsc strict with no `any`, vitest at or above 80% coverage.
-- [ ] vitest: the queue shows every claim with its state badge and formats amounts as dollars.
-- [ ] vitest: a decided claim shows decision, payout, explanation and policy section; an approve over the limit shows the sign-off control and the picker lists the three handlers.
-- [ ] vitest: the instructions page shows text and has no input or textarea.
-- [ ] Playwright MCP browser at `http://localhost:5173/#/`: the queue shows 25 rows. Screenshot in light and dark mode and compare with the brand (page `#F0F4F5` or `#04232E`, panels white or black, rounded, no outlines).
-- [ ] Playwright MCP browser: open CLM-1001, record a decision through the API, and the page shows it within three seconds.
-- [ ] Playwright MCP browser: `#/instructions` has no way to edit the text.
-- [ ] A grep of `dashboard/src` finds no customer email or phone field.
+- [x] `npm run check:ts` passes: ESLint, Prettier, tsc strict with no `any`, vitest at or above 80% coverage.
+- [x] vitest: the queue shows every claim with its state badge and formats amounts as dollars.
+- [x] vitest: a decided claim shows decision, payout, explanation and policy section; an approve over the limit shows the sign-off control and the picker lists the three handlers.
+- [x] vitest: the instructions page shows text and has no input or textarea.
+- [x] Playwright MCP browser at `http://localhost:5173/#/`: the queue shows 25 rows. Screenshot in light and dark mode and compare with the brand (page `#F0F4F5` or `#04232E`, panels white or black, rounded, no outlines).
+- [x] Playwright MCP browser: open CLM-1001, record a decision through the API, and the page shows it within three seconds.
+- [x] Playwright MCP browser: `#/instructions` has no way to edit the text.
+- [x] A grep of `dashboard/src` finds no customer email or phone field.
 
 ## Phase 6: End-to-end checks, status and a live run
 

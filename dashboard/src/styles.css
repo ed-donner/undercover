@@ -1,0 +1,303 @@
+:root {
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --ink: #073b4c;
+  --muted: #4a6b77;
+  --link: #0b6f8f;
+  --field: #edf3f4;
+  --sea: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  --midnight: #073b4c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #04232e;
+    --panel: #000000;
+    --ink: #cdd8db;
+    --muted: #9fb4bb;
+    --link: #6cc4e2;
+    --field: #0b1b21;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--link);
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.25rem;
+}
+
+.shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  padding: 8px 0 20px;
+}
+
+.brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.tagline {
+  font-family: "Instrument Serif", serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+nav {
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.9em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+
+.heading,
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.heading {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+button {
+  background: var(--sea);
+  color: var(--midnight);
+  font: inherit;
+  font-weight: 600;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--field);
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--cerulean);
+  outline-offset: 2px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+th,
+td {
+  padding: 8px 12px;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--field);
+}
+
+.amount {
+  text-align: right;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.waiting {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.badge.in-progress {
+  background: var(--coral);
+  color: var(--midnight);
+}
+
+.badge.waiting-for-sign-off {
+  background: var(--marigold);
+  color: var(--midnight);
+}
+
+.badge.decided {
+  background: var(--sea);
+  color: var(--midnight);
+}
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.counts .panel {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.number {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 1.6rem;
+  font-weight: 500;
+}
+
+.alert {
+  background: var(--raspberry);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 8px 0;
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 12px;
+  align-items: start;
+  overflow-wrap: anywhere;
+}
+
+.kind {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--midnight);
+  background: var(--sea);
+}
+
+.kind.tool_call {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.kind.tool_result {
+  background: var(--marigold);
+}
+
+.kind.error {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.story,
+.instructions p,
+.document p {
+  white-space: pre-line;
+}
+
+.document {
+  background: var(--field);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 8px 0;
+}
+
+.document p {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 640px) {
+  .steps li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  th,
+  td {
+    padding: 6px 6px;
+  }
+}

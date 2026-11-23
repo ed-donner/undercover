@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
+import { Claim } from "./Claim";
+import { useHash } from "./hooks";
+import { Instructions } from "./Instructions";
+import { Queue } from "./Queue";
+
+const CLAIM_ROUTE = /^#\/claims\/([\w-]+)$/;
 
 export function App() {
-  const [status, setStatus] = useState("checking");
-
-  useEffect(() => {
-    void fetch("/api/health")
-      .then((response) => (response.ok ? "up" : "down"))
-      .catch(() => "down")
-      .then(setStatus);
-  }, []);
+  const hash = useHash();
+  const claimId = CLAIM_ROUTE.exec(hash)?.[1];
+  let page = <Queue />;
+  if (claimId) page = <Claim key={claimId} claimId={claimId} />;
+  else if (hash === "#/instructions") page = <Instructions />;
 
   return (
-    <main>
-      <h1>UnderCover</h1>
-      <p>Backend: {status}</p>
-    </main>
+    <div className="shell">
+      <header>
+        <a href="#/" className="brand">
+          UnderCover
+        </a>
+        <span className="tagline">Travel insurance claims</span>
+        <nav>
+          <a href="#/">Queue</a>
+          <a href="#/instructions">Instructions</a>
+        </nav>
+      </header>
+      <main>{page}</main>
+    </div>
   );
 }
