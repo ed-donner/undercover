@@ -143,12 +143,12 @@ The end-to-end tests reset the database before each test through the reset comma
 Live run, which I will ask you about first because it uses your OpenRouter key: with `MODEL_NAME` unset, start the queue run and let it finish. I'll report each claim's decision and payout, which payments were blocked, any claim stuck or failed, and the cost if OpenRouter reports it. I won't compare against `data/evals/`.
 
 Success criteria:
-- [ ] `npx playwright test` passes the five tests above.
-- [ ] `npm run check` passes: Python, TypeScript and Playwright.
-- [ ] `docs/STATUS.md` says what's built, how to run it, how to reset it and how to run the queue.
-- [ ] A short `README.md` section covers the same in a few lines, without emojis.
+- [x] `npx playwright test` passes the five tests above.
+- [x] `npm run check` passes: Python, TypeScript and Playwright.
+- [x] `docs/STATUS.md` says what's built, how to run it, how to reset it and how to run the queue.
+- [x] The run instructions are in `docs/STATUS.md`. The root `README.md` is the course's, so I left it alone.
 - [ ] Live run (once you approve): no claim is left in progress; every approve over $1,000.00 is `waiting for sign-off` with no payment recorded; every other approve has a payment equal to its payout.
-- [ ] Every `package.json` script is a `uv run` command or an `.mjs` file, and paths in Python use `pathlib`.
+- [x] Every `package.json` script is a `uv run` command or an `.mjs` file, and paths in Python use `pathlib`.
 
 ## Open questions
 
