@@ -1,6 +1,8 @@
 # Status
 
-The pilot is built: a backend, a dashboard and the UnderCover Agent that works the claims queue. One step is still open: a live run of the agent with the real model (see "Not done yet").
+The pilot is built: a backend, a dashboard and the UnderCover Agent that works the claims queue.
+
+A live run of the whole queue with `openai/gpt-6-luna` decided all 25 claims with no errors: 3 payouts over $1,000.00 (CLM-1003, CLM-1008, CLM-1011) are waiting for a handler's sign-off with no payment made, 9 other approvals are paid, and 13 claims were declined or referred. The results are in the database until `npm run reset`.
 
 ## What is built
 
@@ -24,5 +26,4 @@ The pilot is built: a backend, a dashboard and the UnderCover Agent that works t
 
 ## Not done yet
 
-- A live run of the agent on the queue with the real model. It makes several model calls per claim, so it waits for the student's go-ahead.
 - Scoring the agent against `data/evals/`. Not part of the pilot plan.

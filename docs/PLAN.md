@@ -147,7 +147,7 @@ Success criteria:
 - [x] `npm run check` passes: Python, TypeScript and Playwright.
 - [x] `docs/STATUS.md` says what's built, how to run it, how to reset it and how to run the queue.
 - [x] The run instructions are in `docs/STATUS.md`. The root `README.md` is the course's, so I left it alone.
-- [ ] Live run (once you approve): no claim is left in progress; every approve over $1,000.00 is `waiting for sign-off` with no payment recorded; every other approve has a payment equal to its payout.
+- [x] Live run (once you approve): no claim is left in progress; every approve over $1,000.00 is `waiting for sign-off` with no payment recorded; every other approve has a payment equal to its payout.
 - [x] Every `package.json` script is a `uv run` command or an `.mjs` file, and paths in Python use `pathlib`.
 
 ## Open questions
