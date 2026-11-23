@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from backend import claims, decisions
+from backend import claims, decisions, runner
 from backend.db import session
 from backend.models import (
     ClaimContext,
@@ -19,6 +19,7 @@ from backend.models import (
     Payment,
     PaymentIn,
     PolicyWording,
+    RunStatus,
     SignOffIn,
     Step,
     StepIn,
@@ -117,3 +118,21 @@ def list_steps(claim_id: str) -> list[Step]:
 def get_instructions() -> Instructions:
     """Get the agent's instructions."""
     return Instructions(text=INSTRUCTIONS.read_text(encoding="utf-8"))
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="start_claim_run", status_code=202)
+def start_claim_run(claim_id: str) -> RunStatus:
+    """Start the agent on one claim that has no decision yet."""
+    return runner.start_claim_run(claim_id)
+
+
+@app.post("/api/runs", operation_id="start_queue_run", status_code=202)
+def start_queue_run() -> RunStatus:
+    """Start the agent on every waiting claim, one after another."""
+    return runner.start_queue_run()
+
+
+@app.get("/api/runs/current", operation_id="get_run_status")
+def get_run_status() -> RunStatus:
+    """Say whether the agent is running, and on which claim."""
+    return runner.RUNNER.status()

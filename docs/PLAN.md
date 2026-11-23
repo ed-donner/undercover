@@ -100,12 +100,12 @@ Builds the way to start the agent, and the "in progress" state.
 - Tests inject the stub model through a single backend setting, not an environment variable, so production code has no test switch.
 
 Success criteria:
-- [ ] Test: with a stub model, the claim is `in progress` during the run and `decided` after it.
-- [ ] Test: starting a second run during a run returns 409; starting a run on a decided claim returns 409.
-- [ ] Test: a queue run over three waiting claims decides them one after another, never two at once.
-- [ ] Test: a run whose model fails ends with a recorded step, and the claim returns to `waiting`.
-- [ ] `curl -X POST localhost:8000/api/claims/CLM-1002/run` returns 202. Polling `curl .../api/claims/CLM-1002` shows steps appearing. With no `OPENROUTER_API_KEY` the failure shows as a step.
-- [ ] `npm run check:python` passes.
+- [x] Test: with a stub model, the claim is `in progress` during the run and `decided` after it.
+- [x] Test: starting a second run during a run returns 409; starting a run on a decided claim returns 409.
+- [x] Test: a queue run over three waiting claims decides them one after another, never two at once.
+- [x] Test: a run whose model fails ends with a recorded step, and the claim returns to `waiting`.
+- [x] `curl -X POST localhost:8000/api/claims/CLM-1002/run` returns 202. Polling `curl .../api/claims/CLM-1002` shows steps appearing. With no `OPENROUTER_API_KEY` the failure shows as a step.
+- [x] `npm run check:python` passes.
 
 ## Phase 5: The dashboard
 

@@ -53,8 +53,12 @@ def seed(conn: sqlite3.Connection):
 
 
 def init_db():
-    """Create the tables, and load the seed data if the database is new."""
+    """Create the tables, and load the seed data if the database is new.
+
+    A run still marked running was cut off by a restart, so it is marked failed.
+    """
     with session() as conn:
         conn.executescript(SCHEMA)
+        conn.execute("UPDATE runs SET status = 'failed' WHERE status = 'running'")
         if conn.execute("SELECT COUNT(*) FROM claims").fetchone()[0] == 0:
             seed(conn)

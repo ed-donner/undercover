@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS payments (
     claim_id TEXT PRIMARY KEY, amount_cents INTEGER NOT NULL,
     signed_off_by TEXT, paid_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS runs (
+    run_id INTEGER PRIMARY KEY AUTOINCREMENT, claim_id TEXT NOT NULL,
+    status TEXT NOT NULL, started_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS steps (
     id INTEGER PRIMARY KEY AUTOINCREMENT, claim_id TEXT NOT NULL,
     kind TEXT NOT NULL, text TEXT NOT NULL, created_at TEXT NOT NULL

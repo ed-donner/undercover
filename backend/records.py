@@ -80,7 +80,10 @@ def claim_state(conn: sqlite3.Connection, claim_id: str) -> ClaimState:
     """Work out where a claim stands from what is recorded about it."""
     decision = find_decision(conn, claim_id)
     if decision is None:
-        return "waiting"
+        running = conn.execute(
+            "SELECT 1 FROM runs WHERE claim_id = ? AND status = 'running'", (claim_id,)
+        ).fetchone()
+        return "in progress" if running else "waiting"
     if needs_sign_off(conn, decision) and find_payment(conn, claim_id) is None:
         return "waiting for sign-off"
     return "decided"

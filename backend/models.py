@@ -162,3 +162,8 @@ class PolicyWording(BaseModel):
 
 class Instructions(BaseModel):
     text: str
+
+
+class RunStatus(BaseModel):
+    active: bool
+    claim_id: str | None
