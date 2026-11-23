@@ -57,7 +57,7 @@ Builds the write side, with the limit enforced in the backend.
 - `pay_claim(claim_id, amount)`: only for an approved claim, and only for the approved payout. Refused with a clear message when the amount is over the limit and nobody has signed off.
 - `sign_off_claim(claim_id, handler_id)`: refused unless the handler's `can_approve_over_limit` is true. A successful sign-off records the payment.
 - `record_step(claim_id, kind, text)` and `list_steps(claim_id)`.
-- `get_claim` now includes the decision, payment, sign-off and state.
+- `get_claim` now includes the decision, payment, sign-off and state. `list_claims` now includes each claim's decision and payout, empty until the claim is decided.
 
 Success criteria:
 - [x] Test: approve $1,000.00, `pay_claim` for $1,000.00 succeeds with no sign-off (the limit is "over $1,000").
@@ -111,7 +111,7 @@ Success criteria:
 
 Builds the screens in React, TypeScript strict, styled to `docs/BRAND.md`. Hash routes, no router library.
 
-- **Queue** (`#/`): table of claims with id, customer, claim type, amount claimed and a state badge. Buttons: run the queue. Refreshes every two seconds while a run is active.
+- **Queue** (`#/`): table of claims with id, customer, claim type, amount claimed, a state badge, the agent's decision and its payout. A claim with no decision shows a dash in both new columns. Buttons: run the queue. Refreshes every two seconds while a run is active.
 - **Claim** (`#/claims/CLM-1001`): the story, items, documents, the policy, the customer's earlier claims. The agent's decision, payout, explanation and policy section. The payment: paid, or waiting for sign-off with a handler picker and a sign-off button. The steps, live. A run button.
 - **Instructions** (`#/instructions`): the agent's instructions, read only.
 - States use the brand's colors: Cerulean for waiting, Coral for in progress, Marigold for waiting for sign-off and Sea Green for decided, with the specified text colors. Raspberry marks a refused payment. Light and dark modes. Instrument Sans, JetBrains Mono for ids and amounts. Money as `$1,250.00`. No borders on one edge, no thin lines across the top.
@@ -120,6 +120,8 @@ Builds the screens in React, TypeScript strict, styled to `docs/BRAND.md`. Hash 
 Success criteria:
 - [x] `npm run check:ts` passes: ESLint, Prettier, tsc strict with no `any`, vitest at or above 80% coverage.
 - [x] vitest: the queue shows every claim with its state badge and formats amounts as dollars.
+- [x] vitest: the queue shows each claim's decision and payout, and a dash for both when there is no decision yet.
+- [x] Playwright: after a decision is recorded through the API, the claim's queue row shows the decision and the payout.
 - [x] vitest: a decided claim shows decision, payout, explanation and policy section; an approve over the limit shows the sign-off control and the picker lists the three handlers.
 - [x] vitest: the instructions page shows text and has no input or textarea.
 - [x] Playwright MCP browser at `http://localhost:5173/#/`: the queue shows 25 rows. Screenshot in light and dark mode and compare with the brand (page `#F0F4F5` or `#04232E`, panels white or black, rounded, no outlines).
