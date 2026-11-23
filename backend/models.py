@@ -5,6 +5,8 @@ from typing import Literal
 from pydantic import BaseModel
 
 ClaimState = Literal["waiting", "in progress", "waiting for sign-off", "decided"]
+DecisionKind = Literal["approve", "decline", "refer"]
+StepKind = Literal["tool_call", "tool_result", "message", "error"]
 
 
 class Item(BaseModel):
@@ -90,8 +92,51 @@ class ClaimContext(BaseModel):
     customer: Customer
 
 
+class DecisionIn(BaseModel):
+    decision: DecisionKind
+    payout: float
+    explanation: str
+    policy_section: str
+
+
+class DecisionRecord(BaseModel):
+    decision: DecisionKind
+    payout: float
+    explanation: str
+    policy_section: str
+    decided_at: str
+
+
+class PaymentIn(BaseModel):
+    amount: float
+
+
+class SignOffIn(BaseModel):
+    handler_id: str
+
+
+class Payment(BaseModel):
+    amount: float
+    signed_off_by: str | None
+    paid_at: str
+
+
+class StepIn(BaseModel):
+    kind: StepKind
+    text: str
+
+
+class Step(BaseModel):
+    id: int
+    kind: StepKind
+    text: str
+    created_at: str
+
+
 class ClaimDetail(ClaimContext):
     state: ClaimState
+    decision: DecisionRecord | None
+    payment: Payment | None
 
 
 class ClaimSummary(BaseModel):

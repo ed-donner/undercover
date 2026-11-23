@@ -3,35 +3,24 @@
 import json
 import sqlite3
 
-from fastapi import HTTPException
-
 from backend.models import (
     Claim,
     ClaimContext,
     ClaimDetail,
-    ClaimState,
     ClaimSummary,
     Customer,
     Handler,
     PlanLimits,
     Policy,
 )
-
-
-def load(conn: sqlite3.Connection, table: str, key: str, value: str) -> dict:
-    """Return one record from a table, or raise a 404."""
-    row = conn.execute(
-        f"SELECT data FROM {table} WHERE {key} = ?",  # noqa: S608
-        (value,),
-    ).fetchone()
-    if row is None:
-        raise HTTPException(404, f"No {table[:-1]} {value}")
-    return json.loads(row["data"])
-
-
-def claim_state(conn: sqlite3.Connection, claim_id: str) -> ClaimState:
-    """Work out where a claim stands from what is recorded about it."""
-    return "waiting"
+from backend.records import (
+    claim_state,
+    decision_record,
+    find_decision,
+    find_payment,
+    load,
+    payment_record,
+)
 
 
 def get_context(conn: sqlite3.Connection, claim_id: str) -> ClaimContext:
@@ -51,7 +40,14 @@ def get_context(conn: sqlite3.Connection, claim_id: str) -> ClaimContext:
 def get_detail(conn: sqlite3.Connection, claim_id: str) -> ClaimDetail:
     """Return a claim in full, with where it stands."""
     context = get_context(conn, claim_id)
-    return ClaimDetail(**context.model_dump(), state=claim_state(conn, claim_id))
+    decision = find_decision(conn, claim_id)
+    payment = find_payment(conn, claim_id)
+    return ClaimDetail(
+        **context.model_dump(),
+        state=claim_state(conn, claim_id),
+        decision=decision_record(decision) if decision else None,
+        payment=payment_record(payment) if payment else None,
+    )
 
 
 def list_summaries(conn: sqlite3.Connection) -> list[ClaimSummary]:

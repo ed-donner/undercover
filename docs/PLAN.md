@@ -60,16 +60,16 @@ Builds the write side, with the limit enforced in the backend.
 - `get_claim` now includes the decision, payment, sign-off and state.
 
 Success criteria:
-- [ ] Test: approve $1,000.00, `pay_claim` for $1,000.00 succeeds with no sign-off (the limit is "over $1,000").
-- [ ] Test: approve $1,000.01, `pay_claim` is refused (HTTP 409), no payment exists, and the state is `waiting for sign-off`.
-- [ ] Test: `pay_claim` with an amount different from the approved payout is refused.
-- [ ] Test: paying a declined, referred or undecided claim is refused.
-- [ ] Test: `sign_off_claim` with HND-01 on a $1,500.00 approve records a payment of $1,500.00, and the state becomes `decided`.
-- [ ] Test: sign-off with an unknown handler is refused, and sign-off on a claim under the limit is refused.
-- [ ] Test: a payment cannot be made twice.
-- [ ] Test: a decline with a payout above zero and an approve with a payout of zero are both refused.
-- [ ] Live check with `curl`: record an approve of $1,500.00 on CLM-1001, `POST .../payment` returns 409 and `GET` shows no payment; sign-off returns 200 and `GET` shows the payment.
-- [ ] `npm run check:python` passes with coverage at or above 80%.
+- [x] Test: approve $1,000.00, `pay_claim` for $1,000.00 succeeds with no sign-off (the limit is "over $1,000").
+- [x] Test: approve $1,000.01, `pay_claim` is refused (HTTP 409), no payment exists, and the state is `waiting for sign-off`.
+- [x] Test: `pay_claim` with an amount different from the approved payout is refused.
+- [x] Test: paying a declined, referred or undecided claim is refused.
+- [x] Test: `sign_off_claim` with HND-01 on a $1,500.00 approve records a payment of $1,500.00, and the state becomes `decided`.
+- [x] Test: sign-off with an unknown handler is refused, and sign-off on a claim under the limit is refused.
+- [x] Test: a payment cannot be made twice.
+- [x] Test: a decline with a payout above zero and an approve with a payout of zero are both refused.
+- [x] Live check with `curl`: record an approve of $1,500.00 on CLM-1001, `POST .../payment` returns 409 and `GET` shows no payment; sign-off returns 200 and `GET` shows the payment.
+- [x] `npm run check:python` passes with coverage at or above 80%.
 
 ## Phase 3: The agent
 
