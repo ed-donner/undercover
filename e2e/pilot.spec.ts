@@ -32,6 +32,11 @@ test("a claim shows its decision and reasons", async ({ page, request }) => {
   ).toBeVisible();
   await expect(page.getByText("5. Baggage and Personal Effects")).toBeVisible();
   await expect(page.getByText("Maya Patel").first()).toBeVisible();
+
+  await page.goto("/");
+  const row = page.getByRole("row", { name: /CLM-1001/ });
+  await expect(row).toContainText("Approved");
+  await expect(row).toContainText("$420.00");
 });
 
 test("a payout over $1,000 waits for a handler's sign-off", async ({

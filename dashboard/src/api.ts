@@ -100,6 +100,8 @@ export interface ClaimSummary {
   submitted_on: string;
   amount_claimed: number;
   state: ClaimState;
+  decision: DecisionKind | null;
+  payout: number | null;
 }
 
 export interface Step {

@@ -16,6 +16,7 @@ from backend.models import (
 from backend.records import (
     claim_state,
     decision_record,
+    dollars,
     find_decision,
     find_payment,
     load,
@@ -59,11 +60,14 @@ def list_summaries(conn: sqlite3.Connection) -> list[ClaimSummary]:
     summaries = []
     for row in conn.execute("SELECT claim_id, data FROM claims ORDER BY claim_id"):
         claim = json.loads(row["data"])
+        decision = find_decision(conn, row["claim_id"])
         summaries.append(
             ClaimSummary(
                 **claim,
                 customer_name=names[claim["customer_id"]],
                 state=claim_state(conn, row["claim_id"]),
+                decision=decision["decision"] if decision else None,
+                payout=dollars(decision["payout_cents"]) if decision else None,
             )
         )
     return summaries

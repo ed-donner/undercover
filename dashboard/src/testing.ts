@@ -76,6 +76,8 @@ export function summary(
     submitted_on: "2026-06-24",
     amount_claimed: 1250 + number,
     state,
+    decision: null,
+    payout: null,
   };
 }
 

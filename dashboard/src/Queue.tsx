@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getRunStatus, listClaims, startQueueRun } from "./api";
 import type { ClaimState, ClaimSummary, RunStatus } from "./api";
-import { errorText, money, sentence } from "./format";
+import { decisionLabel, errorText, money, sentence } from "./format";
 import { useData } from "./hooks";
 import { StateBadge } from "./StateBadge";
 
@@ -72,6 +72,8 @@ export function Queue() {
               <th>Type</th>
               <th className="amount">Claimed</th>
               <th>State</th>
+              <th>Decision</th>
+              <th className="amount">Payout</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +87,10 @@ export function Queue() {
                 <td className="amount mono">{money(claim.amount_claimed)}</td>
                 <td>
                   <StateBadge state={claim.state} />
+                </td>
+                <td>{claim.decision ? decisionLabel[claim.decision] : "-"}</td>
+                <td className="amount mono">
+                  {claim.payout === null ? "-" : money(claim.payout)}
                 </td>
               </tr>
             ))}

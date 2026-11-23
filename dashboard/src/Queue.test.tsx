@@ -32,6 +32,29 @@ it("shows every claim with its state and the amount claimed", async () => {
   ).toBe("#/claims/CLM-1001");
 });
 
+it("shows each claim's decision and payout", async () => {
+  stubApi({
+    "GET /api/claims": [
+      summary(1),
+      { ...summary(2, "decided"), decision: "approve", payout: 420 },
+      { ...summary(3, "decided"), decision: "decline", payout: 0 },
+      { ...summary(4, "decided"), decision: "refer", payout: 0 },
+    ],
+    "GET /api/runs/current": idle,
+  });
+  render(<Queue />);
+  const cells = (id: string) =>
+    within(screen.getByRole("row", { name: new RegExp(id) }))
+      .getAllByRole("cell")
+      .slice(5)
+      .map((cell) => cell.textContent);
+  await screen.findByText("CLM-1001");
+  expect(cells("CLM-1001")).toEqual(["-", "-"]);
+  expect(cells("CLM-1002")).toEqual(["Approved", "$420.00"]);
+  expect(cells("CLM-1003")).toEqual(["Declined", "$0.00"]);
+  expect(cells("CLM-1004")).toEqual(["Referred", "$0.00"]);
+});
+
 it("counts the claims in each state", async () => {
   stubApi({
     "GET /api/claims": [

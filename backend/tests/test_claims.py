@@ -4,6 +4,20 @@ def test_list_claims(client):
     assert claims[0]["claim_id"] == "CLM-1001"
     assert claims[0]["customer_name"] == "Maya Patel"
     assert {claim["state"] for claim in claims} == {"waiting"}
+    assert {claim["decision"] for claim in claims} == {None}
+    assert {claim["payout"] for claim in claims} == {None}
+
+
+def test_list_claims_shows_the_decision_and_payout(client):
+    body = {
+        "decision": "approve",
+        "payout": 420.0,
+        "explanation": "Covered.",
+        "policy_section": "3",
+    }
+    client.post("/api/claims/CLM-1001/decision", json=body)
+    claim = client.get("/api/claims").json()[0]
+    assert (claim["decision"], claim["payout"]) == ("approve", 420.0)
 
 
 def test_get_claim(client):

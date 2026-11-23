@@ -147,6 +147,8 @@ class ClaimSummary(BaseModel):
     submitted_on: str
     amount_claimed: float
     state: ClaimState
+    decision: DecisionKind | None
+    payout: float | None
 
 
 class Handler(BaseModel):

@@ -13,7 +13,7 @@ A live run of the whole queue with `openai/gpt-6-luna` decided all 25 claims wit
   - A claim is waiting, in progress, waiting for sign-off, or decided. Declined and referred claims count as decided.
   - Runs: the agent runs in a background thread, one run at a time. A run that fails, or ends without a decision, leaves an error step and the claim goes back to waiting. A run cut off by a restart is marked failed when the backend starts.
 - `agent/`: `run(claim_id, thread_id)` runs the agent on one claim. It fetches its instructions (`backend/instructions.md`) from the backend, reads the claim and the policy wording, records its decision and pays through the backend, and records each step as it goes. It uses `openai/gpt-6-luna`, or `MODEL_NAME` if set. It reaches the backend at `http://localhost:8000`.
-- `dashboard/`: React, Vite and TypeScript, in the brand's fonts and colors, light and dark. Three screens: the queue (`#/`), a claim (`#/claims/CLM-1001`) with its decision, payment, sign-off, steps and details, and the agent's instructions (`#/instructions`), read only. Pages refresh every two seconds while a run is active.
+- `dashboard/`: React, Vite and TypeScript, in the brand's fonts and colors, light and dark. Three screens: the queue (`#/`) with each claim's state, decision and payout, a claim (`#/claims/CLM-1001`) with its decision, payment, sign-off, steps and details, and the agent's instructions (`#/instructions`), read only. Pages refresh every two seconds while a run is active.
 - `e2e/`: Playwright tests that run against their own backend (port 8100, `backend/e2e.db`) and dashboard (port 5174), reset when the tests start. They never call a model.
 
 ## Run it
