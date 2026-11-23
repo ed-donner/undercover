@@ -81,14 +81,14 @@ Builds the UnderCover Agent in `agent/`, keeping `run(claim_id, thread_id, llm=N
 - `model()` is unchanged: `openai/gpt-6-luna` with low reasoning, or `MODEL_NAME` if set.
 
 Success criteria:
-- [ ] Test: a stub model scripted to read the context, read the wording, record an approve for $420.00 and pay it leaves the claim decided with a payment of $420.00.
-- [ ] Test: a stub model that approves $1,500.00 and tries to pay leaves the claim `waiting for sign-off` with no payment, and the refusal text appears in the steps.
-- [ ] Test: the system prompt passed to the model equals the text from `get_instructions`.
-- [ ] Test: steps are recorded in order, one per tool call and result plus the final message.
-- [ ] Test: the agent package makes no request except to the backend, and no file under `data/` is read by `agent/`. Check with a grep in the test.
-- [ ] Existing `model()` tests still pass.
-- [ ] `curl localhost:8000/api/instructions` returns the instructions.
-- [ ] `npm run check:python` passes.
+- [x] Test: a stub model scripted to read the context, read the wording, record an approve for $420.00 and pay it leaves the claim decided with a payment of $420.00.
+- [x] Test: a stub model that approves $1,500.00 and tries to pay leaves the claim `waiting for sign-off` with no payment, and the refusal text appears in the steps.
+- [x] Test: the system prompt passed to the model equals the text from `get_instructions`.
+- [x] Test: steps are recorded in order, one per tool call and result plus the final message.
+- [x] Test: the agent package makes no request except to the backend, and no file under `data/` is read by `agent/`. Check with a grep in the test.
+- [x] Existing `model()` tests still pass.
+- [x] `curl localhost:8000/api/instructions` returns the instructions.
+- [x] `npm run check:python` passes.
 
 ## Phase 4: Running the agent from the backend
 

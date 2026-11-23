@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 
@@ -14,6 +15,7 @@ from backend.models import (
     DecisionIn,
     DecisionRecord,
     Handler,
+    Instructions,
     Payment,
     PaymentIn,
     PolicyWording,
@@ -31,6 +33,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="UnderCover", lifespan=lifespan)
+
+INSTRUCTIONS = Path(__file__).parent / "instructions.md"
 
 
 @app.get("/api/health", operation_id="health")
@@ -107,3 +111,9 @@ def list_steps(claim_id: str) -> list[Step]:
     """List the steps of the agent's work on a claim, oldest first."""
     with session() as conn:
         return decisions.list_steps(conn, claim_id)
+
+
+@app.get("/api/instructions", operation_id="get_instructions")
+def get_instructions() -> Instructions:
+    """Get the agent's instructions."""
+    return Instructions(text=INSTRUCTIONS.read_text(encoding="utf-8"))

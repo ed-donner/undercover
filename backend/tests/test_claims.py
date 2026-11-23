@@ -52,3 +52,9 @@ def test_every_operation_has_an_id_and_no_optional_input(client):
             assert operation.get("summary") or operation.get("description")
             for parameter in operation.get("parameters", []):
                 assert parameter["required"], f"{method} {path}"
+
+
+def test_instructions(client):
+    text = client.get("/api/instructions").json()["text"]
+    assert text.startswith("You are the UnderCover Agent.")
+    assert "pay_claim" in text
