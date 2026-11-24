@@ -17,14 +17,17 @@ My build of the harness brief in `docs/HARNESS.md`, starting from Ed's `week1day
 
 ## Live runs and score
 
-All on DeepSeek V4.1 Flash, scored against the handlers' decisions in `data/evals/decisions.json` after each run. The agent never sees that file.
+All on DeepSeek V4.1 Flash, scored against the handlers' decisions in `data/evals/` after each run. The agent never sees them.
 
 | Run | Time | Decision and payout right |
 |---|---|---|
 | Capped at five, before the fixes below | about 1.5 min | 5 of 5 |
 | All 25, after the fixes | 7 min 46 s | 24 of 25 |
+| 25 held-out claims, without the rule below | 9 min 49 s | 25 of 25 |
+| 25 held-out claims, with the rule | 8 min 44 s | 25 of 25 |
+| Five claims and CLM-1025, with the rule | not timed in full | 6 of 6 |
 
-| Difficulty, in the full run | Claims | Right |
+| Difficulty, in the full run of the queue | Claims | Right |
 |---|---|---|
 | Routine | 15 | 15 |
 | Needs the manual or the claim history | 5 | 5 |
@@ -32,7 +35,9 @@ All on DeepSeek V4.1 Flash, scored against the handlers' decisions in `data/eval
 
 The miss was CLM-1025, approved and paid at $71.00. The handler referred it because the carrier's certificate doesn't give the cause of the delay. The agent took the cause from the customer's story and said the certificate confirmed it.
 
-In the full run, three approvals over $1,000 were held for sign-off and the other twelve were paid once each. No claim failed in either run, so the retries and outage handling have been tested only with stub models. Each run was done once, and the held-out claims are not scored.
+The rule I then added comes from section 5 of the manual: each required document must itself state what it has to prove. It did no harm on the held-out claims, and they can't show whether it helps, because the agent already had them all right. With the rule, CLM-1025 was referred because the certificate gives no cause, but that is one try on the claim that prompted the rule.
+
+In the full run of the queue, three approvals over $1,000 were held for sign-off and the other twelve were paid once each. No claim failed in any run, so the retries and outage handling have been tested only with stub models. Each run was done once.
 
 ## What we learned
 
@@ -54,4 +59,4 @@ Every check was green, but rereading the code for this write-up found four gaps.
 - **Let the model organize, and let the code guarantee.** The agent planned its own work and kept its own to-do list, and I didn't need to trust it with the cap or the payments, because the tools and the backend refuse what isn't allowed.
 - **Green checks only cover the failures you thought of.** The build met every criterion in its plan and still had four gaps. Asking "what if it stops right here?" at each step found them, so I'd put that question in the plan next time.
 - **A lost reply is harder than a failed request.** When a reply never arrives, the payment may or may not have gone through. Retrying blindly isn't safe, so the harness checks the claim's state and the backend refuses a second payment.
-- **Scoring found what the checks couldn't.** The harness worked as designed on CLM-1025, and the decision was still wrong: the agent read the right rule, then trusted the story over the document. I haven't tuned the instructions to this miss, because they must not come from the answer key. Next I'd try a general rule from the manual, that a document must itself state what it has to prove, and test it on the held-out claims.
+- **Scoring found what the checks couldn't.** The harness worked as designed on CLM-1025, and the decision was still wrong: the agent read the right rule, then trusted the story over the document. The miss prompted a general rule drawn from the manual, and the held-out claims showed that it did no harm, not that it works.
