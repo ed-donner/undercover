@@ -15,25 +15,30 @@ My build of the harness brief in `docs/HARNESS.md`, starting from Ed's `week1day
 - **Looking things up.** The wording and the manual are split into 26 sections and searched with SQLite's FTS5. The instructions hold only their contents, and the claim page shows each section the agent read.
 - **Failures.** A claim that fails goes back in the queue. After a second failure it moves to a new state, Needs a handler, instead of being recorded as a referral the agent never made.
 
-## A live run capped at five
+## Live runs and score
 
-One run on DeepSeek V4.1 Flash took about a minute and a half. I have not scored it against the evals. The run was before the fixes below, which I have tested only with stub models.
+All on DeepSeek V4.1 Flash, scored against the handlers' decisions in `data/evals/decisions.json` after each run. The agent never sees that file.
 
-| Claim | Decision | Payment | Sections read |
-|---|---|---|---|
-| CLM-1001 | Approve $420.00 | Paid | 9 |
-| CLM-1008 | Approve $2,240.00 | Held for sign-off | 8 |
-| CLM-1010 | Decline | None | 8 |
-| CLM-1011 | Approve $1,150.00 | Held for sign-off | 8 |
-| CLM-1018 | Refer | None | 7 |
+| Run | Time | Decision and payout right |
+|---|---|---|
+| Capped at five, before the fixes below | about 1.5 min | 5 of 5 |
+| All 25, after the fixes | 7 min 46 s | 24 of 25 |
 
-No claim failed, so the retry paths have been tested only with stub models.
+| Difficulty, in the full run | Claims | Right |
+|---|---|---|
+| Routine | 15 | 15 |
+| Needs the manual or the claim history | 5 | 5 |
+| Hard | 5 | 4 |
+
+The miss was CLM-1025, approved and paid at $71.00. The handler referred it because the carrier's certificate doesn't give the cause of the delay. The agent took the cause from the customer's story and said the certificate confirmed it.
+
+In the full run, three approvals over $1,000 were held for sign-off and the other twelve were paid once each. No claim failed in either run, so the retries and outage handling have been tested only with stub models. Each run was done once, and the held-out claims are not scored.
 
 ## What we learned
 
-- **A contents list mostly replaced search.** Only one of the five claim agents searched. The others went straight to the sections they needed.
+- **A contents list mostly replaced search.** Only 3 of the 25 claim agents in the full run searched. The others went straight to the sections they needed.
 - **Search needed stemming.** A search for "monkey" missed "Monkeys" until we turned on the Porter stemmer.
-- **A request in the instructions isn't a rule.** They ask for reasons of two or three sentences, and three of the five ran longer. The limits enforced in code held.
+- **A request in the instructions isn't a rule.** They ask for reasons of two or three sentences, and three of the five in the first run ran longer. The limits enforced in code held.
 
 ## Gaps found after the build
 
@@ -49,4 +54,4 @@ Every check was green, but rereading the code for this write-up found four gaps.
 - **Let the model organize, and let the code guarantee.** The agent planned its own work and kept its own to-do list, and I didn't need to trust it with the cap or the payments, because the tools and the backend refuse what isn't allowed.
 - **Green checks only cover the failures you thought of.** The build met every criterion in its plan and still had four gaps. Asking "what if it stops right here?" at each step found them, so I'd put that question in the plan next time.
 - **A lost reply is harder than a failed request.** When a reply never arrives, the payment may or may not have gone through. Retrying blindly isn't safe, so the harness checks the claim's state and the backend refuses a second payment.
-- **Next: score it.** One run of five claims shows that the harness works, but says little about whether the decisions are right. I'd score it against the handlers' decisions, then see whether it can read fewer sections without losing accuracy.
+- **Scoring found what the checks couldn't.** The harness worked as designed on CLM-1025, and the decision was still wrong: the agent read the right rule, then trusted the story over the document. I haven't tuned the instructions to this miss, because they must not come from the answer key. Next I'd try a general rule from the manual, that a document must itself state what it has to prove, and test it on the held-out claims.
