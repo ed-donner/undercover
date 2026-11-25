@@ -1,8 +1,10 @@
-"""Compare evaluation runs: time per claim, model calls and cost.
+r"""Compare evaluation runs: time per claim, model calls and cost.
 
 Read-only. Name each group of runs, such as:
 
-    uv run --env-file .env python scripts/compare_runs.py runtime=12,13 laptop=20,21,22
+    uv run --env-file .env python \
+        community_contributions/steve_higgins/week3day4_lab2_compare_runs.py \
+        runtime=12,13 laptop=20,21,22
 
 Times are the app's own: working time is the sum of every segment of work (failed
 attempts included, as the dashboard counts it), wall clock is start to finish.
