@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { App } from "./App";
 import { date, label, money } from "./format";
@@ -15,13 +15,18 @@ const CLAIMS = [
   summary({ claim_id: "CLM-1002", status: "decided", amount_claimed: 80 }),
   summary({ claim_id: "CLM-1003", status: "decided" }),
   summary({ claim_id: "CLM-1004", status: "awaiting_signoff" }),
+  summary({ claim_id: "CLM-1005", status: "needs_handler" }),
 ];
 
 function routes() {
   return fakeFetch({
     "GET /api/health": { status: "ok" },
     "GET /api/claims": CLAIMS,
-    "GET /api/instructions": { instructions: "You are the UnderCover Agent." },
+    "GET /api/instructions": {
+      queue: "You are running the claims queue.",
+      claim: "You are working one claim.",
+    },
+    "GET /api/runs/latest": null,
     "GET /api/claims/CLM-1001": claim(),
     "GET /api/claims/CLM-1001/steps": [],
   });
@@ -44,10 +49,10 @@ it("lists the queue with amounts, types and links", async () => {
   render(<App />);
   const link = await screen.findByRole("link", { name: "CLM-1001" });
   expect(link.getAttribute("href")).toBe("#/claims/CLM-1001");
-  expect(screen.getAllByRole("row")).toHaveLength(5);
-  expect(screen.getAllByText("$1,250.00")).toHaveLength(3);
+  expect(screen.getAllByRole("row")).toHaveLength(6);
+  expect(screen.getAllByText("$1,250.00")).toHaveLength(4);
   expect(screen.getByText("$80.00")).toBeDefined();
-  expect(screen.getAllByText("Trip delay")).toHaveLength(4);
+  expect(screen.getAllByText("Trip delay")).toHaveLength(5);
 });
 
 it("counts the claims in each state", async () => {
@@ -59,6 +64,9 @@ it("counts the claims in each state", async () => {
     "1",
   );
   expect(screen.getByLabelText("Decided count").textContent).toBe("2");
+  expect(screen.getByLabelText("Left for a handler count").textContent).toBe(
+    "1",
+  );
 });
 
 it("colors each state chip", async () => {
@@ -67,6 +75,8 @@ it("colors each state chip", async () => {
   await screen.findByRole("link", { name: "CLM-1001" });
   const chip = screen.getAllByText("Waiting for sign-off")[1];
   expect(chip.className).toBe("chip chip-awaiting_signoff");
+  const handler = screen.getAllByText("Left for a handler")[1];
+  expect(handler.className).toBe("chip chip-needs_handler");
 });
 
 it("refreshes the queue as claims change", async () => {
@@ -114,9 +124,10 @@ it("shows the instructions read only", async () => {
   routes();
   window.location.hash = "#/instructions";
   render(<App />);
-  expect(
-    await screen.findByText("You are the UnderCover Agent."),
-  ).toBeDefined();
+  const queue = within(await screen.findByLabelText("Running the queue"));
+  expect(queue.getByText("You are running the claims queue.")).toBeDefined();
+  const claim = within(screen.getByLabelText("Working a claim"));
+  expect(claim.getByText("You are working one claim.")).toBeDefined();
   expect(screen.queryByRole("textbox")).toBeNull();
   const current = screen.getByRole("link", { current: "page" });
   expect(current.textContent).toBe("Instructions");

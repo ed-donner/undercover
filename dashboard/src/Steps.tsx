@@ -4,8 +4,25 @@ const KINDS: Record<Step["kind"], string> = {
   tool_call: "Action",
   tool_result: "Result",
   message: "Agent",
+  read: "Read",
+  attempt: "Retry",
   error: "Problem",
 };
+
+export function Reads({ steps }: Readonly<{ steps: Step[] }>) {
+  const reads = steps.filter((step) => step.kind === "read");
+  if (reads.length === 0) return null;
+  return (
+    <section className="panel" aria-label="What the agent read">
+      <h2>What the agent read</h2>
+      <ul className="reads">
+        {reads.map((step, index) => (
+          <li key={index}>{step.content}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export function Steps({
   steps,

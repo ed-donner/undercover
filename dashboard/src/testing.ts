@@ -28,6 +28,7 @@ export const summary = (
   submitted_on: "2026-06-24",
   status: "waiting",
   decision: null,
+  attempts: 0,
   ...overrides,
 });
 

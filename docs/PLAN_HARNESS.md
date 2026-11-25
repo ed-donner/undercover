@@ -158,10 +158,10 @@ Build `agent/queue.py`: the queue agent with `list_waiting_claims` (the waiting 
 
 On the queue page, above the queue: a Current run panel with its status, cap and times, the to-do list with a chip for each item's state, and the summary when it finishes; and Run the queue with a number field for the cap (default 5). The queue polls the run with the queue. The claim page gets What the agent read (the `read` steps), shows `read` steps in the step list and shows the attempt markers. Add the "Left for a handler" chip and count. The Instructions page shows both sets of instructions, each under its own heading.
 
-- [ ] Vitest: the run panel shows each to-do state, the summary, an empty state before any run, and the refusal when a run is already going
-- [ ] Vitest: Run the queue sends the cap; the claim page lists the sections read; the new chip and count; both sets of instructions
-- [ ] Checked in the browser with the Playwright MCP server in light and dark mode, with a run played through the API: the list fills in and ticks off, the chips are readable, the brand holds
-- [ ] `npm run check:ts` passes with coverage of at least 80%
+- [x] Vitest: the run panel shows each to-do state, the summary, an empty state before any run, and the refusal when a run is already going
+- [x] Vitest: Run the queue sends the cap; the claim page lists the sections read; the new chip and count; both sets of instructions
+- [x] Checked in the browser with the Playwright MCP server in light and dark mode, with a run played through the API: the list fills in and ticks off, the chips are readable, the brand holds
+- [x] `npm run check:ts` passes with coverage of at least 80%
 
 ## Phase 5: end-to-end tests, docs and the live trial
 

@@ -1,4 +1,5 @@
-export type Status = "waiting" | "in_progress" | "awaiting_signoff" | "decided";
+export type Status =
+  "waiting" | "in_progress" | "awaiting_signoff" | "decided" | "needs_handler";
 export type DecisionKind = "approve" | "decline" | "refer";
 
 export interface ClaimSummary {
@@ -9,6 +10,7 @@ export interface ClaimSummary {
   submitted_on: string;
   status: Status;
   decision: DecisionKind | null;
+  attempts: number;
 }
 
 export interface Item {
@@ -80,9 +82,35 @@ export interface Handler {
 }
 
 export interface Step {
-  kind: "tool_call" | "tool_result" | "message" | "error";
+  kind: "tool_call" | "tool_result" | "message" | "read" | "attempt" | "error";
   content: string;
   created_at: string;
+}
+
+export type TodoStatus = "todo" | "in_progress" | "done" | "handler";
+export type RunStatus = "running" | "finished" | "failed";
+
+export interface Todo {
+  claim_id: string;
+  content: string;
+  status: TodoStatus;
+}
+
+export interface Run {
+  id: number;
+  claim_id: string | null;
+  cap: number;
+  status: RunStatus;
+  todos: Todo[];
+  summary: string | null;
+  problem: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+export interface Instructions {
+  queue: string;
+  claim: string;
 }
 
 async function request<T>(method: string, path: string, body?: unknown) {
@@ -105,7 +133,8 @@ export const api = {
   listClaims: () => request<ClaimSummary[]>("GET", "/api/claims"),
   getClaim: (id: string) => request<Claim>("GET", `/api/claims/${id}`),
   listSteps: (id: string) => request<Step[]>("GET", `/api/claims/${id}/steps`),
-  runAgent: (id: string) => request<unknown>("POST", `/api/claims/${id}/run`),
+  runAgent: (id: string) => request<Run>("POST", `/api/claims/${id}/run`),
+  startRun: (cap: number) => request<Run>("POST", "/api/runs", { cap }),
   signOff: (id: string, handlerId: string) =>
     request<Claim>("POST", `/api/claims/${id}/signoff`, {
       handler_id: handlerId,

@@ -291,6 +291,42 @@ it("shows the backend's refusal in plain English", async () => {
   );
 });
 
+it("lists the sections the agent read and marks a retry", async () => {
+  routes(
+    () => claim({ status: "in_progress", attempts: 1 }),
+    () => [
+      step("The agent stopped with an error: timed out", "error"),
+      step("Attempt 2", "attempt"),
+      step("Policy wording, 3. Trip Delay", "read"),
+      step("Claims manual, 10. Meals without receipts", "read"),
+    ],
+  );
+  render(<ClaimView claimId="CLM-1001" />);
+  const reads = within(await screen.findByLabelText("What the agent read"));
+  expect(
+    reads.getAllByRole("listitem").map((item) => item.textContent),
+  ).toEqual([
+    "Policy wording, 3. Trip Delay",
+    "Claims manual, 10. Meals without receipts",
+  ]);
+  const steps = within(screen.getByLabelText("Agent steps"));
+  expect(steps.getByText("Retry")).toBeDefined();
+  expect(steps.getByText("Attempt 2")).toBeDefined();
+  expect(steps.getAllByText("Read")).toHaveLength(2);
+});
+
+it("shows a claim left for a handler without Run agent", async () => {
+  routes(
+    () => claim({ status: "needs_handler", attempts: 2 }),
+    () => [step("Second problem", "error")],
+  );
+  render(<ClaimView claimId="CLM-1001" />);
+  expect(await screen.findByText("Left for a handler")).toBeDefined();
+  expect(screen.getByText("Second problem")).toBeDefined();
+  expect(screen.queryByRole("button", { name: "Run agent" })).toBeNull();
+  expect(screen.queryByLabelText("What the agent read")).toBeNull();
+});
+
 it("shows a claim that can't be found", async () => {
   fakeFetch({
     "GET /api/claims/CLM-0000": Response.json(

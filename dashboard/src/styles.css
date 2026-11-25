@@ -195,12 +195,15 @@ th.amount {
   color: var(--midnight);
 }
 
-.chip-waiting {
+.chip-waiting,
+.chip-todo-todo {
   background: var(--cerulean);
   color: #ffffff;
 }
 
-.chip-in_progress {
+.chip-in_progress,
+.chip-todo-in_progress,
+.chip-run-running {
   background: var(--marigold);
 }
 
@@ -208,8 +211,76 @@ th.amount {
   background: var(--coral);
 }
 
-.chip-decided {
+.chip-decided,
+.chip-todo-done,
+.chip-run-finished {
   background: var(--sea-green);
+}
+
+.chip-needs_handler,
+.chip-todo-handler,
+.chip-run-failed {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.run-head h2 {
+  margin: 0;
+}
+
+.run-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.run-start input {
+  font: inherit;
+  width: 5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: none;
+  background: var(--inset);
+  color: var(--ink);
+}
+
+.todos {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.todos li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+}
+
+.todos li:nth-child(odd) {
+  background: var(--inset);
+}
+
+.reads {
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.7;
+}
+
+.step-attempt .step-kind {
+  color: var(--marigold-text);
 }
 
 .instructions,

@@ -1,5 +1,6 @@
 import type { ClaimSummary } from "./api";
 import { date, label, money, STATUS_LABELS, STATUSES } from "./format";
+import { RunPanel } from "./RunPanel";
 import { StatusChip } from "./StatusChip";
 import { useGet } from "./useGet";
 
@@ -22,6 +23,7 @@ export function Queue() {
   return (
     <>
       <h1>Claims queue</h1>
+      <RunPanel />
       <div className="counts">
         {STATUSES.map((status) => (
           <div className="count" key={status}>

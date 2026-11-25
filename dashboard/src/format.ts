@@ -1,4 +1,4 @@
-import type { Status } from "./api";
+import type { RunStatus, Status, TodoStatus } from "./api";
 
 const dollars = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -25,9 +25,30 @@ export const STATUS_LABELS: Record<Status, string> = {
   in_progress: "In progress",
   awaiting_signoff: "Waiting for sign-off",
   decided: "Decided",
+  needs_handler: "Left for a handler",
 };
 
 export const STATUSES = Object.keys(STATUS_LABELS) as Status[];
+
+export const TODO_LABELS: Record<TodoStatus, string> = {
+  todo: "To do",
+  in_progress: "In progress",
+  done: "Done",
+  handler: "Left for a handler",
+};
+
+export const RUN_LABELS: Record<RunStatus, string> = {
+  running: "Running",
+  finished: "Finished",
+  failed: "Failed",
+};
+
+export function time(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 export function section(wording: string, reference: string) {
   const number = /\d+/.exec(reference)?.[0];

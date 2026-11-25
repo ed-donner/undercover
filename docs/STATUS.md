@@ -1,6 +1,6 @@
 # Status
 
-The pilot from `docs/PLAN.md` is built: all six phases. The harness from `docs/PLAN_HARNESS.md` is being built: Phases 1 to 3 (the backend for runs, the claim agent and the queue agent) are done; the dashboard, the end-to-end tests and the live trial are next.
+The pilot from `docs/PLAN.md` is built: all six phases. The harness from `docs/PLAN_HARNESS.md` is being built: Phases 1 to 4 (the backend for runs, the claim agent, the queue agent and the dashboard) are done; the end-to-end tests, the docs and the live trial are next.
 
 - `backend/`: FastAPI on SQLite. The database is seeded from `data/` (never `data/evals/`) and serves the claims queue, policies with their plan limits, customers' claim history (without personal details), the policy wording, the agent's instructions (`backend/instructions.md`) and the handlers. It records decisions, payments, sign-offs and the agent's steps, and enforces the rules: one decision per claim, a payment only for the approved payout, and an approval over $1,000 waits for a handler's sign-off before it can be paid.
 - `agent/`: the UnderCover Agent. `run(claim_id, thread_id)` starts the claim, fetches its instructions from the backend, reads the claim, policy, claim history and policy wording through the API, records a decision and pays approvals up to $1,000. Each step is posted to the backend. If a run fails or ends without recording a decision, the runner puts the claim back to waiting (through `release_claim`) with the problem shown as a step, however the run was started.

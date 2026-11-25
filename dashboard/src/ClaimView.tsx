@@ -3,7 +3,7 @@ import { api, message, type Claim, type Step } from "./api";
 import { ClaimDetails } from "./ClaimDetails";
 import { DecisionPanel } from "./DecisionPanel";
 import { StatusChip } from "./StatusChip";
-import { Steps } from "./Steps";
+import { Reads, Steps } from "./Steps";
 
 const POLL_MS = 1000;
 
@@ -103,6 +103,7 @@ export function ClaimView({ claimId }: Readonly<{ claimId: string }>) {
             busy={busy}
             onSignOff={(handlerId) => void signOff(handlerId)}
           />
+          <Reads steps={steps} />
           <Steps steps={steps} working={claim.status === "in_progress"} />
         </div>
       </div>
