@@ -2,7 +2,6 @@ import json
 
 import pytest
 
-from agent import main as agent
 from backend import db
 
 APPROVE_SMALL = {
@@ -173,42 +172,72 @@ def test_steps_in_order(client):
     assert all(s["created_at"] for s in steps)
 
 
-def test_start_clears_old_steps(client):
+def test_start_keeps_earlier_steps(client):
     client.post("/api/claims/CLM-1001/steps", json={"kind": "error", "content": "old"})
     start(client)
-    assert client.get("/api/claims/CLM-1001/steps").json() == []
+    steps = client.get("/api/claims/CLM-1001/steps").json()
+    assert [s["content"] for s in steps] == ["old"]
 
 
-def test_run_agent_starts_the_agent(client, monkeypatch):
-    runs = []
-
-    def fake_run(claim_id, thread_id):
-        runs.append((claim_id, thread_id))
-        client.post(f"/api/claims/{claim_id}/start")
-        client.post(f"/api/claims/{claim_id}/decision", json=APPROVE_SMALL)
-
-    monkeypatch.setattr(agent, "run", fake_run)
-    response = client.post("/api/claims/CLM-1001/run")
-    assert response.json() == {"status": "started"}
-    assert runs[0][0] == "CLM-1001"
-    assert runs[0][1].startswith("CLM-1001-")
-    assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
+def test_read_steps(client):
+    response = client.post(
+        "/api/claims/CLM-1001/steps",
+        json={"kind": "read", "content": "Claims manual, 9. Repeat claims"},
+    )
+    assert response.status_code == 200
+    assert client.get("/api/claims/CLM-1001/steps").json()[0]["kind"] == "read"
 
 
-def test_run_agent_needs_a_waiting_claim(client):
-    start(client)
-    assert client.post("/api/claims/CLM-1001/run").status_code == 409
+def release(client, problem="No decision recorded", claim_id="CLM-1001"):
+    response = client.post(f"/api/claims/{claim_id}/release", json={"problem": problem})
+    assert response.status_code == 200
+    return response.json()
 
 
 def test_release_claim(client):
     start(client)
-    response = client.post(
-        "/api/claims/CLM-1001/release", json={"problem": "No decision recorded"}
-    )
-    assert response.json()["status"] == "waiting"
+    claim = release(client)
+    assert claim["status"] == "waiting"
+    assert claim["attempts"] == 1
     steps = client.get("/api/claims/CLM-1001/steps").json()
     assert steps[-1]["kind"] == "error"
     assert steps[-1]["content"] == "No decision recorded"
+
+
+def test_a_retry_is_marked_as_a_new_attempt(client):
+    start(client)
+    release(client, "The model provider timed out")
+    start(client)
+    steps = client.get("/api/claims/CLM-1001/steps").json()
+    assert [(s["kind"], s["content"]) for s in steps] == [
+        ("error", "The model provider timed out"),
+        ("attempt", "Attempt 2"),
+    ]
+
+
+def test_second_failure_leaves_the_claim_for_a_handler(client):
+    start(client)
+    release(client, "First problem")
+    start(client)
+    claim = release(client, "Second problem")
+    assert claim["status"] == "needs_handler"
+    assert claim["attempts"] == 2
+    assert client.post("/api/claims/CLM-1001/start").status_code == 409
+    errors = [
+        s["content"]
+        for s in client.get("/api/claims/CLM-1001/steps").json()
+        if s["kind"] == "error"
+    ]
+    assert errors == ["First problem", "Second problem"]
+
+
+def test_a_decided_claim_is_never_released(client):
+    decide(client, APPROVE_SMALL)
+    response = client.post(
+        "/api/claims/CLM-1001/release", json={"problem": "Late failure"}
+    )
+    assert response.status_code == 409
+    assert client.get("/api/claims/CLM-1001").json()["status"] == "decided"
 
 
 def test_release_needs_a_claim_in_progress(client):

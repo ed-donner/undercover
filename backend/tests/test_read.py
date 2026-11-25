@@ -39,6 +39,7 @@ def test_list_claims_fields(client):
         "submitted_on": "2026-06-24",
         "status": "waiting",
         "decision": None,
+        "attempts": 0,
     }
 
 
@@ -87,8 +88,58 @@ def test_policy_wording(client):
 
 
 def test_instructions(client):
-    instructions = client.get("/api/instructions").json()["instructions"]
-    assert "UnderCover Agent" in instructions
+    instructions = client.get("/api/instructions").json()
+    assert set(instructions) == {"queue", "claim"}
+    assert "running the claims queue" in instructions["queue"]
+    assert "claims manual" in instructions["claim"]
+
+
+def test_seed_stores_the_manual(client):
+    database = db.connect()
+    manual = db.setting(database, "claims_manual")
+    database.close()
+    assert manual.startswith("# UnderCover Claims Handling Manual")
+
+
+def test_list_sections(client):
+    manual = client.get("/api/documents/claims-manual/sections").json()
+    assert manual["document"] == "Claims manual"
+    assert manual["introduction"].startswith("# UnderCover Claims Handling Manual")
+    assert len(manual["sections"]) == 14
+    assert manual["sections"][8] == "9. Repeat claims"
+    wording = client.get("/api/documents/policy-wording/sections").json()
+    assert len(wording["sections"]) == 12
+    assert wording["sections"][0] == "1. Your plan"
+
+
+def test_list_sections_of_an_unknown_document(client):
+    response = client.get("/api/documents/evals/sections")
+    assert response.status_code == 404
+    assert response.json()["detail"] == (
+        "evals is not a document: use policy-wording or claims-manual"
+    )
+
+
+def test_read_section(client):
+    section = client.get("/api/documents/claims-manual/sections/9").json()
+    assert section["document"] == "Claims manual"
+    assert section["section"] == "9. Repeat claims"
+    assert section["text"].startswith("Before deciding any claim")
+    assert "## " not in section["text"]
+    assert "Meals without receipts" not in section["text"]
+    last = client.get("/api/documents/policy-wording/sections/12").json()
+    assert last["section"] == "12. Definitions"
+
+
+def test_read_section_tells_1_from_10(client):
+    section = client.get("/api/documents/claims-manual/sections/1").json()
+    assert section["section"] == "1. Purpose and scope"
+
+
+def test_read_an_unknown_section(client):
+    response = client.get("/api/documents/claims-manual/sections/15")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "The claims manual has no section 15"
 
 
 def test_handlers(client):
@@ -111,6 +162,16 @@ def test_every_operation_is_documented(client):
                 ref = content["schema"]["$ref"].split("/")[-1]
                 model = schema["components"]["schemas"][ref]
                 assert set(model.get("required", [])) == set(model["properties"])
+
+
+def test_startup_closes_an_interrupted_run(client):
+    client.post("/api/runs", json={"cap": 1})
+    client.post("/api/claims/CLM-1001/start")
+    with TestClient(app) as restarted:
+        assert restarted.get("/api/runs/latest").json()["status"] == "failed"
+        claim = restarted.get("/api/claims/CLM-1001").json()
+        assert claim["status"] == "waiting"
+        assert claim["attempts"] == 1
 
 
 def test_startup_seeds_a_missing_database(tmp_path, monkeypatch):

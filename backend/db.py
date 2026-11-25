@@ -21,6 +21,7 @@ SETTING_FILES = {
     "plans": DATA / "plans.json",
     "company": DATA / "company.json",
     "policy_wording": DATA / "policy_wording.md",
+    "claims_manual": DATA / "claims_manual.md",
 }
 SEED_FILES = [*RECORD_FILES.values(), *SETTING_FILES.values()]
 
@@ -29,6 +30,7 @@ CREATE TABLE claims (
     id TEXT PRIMARY KEY,
     record TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'waiting',
+    attempts INTEGER NOT NULL DEFAULT 0,
     decision TEXT,
     payout REAL,
     reason TEXT,
@@ -49,6 +51,17 @@ CREATE TABLE steps (
     kind TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at TEXT NOT NULL
+);
+CREATE TABLE runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    claim_id TEXT,
+    cap INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'running',
+    todos TEXT NOT NULL DEFAULT '[]',
+    summary TEXT,
+    problem TEXT,
+    started_at TEXT NOT NULL,
+    finished_at TEXT
 );
 """
 
