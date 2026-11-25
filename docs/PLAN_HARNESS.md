@@ -167,11 +167,11 @@ On the queue page, above the queue: a Current run panel with its status, cap and
 
 Add e2e tests that play both agents through the API, as the pilot's do. Update `docs/SPEC.md` (the manual is now in, no longer "Not for now"; a run works the queue; a claim can be left for a handler), `docs/TECH_STACK.md` (the default model, the harness) and `docs/STATUS.md`. Then reseed and run the real model on a run capped at five claims, watching it in the browser.
 
-- [ ] e2e: a run started from the queue page shows its to-do list as items are written and ticked off through the API, then the summary
-- [ ] e2e: a claim released twice through the API shows as left for a handler on the queue and its page shows both attempts' problems
-- [ ] e2e: a claim's page lists the sections the agent read
-- [ ] e2e: the Instructions page shows both sets of instructions
-- [ ] The pilot's e2e tests still pass
-- [ ] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is
-- [ ] Live trial: `npm run seed`, then Run the queue with a cap of 5 on the default model. Checked with the Playwright MCP server: the to-do list fills in and is ticked off, each of the five claims shows its steps and the sections read, the run ends with a summary, and the other 20 claims stay `waiting`
-- [ ] `npm run check` passes in full
+- [x] e2e: a run started from the queue page shows its to-do list as items are written and ticked off through the API, then the summary
+- [x] e2e: a claim released twice through the API shows as left for a handler on the queue and its page shows both attempts' problems
+- [x] e2e: a claim's page lists the sections the agent read
+- [x] e2e: the Instructions page shows both sets of instructions
+- [x] The pilot's e2e tests still pass
+- [x] `docs/SPEC.md`, `docs/TECH_STACK.md` and `docs/STATUS.md` describe the product as it now is
+- [x] Live trial: `npm run seed`, then Run the queue with a cap of 5 on the default model. Checked with the Playwright MCP server: the to-do list fills in and is ticked off, each of the five claims shows its steps and the sections read, the run ends with a summary, and the other 20 claims stay `waiting`
+- [x] `npm run check` passes in full

@@ -21,9 +21,14 @@ test("the queue shows every claim and the count in each state", async ({
   await page.goto("/");
   await expect(page.getByRole("link", { name: /^CLM-/ })).toHaveCount(25);
   const counts = await Promise.all(
-    ["Waiting", "In progress", "Waiting for sign-off", "Decided"].map(
-      async (state) =>
-        Number(await page.getByLabel(`${state} count`).textContent()),
+    [
+      "Waiting",
+      "In progress",
+      "Waiting for sign-off",
+      "Decided",
+      "Left for a handler",
+    ].map(async (state) =>
+      Number(await page.getByLabel(`${state} count`).textContent()),
     ),
   );
   expect(counts.reduce((sum, count) => sum + count, 0)).toBe(25);
@@ -78,12 +83,19 @@ test("a payout over $1,000 waits for a handler's sign-off", async ({
   await expect(page.locator(".claim-title").getByText("Decided")).toBeVisible();
 });
 
-test("the instructions view shows the agent's instructions", async ({
+test("the instructions view shows both sets of instructions", async ({
   page,
 }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Instructions" }).click();
   await expect(
-    page.getByText("You are the UnderCover Agent.", { exact: false }),
+    page
+      .getByLabel("Running the queue")
+      .getByText("running the claims queue", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByLabel("Working a claim")
+      .getByText("working one travel insurance claim", { exact: false }),
   ).toBeVisible();
 });
