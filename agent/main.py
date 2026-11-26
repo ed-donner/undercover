@@ -1,56 +1,29 @@
-"""The UnderCover Agent."""
+"""Public entry point for a fresh, claim-scoped helper."""
 
-import os
-
-import httpx
-from dotenv import load_dotenv
-from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
-from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
-from pydantic import SecretStr
 
-load_dotenv(override=True)
-
-BACKEND_URL = "http://localhost:8000"
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "openai/gpt-6-luna"
-SYSTEM_PROMPT = """You are the UnderCover Agent.
-Check that the backend is running, then say hello."""
-
-
-def backend() -> httpx.Client:
-    """Return a client for the UnderCover backend."""
-    return httpx.Client(base_url=BACKEND_URL, timeout=10)
-
-
-@tool
-def check_backend() -> str:
-    """Check whether the UnderCover backend is running."""
-    with backend() as client:
-        response = client.get("/api/health")
-    response.raise_for_status()
-    return response.json()["status"]
-
-
-def model() -> ChatOpenAI:
-    """Return the model named in MODEL_NAME, or GPT-6 Luna by default."""
-    name = os.getenv("MODEL_NAME")
-    return ChatOpenAI(
-        model=name or DEFAULT_MODEL,
-        base_url=OPENROUTER_BASE_URL,
-        api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
-        reasoning_effort=None if name else "low",
-    )
+from agent import api, claims, harness
+from agent.context import RunContext
+from agent.middleware import claim_middleware
+from agent.tools import CLAIM_TOOLS
 
 
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
-    """Run the agent on one claim and return its final reply."""
-    agent = create_agent(
-        llm or model(), tools=[check_backend], system_prompt=SYSTEM_PROMPT
-    )
-    result = agent.invoke(
-        {"messages": [{"role": "user", "content": f"Claim {claim_id}"}]},
-        config={"configurable": {"thread_id": thread_id}},
-    )
-    return result["messages"][-1].text
+    with api.connect() as backend:
+        attempt = claims.active_attempt(backend, claim_id, thread_id)
+        run_id = attempt["run_id"]
+        spec = harness.AgentSpec(
+            backend.instructions("claim"),
+            CLAIM_TOOLS,
+            claim_middleware(lambda activity: backend.event(run_id, activity)),
+            80,
+        )
+        result = harness.invoke(
+            spec,
+            RunContext(backend, run_id, claim_id),
+            thread_id,
+            f"Process claim {claim_id}.",
+            llm,
+        )
+        claims.verify_completion(backend, claim_id, run_id)
+        return result

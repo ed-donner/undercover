@@ -1,10 +1,60 @@
 # Status
 
-A hello-world skeleton with every check in place:
+The pilot and harness are implemented, including the architecture corrections requested in `docs/HUMAN_REVIEW_HARNESS.md`. The original harness plan and verification evidence are in `docs/PLAN_HARNESS.md`; `docs/PLAN.md` remains the pilot's historical plan.
 
-- `backend/`: one route, `GET /api/health`
-- `agent/`: the entry point `run(claim_id, thread_id)`, with one tool that calls the health route
-- `dashboard/`: one page that shows whether the backend is up
-- `e2e/`: one test of that page
+## Built
 
-Nothing of UnderCover is built yet. Update this file as you build.
+- FastAPI and SQLite with 25 seeded claims, policies, customers/history, plans, handlers, backend-owned instructions and allowlisted wording/manual sections. Additive migrations preserve existing decisions, sign-offs, payments and history. Money is stored as integer cents. Evaluation, held-out and security files are not loaded.
+- One queue agent chooses claim order, persists its to-do list and delegates sequentially to fresh claim helpers. Whole-queue, distinct-claim caps and named-claim runs share backend ownership/cap guards. Retries consume the same cap slot. Only one top-level run is active.
+- Each claim helper reads context and selected wording/manual sections through the API, records its decision/calculation/explanation and source provenance, then separately requests simulated payment. The default is `deepseek/deepseek-v4.1-flash` with low reasoning effort; `MODEL_NAME` overrides it.
+- First pre-decision failure returns a claim to waiting for an automatic retry. Two failures persist a handler hold without a coverage decision; later runs cannot reset the budget. Committed decisions/payments are reconciled after ambiguous responses rather than duplicated. An unresolved payment is visible handler work, not a successful payment.
+- Backend-enforced payment rules: approval required, exact approved amount, no duplicate payment, and handler sign-off above $1,000. An above-limit claim stays approved while payment waits. Agent payment calls are also fenced to an active attempt.
+- Persisted runs, ordered task states, activity and exact source-read text/version/attempt. Model requests have a 60-second timeout and one transient middleware retry; helpers have an 80-step limit and an eight-minute write deadline. A 490-second delegation deadline fences late children. A failed supervisor gets one fresh invocation using recorded work. Completion is checked transactionally for missed claims within the cap.
+- React dashboard with queue/capped/named starts, live tasks and summaries, claim evidence/decisions/activity/sources, separate read-only queue/claim instructions and a source library. Handler sign-off and simulated payment remain separate controls. Supports narrow screens, keyboard focus and system light/dark preference.
+
+## Run locally
+
+1. Use Python 3.12, uv and Node 26. Run `uv sync` and root `npm install`.
+2. Add `OPENROUTER_API_KEY` to the existing `.env`; `.env.example` lists settings. A nonempty `MODEL_NAME` overrides the default. Starting a run makes paid model calls.
+3. Run `npm run dev`. Dashboard: `http://localhost:5173`; API: `http://localhost:8000/docs`. Those ports must be available; do not start a second backend against the same database.
+4. Use **Start capped run** with cap five for trials, **Start queue** for all eligible claims, or **Process claim** for one named claim. Review the run's to-do list and the claim's evidence/activity/sources. For above-limit approvals, select a handler, **Sign off payout**, then **Record simulated payment**.
+5. From a second terminal: `uv run -m agent --max-claims 5`, `uv run -m agent`, or `uv run -m agent CLM-1001`. Multiple explicit claim IDs start separate named runs. Queue mode starts once and polls; it does not iterate claims in the CLI. Technical failures yield exit status 1; normal referrals and sign-off waits do not.
+6. `uv run -m backend.seed` deletes the configured database and all its decisions, payments, task/run/activity history, then creates 25 waiting claims. Stop that database's backend first. For every live-model trial, reseed first and cap at five; use a dedicated `DATABASE_PATH` to preserve existing work.
+
+The default git-ignored database is `undercover.db`; `DATABASE_PATH` changes it. `BACKEND_URL` changes the agent's API address. `VITE_BACKEND_URL` changes the dashboard development proxy when using another API port. One local backend process owns a database. On restart, interrupted runs are marked failed, undecided claims are released or held after their second failure, and committed financial records survive. Runs do not resume automatically.
+
+## Verification
+
+- `uv sync`, root `npm install` and hook/browser installation succeeded. `npm run dev` served a healthy API and dashboard using a separate database, a free `UVICORN_PORT` and Vite's next available port. The live preview also used isolated ports. Existing services and the developer database were not stopped or reseeded; temporary preview services were stopped afterward. Restarting the smoke database preserved its completed run without resuming any work.
+- After the human-review corrections, `npm run check` exits 0: ruff formatting/lint, pyright, 128 pytest tests (99.17% coverage), Prettier, ESLint, strict TypeScript, 28 Vitest tests (100% statement coverage) and 11 Playwright tests. `npx vite build dashboard` passes. No rules, thresholds or coverage scope were weakened.
+- Automated tests use stub models and isolated databases, require no model key and make no provider calls. End-to-end tests use ports 8011/5174 and test-only reset/release/failure controls absent from production. They cover cap five, a missed task repaired before completion, fresh helpers, automatic retry, a two-failure hold, source reads, all decision outcomes, sign-off/payment enforcement and persistence after reload.
+- Before the human-review corrections, local Playwright inspection covered desktop and 390px narrow screens, light/dark, live and completed tasks, source text, both instruction sets, USD formatting and visible keyboard focus. Dark task-link contrast measured 9.68:1. No horizontal overflow or page errors were observed. Screenshots were inspected. A Playwright MCP server is not exposed, so the specific MCP criterion remains blocked, not marked verified. The automated desktop/narrow light/dark tests were rerun after the corrections.
+- Before the human-review corrections, a live trial on a freshly reseeded, separate temporary database used `deepseek/deepseek-v4.1-flash`, low reasoning effort, cap five. Run `a1164190-db88-494b-a1d8-14a8e75442c1` completed its check and processed five claims in five attempts with 76 source reads. It recorded five approvals, four simulated payments and one $3,750 approval waiting for sign-off, with zero technical issues. All other 20 claims remained waiting with no attempts. There were exactly five decision records and four payment records; a direct attempt to pay the unsigned above-limit approval returned `409`.
+- At that original live trial, the dashboard showed tasks filling and progressing, recorded source sections and the completed summary after reload. All real calls were confined to this cap-five run. Decisions were not scored against handler answers, and evaluation files were not opened. This is historical evidence, not verification of the rewritten instructions; no additional paid model calls or database resets were made for the review response.
+- Each implementation phase is committed with the pre-commit hook. Nothing is pushed.
+
+## Harness human-review response
+
+### Findings and cause
+
+- Confirmed duplicated backend route strings/HTTP handling in agent entry points, `queue.py` importing `main.py`, closure-bound tools with mutable state, mixed harness/domain responsibilities, and overly procedural prompts. The brief's specific existing `tools.py` and `main → tools.request` example did not match this checkout; the underlying transport and dependency problems did.
+- Similar issues existed in other layers: `backend/main.py` combined app composition, routes, direct SQL and payment-rejection auditing; document contracts imported queue-specific contracts. Dashboard components owned endpoint strings and string-switched actions, while `api.ts` combined transport with a polling hook.
+- The implementation review verified acceptance behavior, lint/types and coverage but did not trace imports, transport ownership or state lifetimes. The process had no explicit architecture gate or executable boundary tests. Passing workflow tests was incorrectly treated as evidence of a clean design.
+
+### Corrections and review evidence
+
+- `agent/api.py` is the single backend transport/base-URL owner, with named operations used by tools, domain services, CLI and end-to-end stubs. `model.py` owns provider configuration separately. No agent module imports backend services or another agent entry point.
+- `agent/harness.py` alone constructs/invokes agents. `main.py` and `queue.py` now compose dependencies; claim reconciliation/completion lives in `claims.py`, and queue context/delegation lives in `delegation.py`. All model-visible tools are in `tools.py`, with immutable invocation dependencies injected through `RunContext`/`ToolRuntime`; `context_read` is invocation-local graph state updated through `Command`.
+- Instructions now state goals, source authority, expected results and privacy/financial boundaries, without scripting a fixed investigation or tool-call order. Backend enforcement of caps, ownership, source provenance, retries, exact payments and sign-off remains authoritative.
+- Backend adapters are grouped in `backend/routes/`; `backend/main.py` only composes the app and its lifecycle. Attempt closing and payment-rejection auditing belong to workflow services; generic input validation lives in `contracts.py`. Workflow inserts name their columns rather than relying on model/table field order.
+- Dashboard endpoint operations are centralized in `api.ts`, polling is in `useResource.ts`, and instruction/card/control presentation is separated. Actions pass typed callbacks instead of endpoint suffixes. Layout, financial controls and existing error/retry behavior are preserved.
+- The CLI now reads the backend's structured `technical_issues` field, projected in `backend/outcomes.py`, rather than searching task-reason prose. Referrals and sign-off waits remain normal business outcomes; exhausted failures and unresolved payments remain technical issues. No database migration was needed for this computed response field.
+- Source review traced claim/context reads, decision/payment writes, queue delegation/completion, backend routers/services and dashboard actions across their callers. Architecture tests enforce transport ownership, entry-point dependency direction, harness/tool ownership, hidden runtime inputs, SQL-free adapters and dashboard route ownership. Contract tests check encoded IDs, required request bodies and HTTP error propagation. Invocation tests verify injected context and prevent state leakage; outcome tests distinguish technical problems from referrals/sign-off and changed display wording.
+- `docs/PROCESS.md` now requires an explicit architecture/source-review gate before commits and handover, including adjacent-layer investigation and separate reporting of stub versus live evidence. `docs/CODE_STANDARDS.md` defines the module, state, contract and prompt boundaries above. The new pytest/Vitest architecture checks run in the existing pre-commit hook as well as `npm run check`; no checks were disabled.
+
+The full successful verification is recorded above. An earlier check command hit its external 120-second execution limit during Playwright and left its own isolated test server running; that process was stopped, then the full suite passed with a longer execution allowance. Existing developer services and databases were left untouched. Real-model behavior of the shorter prompts remains unverified; automated stub tests establish plumbing and safeguards, not prompt quality or decision accuracy.
+
+## Limits
+
+- Local pilot only: no sign-in, authenticated handler identity, real money, customer messages, external document requests or automatic restart resumption. Technical holds are visible for review; no new handler adjudication/release workflow is included.
+- `npm install` reports 21 existing dependency vulnerabilities: 15 moderate, four high and two critical. Dependency upgrades were not part of this build.
