@@ -1,0 +1,7 @@
+{
+  "C-001": {"decision": "approve", "payout": 250.0, "difficulty": "routine", "reason": "min(1200, 300 limit) - 50 deductible"},
+  "C-002": {"decision": "decline", "payout": 0.0, "difficulty": "routine", "reason": "change of mind is not covered"},
+  "C-003": {"decision": "refer", "payout": 0.0, "difficulty": "hard", "reason": "theft with no police report"},
+  "C-004": {"decision": "approve", "payout": 100.0, "difficulty": "hard", "reason": "9 hours is 2 full 4-hour blocks, 2 x $50"},
+  "C-005": {"decision": "approve", "payout": 780.0, "difficulty": "routine", "reason": "medical in full, no deductible"}
+}
