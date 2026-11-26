@@ -1,0 +1,17 @@
+[
+  {"claim_id": "C-001", "policy_id": "P-1", "claim_type": "baggage", "amount_claimed": 1200.0,
+   "story": "My laptop got soaked when a water bottle leaked in my bag in Lisbon on May 4. The repair shop says it cannot be repaired, so I bought a new one for $1,200.",
+   "documents": ["Repair shop report: liquid damage, beyond repair", "Receipt for replacement laptop, $1,200"]},
+  {"claim_id": "C-002", "policy_id": "P-2", "claim_type": "trip_cancellation", "amount_claimed": 900.0,
+   "story": "I cancelled my Tokyo trip because friends invited me to a music festival instead. Please refund my $900 hotel booking.",
+   "documents": ["Hotel cancellation notice, $900"]},
+  {"claim_id": "C-003", "policy_id": "P-3", "claim_type": "baggage", "amount_claimed": 400.0,
+   "story": "My backpack was stolen from the train to Prague on July 2. It held a camera worth $400.",
+   "documents": ["Camera purchase receipt, $400"]},
+  {"claim_id": "C-004", "policy_id": "P-4", "claim_type": "flight_delay", "amount_claimed": 300.0,
+   "story": "My flight to Cairo on August 12 left 9 hours late. I would like to claim for the delay.",
+   "documents": ["Airline delay letter: departure delayed 9 hours"]},
+  {"claim_id": "C-005", "policy_id": "P-5", "claim_type": "medical", "amount_claimed": 780.0,
+   "story": "I cut my foot on coral in Bali on September 5 and went to a clinic for stitches and antibiotics.",
+   "documents": ["Clinic receipt, $780", "Doctor's treatment note"]}
+]
