@@ -1,10 +1,10 @@
 # Status
 
-The pilot is being built to `docs/PLAN.md`. Phases 1 to 3 are done.
+The pilot is being built to `docs/PLAN.md`. Phases 1 to 4 are done.
 
 - `backend/`: FastAPI on SQLite. The database `backend/undercover.db` is created from `data/` on first use (`UNDERCOVER_DB` changes the path). Read routes: claims, policy with plan, claim history, policy wording, agent instructions, handlers. Workflow routes: start a claim, record steps, record a decision, pay, and sign off. A payout over $1,000 waits in `awaiting_signoff` and the backend refuses to pay it until a handler signs off.
 - `agent/`: the UnderCover Agent, `create_agent` on OpenRouter with one tool per backend operation. Its instructions come from the backend (`backend/instructions.md`), and each tool call and result is posted to the backend as a step.
-- `dashboard/`: still the skeleton's health page
+- `dashboard/`: React pages for the queue (counts by state and every claim), each claim in full with its decision and policy, and the agent's instructions, read only. Hash routes: `#/`, `#/claims/CLM-1001`, `#/instructions`. Light and dark mode follow the system setting.
 
 ## Commands
 

@@ -114,11 +114,11 @@ Styling follows `docs/BRAND.md`: Instrument Sans, Instrument Serif and JetBrains
 
 Success criteria:
 
-- [ ] Vitest tests cover each page with a mocked `fetch`, plus the money formatter and the router
-- [ ] `npm run check:ts` passes, with coverage at or above 80% and no `any`
-- [ ] With `npm run dev`, Playwright MCP shows the queue with 25 claims and the right badge colors, in light and dark mode
-- [ ] Clicking `CLM-1001` opens its claim page with the story, three items and four documents
-- [ ] The instructions page shows the agent's instructions with no way to edit them
+- [x] Vitest tests cover each page with a mocked `fetch`, plus the money formatter and the router
+- [x] `npm run check:ts` passes, with coverage at or above 80% and no `any`
+- [x] With `npm run dev`, Playwright MCP shows the queue with 25 claims and the right badge colors, in light and dark mode
+- [x] Clicking `CLM-1001` opens its claim page with the story, three items and four documents
+- [x] The instructions page shows the agent's instructions with no way to edit them
 
 ## Phase 5: Live steps and sign-off in the dashboard
 

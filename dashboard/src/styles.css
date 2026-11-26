@@ -1,0 +1,305 @@
+:root {
+  --sea-green: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  --midnight: #073b4c;
+  --sea-mist: #cdd8db;
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --ink: var(--midnight);
+  --muted: #4a6b76;
+  --heading: #047857;
+  --link: #0b6e8f;
+  --rule: #e3eaec;
+  color-scheme: light dark;
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--page);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #04232e;
+    --panel: #000000;
+    --ink: var(--sea-mist);
+    --muted: #94adb5;
+    --heading: #5eead4;
+    --link: #6cc6e4;
+    --rule: #12343f;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: var(--link);
+}
+
+h1,
+h2,
+h3 {
+  color: var(--heading);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0.5rem 0 1rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin-top: 0;
+}
+
+h3 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.mono,
+.number {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  white-space: nowrap;
+}
+
+nav.top,
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+nav.top {
+  display: flex;
+  gap: 1.5rem;
+  align-items: baseline;
+  padding: 1rem 2rem;
+}
+
+nav.top .brand {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.tagline,
+blockquote {
+  font-family: "Instrument Serif", serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.tagline {
+  color: var(--muted);
+  margin-left: 0.5rem;
+}
+
+main {
+  padding: 0 2rem 3rem;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.note {
+  color: var(--muted);
+}
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.count {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.count span:last-child::before {
+  content: "";
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+}
+
+.count.waiting span:last-child::before {
+  background: var(--cerulean);
+}
+
+.count.in_progress span:last-child::before {
+  background: var(--marigold);
+}
+
+.count.awaiting_signoff span:last-child::before {
+  background: var(--coral);
+}
+
+.count.decided span:last-child::before {
+  background: var(--sea-green);
+}
+
+.count .number {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+tbody tr + tr td {
+  border-top: 1px solid var(--rule);
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.total td {
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--midnight);
+}
+
+.badge.waiting {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.badge.in_progress {
+  background: var(--marigold);
+}
+
+.badge.awaiting_signoff {
+  background: var(--coral);
+}
+
+.badge.decided {
+  background: var(--sea-green);
+}
+
+.claim-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.claim-header h1 {
+  margin-bottom: 0;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+}
+
+blockquote {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+}
+
+.document p,
+.story {
+  line-height: 1.5;
+}
+
+.instructions {
+  white-space: pre-wrap;
+  font-family: "Instrument Sans", system-ui, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.steps li {
+  padding: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+
+.steps li + li {
+  border-top: 1px solid var(--rule);
+}
+
+button,
+select {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+}
+
+button {
+  background: var(--sea-green);
+  color: var(--midnight);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signoff {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 800px) {
+  .columns,
+  .counts {
+    grid-template-columns: 1fr;
+  }
+}
