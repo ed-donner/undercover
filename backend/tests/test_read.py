@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -95,3 +96,13 @@ def test_reset_restores_the_seed():
 def test_backend_never_reads_evals(source):
     if "tests" not in source.parts:
         assert "evals" not in source.read_text()
+
+
+def test_concurrent_requests():
+    with ThreadPoolExecutor(8) as pool:
+        codes = list(
+            pool.map(
+                lambda _: client.get("/api/claims/CLM-1001").status_code, range(32)
+            )
+        )
+    assert set(codes) == {200}

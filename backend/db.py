@@ -3,10 +3,12 @@
 import json
 import os
 import sqlite3
+import threading
 from pathlib import Path
 
 DATA = Path(__file__).parent.parent / "data"
 DEFAULT_DB = Path(__file__).parent / "undercover.db"
+SEEDING = threading.Lock()
 
 SCHEMA = """
 CREATE TABLE claims (
@@ -71,8 +73,9 @@ def seed(path: Path) -> None:
 def connect() -> sqlite3.Connection:
     """Open the database, seeding it first if it does not exist."""
     path = db_path()
-    if not path.exists():
-        seed(path)
-    conn = sqlite3.connect(path, isolation_level=None)
+    with SEEDING:
+        if not path.exists():
+            seed(path)
+    conn = sqlite3.connect(path, isolation_level=None, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn

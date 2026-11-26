@@ -93,12 +93,12 @@ The instructions tell the agent to start the claim, read the claim, policy, hist
 
 Success criteria:
 
-- [ ] Agent tests with a stub model and the backend's `TestClient` work a claim end to end: steps recorded, decision recorded, claim `decided`
-- [ ] A stub test where the model calls `pay_claim` on a $1,500 approval shows the tool returning the backend's refusal, and the claim staying `awaiting_signoff`
-- [ ] A test of the CLI picks only `waiting` claims, in queue order
-- [ ] `MODEL_NAME` still selects the model, and the default stays `openai/gpt-6-luna` with low reasoning effort
-- [ ] With the backend running, `uv run -m agent CLM-1001` (one real model call chain, a few cents) leaves `CLM-1001` `decided` with a reason and a policy section, and `GET /api/claims/CLM-1001/steps` lists its tool calls
-- [ ] `npm run check:python` passes
+- [x] Agent tests with a stub model and the backend's `TestClient` work a claim end to end: steps recorded, decision recorded, claim `decided`
+- [x] A stub test where the model calls `pay_claim` on a $1,500 approval shows the tool returning the backend's refusal, and the claim staying `awaiting_signoff`
+- [x] A test of the CLI picks only `waiting` claims, in queue order
+- [x] `MODEL_NAME` still selects the model, and the default stays `openai/gpt-6-luna` with low reasoning effort
+- [x] With the backend running, `uv run -m agent CLM-1001` (one real model call chain, a few cents) leaves `CLM-1001` `decided` with a reason and a policy section, and `GET /api/claims/CLM-1001/steps` lists its tool calls
+- [x] `npm run check:python` passes
 
 ## Phase 4: Dashboard: queue, claim and instructions pages
 
