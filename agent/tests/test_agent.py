@@ -57,10 +57,17 @@ def test_run_works_a_claim_end_to_end():
     assert claim["decision"]["policy_section"] == "Section 3, Trip Delay"
     assert claim["payment"]["amount"] == 420.0
     steps = [s["text"] for s in client.get("/api/claims/CLM-1001/steps").json()]
-    assert steps[0].startswith("Calling start_claim")
-    assert any(s.startswith("Calling pay_claim") for s in steps)
-    assert any(s.startswith("get_policy returned {") for s in steps)
-    assert steps[-1] == "Finished: CLM-1001: approve, $420.00"
+    assert steps == [
+        "Taking the claim from the queue",
+        "Reading the claim",
+        "Reading the policy and its plan",
+        "Reading the customer's earlier claims",
+        "Reading the policy wording",
+        "Recording the decision: approve, payout $420.00, Section 3, Trip Delay."
+        " The delay is covered.",
+        "Paying $420.00",
+        "Finished: CLM-1001: approve, $420.00",
+    ]
     assert all(len(s) <= main.STEP_LENGTH + 3 for s in steps)
 
 
@@ -70,7 +77,17 @@ def test_payment_over_the_limit_is_refused():
     assert claim["status"] == "awaiting_signoff"
     assert claim["payment"] is None
     steps = [s["text"] for s in client.get("/api/claims/CLM-1003/steps").json()]
-    assert any("Refused (409)" in s and "sign-off" in s for s in steps)
+    assert "Paying $1,500.00" in steps
+    assert any(
+        s.startswith("pay_claim was refused: Refused (409)") and "sign-off" in s
+        for s in steps
+    )
+
+
+def test_long_steps_are_shortened():
+    main.StepRecorder("CLM-1001").record("x" * 1000)
+    step = client.get("/api/claims/CLM-1001/steps").json()[0]["text"]
+    assert len(step) == main.STEP_LENGTH + 3
 
 
 def test_pay_claim_tool_returns_the_refusal():
@@ -106,5 +123,6 @@ def test_model_name(monkeypatch):
     monkeypatch.delenv("MODEL_NAME", raising=False)
     assert main.model().model_name == "openai/gpt-6-luna"
     assert main.model().reasoning_effort == "low"
+    assert main.model().max_retries == main.MODEL_RETRIES
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")
     assert main.model().model_name == "openrouter/free"

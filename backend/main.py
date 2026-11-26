@@ -171,9 +171,10 @@ def conflict(message: str) -> HTTPException:
 
 @app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
 def start_claim(claim_id: str, db: Db) -> Claim:
-    """Take a waiting claim from the queue and mark it in progress."""
-    if claim_row(db, claim_id)["status"] != "waiting":
-        raise conflict(f"{claim_id} is not waiting")
+    """Take a waiting claim, or resume an undecided one, and mark it in progress."""
+    row = claim_row(db, claim_id)
+    if row["status"] not in ("waiting", "in_progress") or row["decision"]:
+        raise conflict(f"{claim_id} is already decided")
     db.execute(
         "UPDATE claims SET status = 'in_progress' WHERE claim_id = ?", (claim_id,)
     )

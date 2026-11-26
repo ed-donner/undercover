@@ -136,12 +136,19 @@ Success criteria:
 
 **Builds:** the full run. `uv run -m agent` works the queue while the dashboard is open, and the docs are brought up to date. Any problems the run turns up are fixed here, such as a tool description the model misreads or a step that's hard to read on screen.
 
+What the first run turned up, and the fixes:
+
+- Steps showed raw JSON. They now say what the agent is doing in plain words, and show refusals in full.
+- OpenRouter limits new accounts to 20 requests a minute on this model, and the run stopped at the eighth claim. The model client now retries with backoff long enough to wait out the limit.
+- The crash left a claim stuck in progress. `start_claim` now also resumes a claim that is in progress with no decision, so `uv run -m agent CLM-1008` finishes it.
+- On the second run the model wrote one decision (CLM-1020) in its reply without calling `record_decision`. The instructions now say every claim must end with `record_decision`, and resuming the claim recorded it.
+
 Success criteria:
 
-- [ ] After `uv run -m backend.reset`, `uv run -m agent` works all 25 claims: none left `waiting` or `in_progress`, and every claim over $1,000 that was approved is `awaiting_signoff` with no payment
-- [ ] Playwright MCP shows a claim's steps arriving live during the run, and the queue counts change as claims are decided
-- [ ] Signing off one `awaiting_signoff` claim in the dashboard pays it
-- [ ] `docs/STATUS.md` lists what's built and every command: `npm run dev`, `uv run -m agent`, `uv run -m agent CLM-1001`, `uv run -m backend.reset` and `npm run check`
-- [ ] `npm run check` passes in full
+- [x] After `uv run -m backend.reset`, `uv run -m agent` works all 25 claims: none left `waiting` or `in_progress`, and every claim over $1,000 that was approved is `awaiting_signoff` with no payment
+- [x] Playwright MCP shows a claim's steps arriving live during the run, and the queue counts change as claims are decided
+- [x] Signing off one `awaiting_signoff` claim in the dashboard pays it
+- [x] `docs/STATUS.md` lists what's built and every command: `npm run dev`, `uv run -m agent`, `uv run -m agent CLM-1001`, `uv run -m backend.reset` and `npm run check`
+- [x] `npm run check` passes in full
 
 The full run calls the model 25 times. With `openai/gpt-6-luna` on low effort that should cost well under a dollar. Setting `MODEL_NAME=openrouter/free` keeps it free, with lower accuracy and a daily limit. Scoring the agent against `data/evals/` isn't part of this plan. The spec keeps that for later.

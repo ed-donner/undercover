@@ -20,6 +20,8 @@ BACKEND_URL = "http://localhost:8000"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-6-luna"
 STEP_LENGTH = 300
+# Backoff long enough to wait out a per-minute rate limit.
+MODEL_RETRIES = 10
 
 
 def backend() -> httpx.Client:
@@ -105,8 +107,29 @@ TOOLS = [
 ]
 
 
+ACTIONS = {
+    "start_claim": "Taking the claim from the queue",
+    "get_claim": "Reading the claim",
+    "get_policy": "Reading the policy and its plan",
+    "get_claim_history": "Reading the customer's earlier claims",
+    "get_policy_wording": "Reading the policy wording",
+}
+
+
+def describe(name: str, inputs: dict[str, Any]) -> str:
+    """Describe a tool call in plain words for the dashboard."""
+    if name == "record_decision":
+        return (
+            f"Recording the decision: {inputs['decision']}, payout"
+            f" ${inputs['payout']:,.2f}, {inputs['policy_section']}. {inputs['reason']}"
+        )
+    if name == "pay_claim":
+        return f"Paying ${inputs['amount']:,.2f}"
+    return ACTIONS[name]
+
+
 class StepRecorder(BaseCallbackHandler):
-    """Posts each tool call and its result to the backend as a step."""
+    """Posts what the agent does on a claim to the backend, step by step."""
 
     def __init__(self, claim_id: str) -> None:
         self.claim_id = claim_id
@@ -118,12 +141,18 @@ class StepRecorder(BaseCallbackHandler):
         call("POST", f"/api/claims/{self.claim_id}/steps", {"text": text})
 
     def on_tool_start(
-        self, serialized: dict[str, Any], input_str: str, **kwargs: Any
+        self,
+        serialized: dict[str, Any],
+        input_str: str,
+        *,
+        inputs: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> None:
-        self.record(f"Calling {serialized['name']} with {input_str}")
+        self.record(describe(serialized["name"], inputs or {}))
 
     def on_tool_end(self, output: ToolMessage, **kwargs: Any) -> None:
-        self.record(f"{output.name} returned {output.content}")
+        if str(output.content).startswith("Refused"):
+            self.record(f"{output.name} was refused: {output.content}")
 
 
 def model() -> ChatOpenAI:
@@ -134,6 +163,7 @@ def model() -> ChatOpenAI:
         base_url=OPENROUTER_BASE_URL,
         api_key=SecretStr(os.environ["OPENROUTER_API_KEY"]),
         reasoning_effort=None if name else "low",
+        max_retries=MODEL_RETRIES,
     )
 
 

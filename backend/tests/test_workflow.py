@@ -97,6 +97,15 @@ def test_decide_out_of_order():
     assert client.post("/api/claims/CLM-1001/start").status_code == 409
 
 
+def test_resume_an_undecided_claim():
+    client.post("/api/claims/CLM-1001/start")
+    resumed = client.post("/api/claims/CLM-1001/start")
+    assert resumed.status_code == 200
+    assert resumed.json()["status"] == "in_progress"
+    decide("CLM-1001", "approve", 420.0)
+    assert client.post("/api/claims/CLM-1001/start").status_code == 409
+
+
 @pytest.mark.parametrize(
     ("decision", "payout"),
     [("pay", 10), ("approve", -5), ("approve", 0), ("decline", 50), ("refer", 1)],
