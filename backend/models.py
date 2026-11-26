@@ -1,8 +1,8 @@
 """The shapes the API takes and returns."""
 
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 Status = Literal["waiting", "in_progress", "awaiting_signoff", "decided"]
 DecisionKind = Literal["approve", "decline", "refer"]
@@ -25,6 +25,12 @@ class Decision(BaseModel):
     payout: float = Field(ge=0)
     reason: str = Field(min_length=1)
     policy_section: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def payout_matches_decision(self) -> Self:
+        if (self.decision == "approve") != (self.payout > 0):
+            raise ValueError("Only an approval has a payout, and it must be above 0")
+        return self
 
 
 class Payment(BaseModel):

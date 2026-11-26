@@ -11,6 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from backend.db import DATA, connect, load
 from backend.models import (
     AddOn,
+    Amount,
     Claim,
     ClaimSummary,
     Decision,
@@ -19,6 +20,8 @@ from backend.models import (
     Plan,
     Policy,
     PreviousClaim,
+    SignOff,
+    Step,
     Text,
 )
 
@@ -26,6 +29,9 @@ app = FastAPI(title="UnderCover")
 
 PLANS = json.loads((DATA / "plans.json").read_text())
 INSTRUCTIONS = Path(__file__).parent / "instructions.md"
+APPROVAL_LIMIT = json.loads((DATA / "company.json").read_text())[
+    "payout_approval_limit"
+]
 
 
 def database() -> Iterator[sqlite3.Connection]:
@@ -156,3 +162,111 @@ def get_instructions() -> Text:
 def list_handlers() -> list[Handler]:
     """List the claims handlers who can sign off payments."""
     return [Handler(**h) for h in load("handlers.json")]
+
+
+def conflict(message: str) -> HTTPException:
+    """Return a 409 for a step taken out of order."""
+    return HTTPException(409, message)
+
+
+@app.post("/api/claims/{claim_id}/start", operation_id="start_claim")
+def start_claim(claim_id: str, db: Db) -> Claim:
+    """Take a waiting claim from the queue and mark it in progress."""
+    if claim_row(db, claim_id)["status"] != "waiting":
+        raise conflict(f"{claim_id} is not waiting")
+    db.execute(
+        "UPDATE claims SET status = 'in_progress' WHERE claim_id = ?", (claim_id,)
+    )
+    return get_claim(claim_id, db)
+
+
+@app.get("/api/claims/{claim_id}/steps", operation_id="list_steps")
+def list_steps(claim_id: str, db: Db) -> list[Step]:
+    """List the agent's steps on a claim, oldest first."""
+    claim_row(db, claim_id)
+    rows = db.execute(
+        "SELECT id, text, created_at FROM steps WHERE claim_id = ? ORDER BY id",
+        (claim_id,),
+    ).fetchall()
+    return [Step(**row) for row in rows]
+
+
+@app.post("/api/claims/{claim_id}/steps", operation_id="add_step")
+def add_step(claim_id: str, step: Text, db: Db) -> Step:
+    """Record one step the agent took on a claim."""
+    claim_row(db, claim_id)
+    cursor = db.execute(
+        "INSERT INTO steps (claim_id, text) VALUES (?, ?)", (claim_id, step.text)
+    )
+    row = db.execute(
+        "SELECT id, text, created_at FROM steps WHERE id = ?", (cursor.lastrowid,)
+    ).fetchone()
+    return Step(**row)
+
+
+@app.post("/api/claims/{claim_id}/decision", operation_id="record_decision")
+def record_decision(claim_id: str, decision: Decision, db: Db) -> Claim:
+    """Approve, decline or refer a claim in progress, with the payout and reasons."""
+    row = claim_row(db, claim_id)
+    if row["status"] != "in_progress" or row["decision"]:
+        raise conflict(f"{claim_id} is not in progress or is already decided")
+    status = "in_progress"
+    if decision.decision != "approve":
+        status = "decided"
+    elif decision.payout > APPROVAL_LIMIT:
+        status = "awaiting_signoff"
+    db.execute(
+        "UPDATE claims SET status = ?, decision = ?, payout = ?, reason = ?,"
+        " policy_section = ? WHERE claim_id = ?",
+        (
+            status,
+            decision.decision,
+            decision.payout,
+            decision.reason,
+            decision.policy_section,
+            claim_id,
+        ),
+    )
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/claims/{claim_id}/payment", operation_id="pay_claim")
+def pay_claim(claim_id: str, payment: Amount, db: Db) -> Claim:
+    """Pay the approved payout on a claim that needs no sign-off."""
+    row = claim_row(db, claim_id)
+    if row["status"] == "awaiting_signoff":
+        raise conflict(
+            f"{claim_id} pays over ${APPROVAL_LIMIT:,.2f} and needs a handler's"
+            " sign-off. The payment is held until then."
+        )
+    if row["decision"] != "approve" or row["status"] != "in_progress":
+        raise conflict(f"{claim_id} is not an approved claim waiting for payment")
+    if payment.amount != row["payout"]:
+        raise conflict(
+            f"The payment must be the approved payout, ${row['payout']:,.2f}"
+        )
+    db.execute(
+        "UPDATE claims SET status = 'decided', paid_amount = ? WHERE claim_id = ?",
+        (payment.amount, claim_id),
+    )
+    return get_claim(claim_id, db)
+
+
+@app.post("/api/claims/{claim_id}/signoff", operation_id="sign_off_claim")
+def sign_off_claim(claim_id: str, sign_off: SignOff, db: Db) -> Claim:
+    """Sign off a payout over the approval limit, which releases the payment."""
+    row = claim_row(db, claim_id)
+    if row["status"] != "awaiting_signoff":
+        raise conflict(f"{claim_id} is not waiting for sign-off")
+    handler = next(
+        (h for h in load("handlers.json") if h["handler_id"] == sign_off.handler_id),
+        None,
+    )
+    if handler is None or not handler["can_approve_over_limit"]:
+        raise HTTPException(422, f"{sign_off.handler_id} cannot sign off payments")
+    db.execute(
+        "UPDATE claims SET status = 'decided', paid_amount = payout,"
+        " signed_off_by = ? WHERE claim_id = ?",
+        (handler["name"], claim_id),
+    )
+    return get_claim(claim_id, db)

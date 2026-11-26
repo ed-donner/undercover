@@ -73,15 +73,15 @@ Success criteria:
 
 Success criteria:
 
-- [ ] Tests cover every state change in the table and every 409 case
-- [ ] A $420 approval on `CLM-1001` goes `waiting` → `in_progress` → `decided` once `pay_claim` is called with 420
-- [ ] An approval over $1,000 goes to `awaiting_signoff`, and `pay_claim` with the full amount returns 409 with no payment recorded
-- [ ] `sign_off_claim` with `HND-01` on that claim records the payment and the handler, and the claim becomes `decided`
-- [ ] `pay_claim` with an amount different from the approved payout returns 409
-- [ ] Decline and refer go straight to `decided`, and `pay_claim` on them returns 409
-- [ ] `record_decision` rejects a decision other than `approve`, `decline` or `refer`, a negative payout, and a non-zero payout on a decline or referral (422)
-- [ ] Steps come back from `list_steps` in the order they were added
-- [ ] `npm run check:python` passes with coverage at or above 80%
+- [x] Tests cover every state change in the table and every 409 case
+- [x] A $420 approval on `CLM-1001` goes `waiting` → `in_progress` → `decided` once `pay_claim` is called with 420
+- [x] An approval over $1,000 goes to `awaiting_signoff`, and `pay_claim` with the full amount returns 409 with no payment recorded
+- [x] `sign_off_claim` with `HND-01` on that claim records the payment and the handler, and the claim becomes `decided`
+- [x] `pay_claim` with an amount different from the approved payout returns 409
+- [x] Decline and refer go straight to `decided`, and `pay_claim` on them returns 409
+- [x] `record_decision` rejects a decision other than `approve`, `decline` or `refer`, a negative payout, and a non-zero payout on a decline or referral (422)
+- [x] Steps come back from `list_steps` in the order they were added
+- [x] `npm run check:python` passes with coverage at or above 80%
 
 ## Phase 3: The UnderCover Agent
 
