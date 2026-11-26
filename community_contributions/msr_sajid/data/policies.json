@@ -1,0 +1,7 @@
+[
+  {"policy_id": "P-1", "traveler": "Asha Verma", "plan": "standard", "trip": {"destination": "Lisbon", "departs_on": "2026-05-02", "returns_on": "2026-05-09"}},
+  {"policy_id": "P-2", "traveler": "Omar Haddad", "plan": "standard", "trip": {"destination": "Tokyo", "departs_on": "2026-06-10", "returns_on": "2026-06-20"}},
+  {"policy_id": "P-3", "traveler": "Lena Fischer", "plan": "standard", "trip": {"destination": "Prague", "departs_on": "2026-07-01", "returns_on": "2026-07-06"}},
+  {"policy_id": "P-4", "traveler": "Ravi Menon", "plan": "standard", "trip": {"destination": "Cairo", "departs_on": "2026-08-12", "returns_on": "2026-08-19"}},
+  {"policy_id": "P-5", "traveler": "Sofia Rossi", "plan": "standard", "trip": {"destination": "Bali", "departs_on": "2026-09-03", "returns_on": "2026-09-14"}}
+]

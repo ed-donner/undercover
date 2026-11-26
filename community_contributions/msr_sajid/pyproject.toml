@@ -1,0 +1,34 @@
+[project]
+name = "claims-single-vs-agent"
+version = "0.1.0"
+description = "Compare one structured-output LLM call with a tool-using agent on a small insurance-claims task."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=1.50",
+    "pydantic>=2",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+compare-claims = "claims_compare.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/claims_compare"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "SIM", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
