@@ -1,9 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { Claim, Policy } from "../api";
 import { api } from "../api";
 import { claimType, decisionLabels, money } from "../format";
 import { StatusBadge } from "../StatusBadge";
-import { useData } from "../useData";
+import { REFRESH_MS, useData } from "../useData";
+import { SignOff } from "./SignOff";
+import { Steps } from "./Steps";
 
 function DecisionPanel({ claim }: Readonly<{ claim: Claim }>) {
   const { decision, payment } = claim;
@@ -109,8 +111,17 @@ function ClaimDetails({ claim }: Readonly<{ claim: Claim }>) {
 export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
   const loadClaim = useCallback(() => api.claim(claimId), [claimId]);
   const loadPolicy = useCallback(() => api.policy(claimId), [claimId]);
-  const { data: claim, error } = useData(loadClaim);
+  const loadSteps = useCallback(() => api.steps(claimId), [claimId]);
+  const [decided, setDecided] = useState(false);
+  const {
+    data: claim,
+    error,
+    reload,
+  } = useData(loadClaim, decided ? null : REFRESH_MS);
+  const { data: steps } = useData(loadSteps, REFRESH_MS);
   const { data: policy } = useData(loadPolicy);
+
+  if (!decided && claim?.status === "decided") setDecided(true);
 
   if (error)
     return (
@@ -136,10 +147,16 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
       </p>
       <div className="columns">
         <div>
+          {claim.status === "awaiting_signoff" && (
+            <SignOff claim={claim} onSignedOff={reload} />
+          )}
           <DecisionPanel claim={claim} />
           <ClaimDetails claim={claim} />
         </div>
-        <div>{policy && <PolicyPanel policy={policy} />}</div>
+        <div>
+          {policy && <PolicyPanel policy={policy} />}
+          {steps && <Steps steps={steps} />}
+        </div>
       </div>
     </>
   );

@@ -122,15 +122,15 @@ Success criteria:
 
 ## Phase 5: Live steps and sign-off in the dashboard
 
-**Builds:** the claim page polls `list_steps` and the claim every two seconds while the claim is `in_progress`, and shows each step as it lands. Claims in `awaiting_signoff` get a sign-off panel: choose a handler from `list_handlers` and sign off, which releases the payment. The queue page refreshes on the same interval. Playwright tests run against their own backend on port 8001, using `UNDERCOVER_DB` and Playwright's `webServer.env` so they work on Windows. They drive the backend API the way the agent would, so no model is called.
+**Builds:** the claim page polls the claim every two seconds until it is decided, and polls `list_steps` while the page is open so the agent's last step still shows, and shows each step as it lands. Claims in `awaiting_signoff` get a sign-off panel: choose a handler from `list_handlers` and sign off, which releases the payment. The queue page refreshes on the same interval. Playwright tests run against their own backend on port 8001, using `UNDERCOVER_DB` and Playwright's `webServer.env` so they work on Windows. They drive the backend API the way the agent would, so no model is called.
 
 Success criteria:
 
-- [ ] Vitest tests cover polling (it stops once the claim is decided) and the sign-off panel
-- [ ] Playwright: steps posted through the API appear on the claim page without a reload
-- [ ] Playwright: a claim approved at $1,500 shows "Waiting for sign-off", signing off as Dana Whitfield moves it to decided with the payment shown, and the queue badge updates
-- [ ] Playwright: a declined claim shows its reasons and policy section and has no sign-off panel
-- [ ] `npm run e2e` passes, and the end-to-end tests leave the dev database untouched
+- [x] Vitest tests cover polling (the claim stops polling once decided) and the sign-off panel
+- [x] Playwright: steps posted through the API appear on the claim page without a reload
+- [x] Playwright: a claim approved at $1,500 shows "Waiting for sign-off", signing off as Dana Whitfield moves it to decided with the payment shown, and the queue badge updates
+- [x] Playwright: a declined claim shows its reasons and policy section and has no sign-off panel
+- [x] `npm run e2e` passes, and the end-to-end tests leave the dev database untouched
 
 ## Phase 6: Working the queue
 

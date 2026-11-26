@@ -2,7 +2,7 @@ import type { ClaimSummary, Status } from "../api";
 import { api } from "../api";
 import { claimType, money, statusLabels } from "../format";
 import { StatusBadge } from "../StatusBadge";
-import { useData } from "../useData";
+import { REFRESH_MS, useData } from "../useData";
 
 const order: Status[] = [
   "waiting",
@@ -27,7 +27,7 @@ function Counts({ claims }: Readonly<{ claims: ClaimSummary[] }>) {
 }
 
 export function Queue() {
-  const { data: claims, error } = useData(api.claims);
+  const { data: claims, error } = useData(api.claims, REFRESH_MS);
   if (error) return <p role="alert">Could not load the queue: {error}</p>;
   if (!claims) return <p>Loading the queue</p>;
 
