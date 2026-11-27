@@ -131,10 +131,10 @@ Build the screens the team asked for, in the brand, against the API.
 
 Success criteria:
 
-- [ ] `npx vitest run --root dashboard --coverage` passes at or above 80%, with tests for the queue, the claim page, the instructions page, navigation and money formatting
-- [ ] `npm run check:ts` passes
-- [ ] Playwright tests: the queue shows 25 claims all `Waiting`; clicking CLM-1001 shows its story and its three items; the instructions page shows the instructions
-- [ ] Checked in the browser with the Playwright MCP server: the queue, a claim and the instructions match the brand in light and dark mode, and the layout holds at a narrow width
+- [x] `npx vitest run --root dashboard --coverage` passes at or above 80%, with tests for the queue, the claim page, the instructions page, navigation and money formatting
+- [x] `npm run check:ts` passes
+- [x] Playwright tests: the queue shows 25 claims all `Waiting`; clicking CLM-1001 shows its story and its three items; the instructions page shows the instructions
+- [x] Checked in the browser with the Playwright MCP server: the queue, a claim and the instructions match the brand in light and dark mode, and the layout holds at a narrow width
 
 ## Phase 5: Running the agent from the dashboard
 

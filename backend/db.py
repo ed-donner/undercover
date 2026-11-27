@@ -100,6 +100,7 @@ def seed(connection: sqlite3.Connection) -> None:
 
 def init() -> None:
     """Create the tables, and seed them if the database is new."""
+    path().parent.mkdir(parents=True, exist_ok=True)
     with closing(connect()) as connection:
         connection.executescript(SCHEMA)
         if not connection.execute("SELECT 1 FROM settings").fetchone():

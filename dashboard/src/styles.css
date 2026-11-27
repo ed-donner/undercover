@@ -1,0 +1,304 @@
+:root {
+  --sea-green: #06d6a0;
+  --marigold: #ffc145;
+  --coral: #f78c6b;
+  --cerulean: #118ab2;
+  --raspberry: #ef476f;
+  --midnight: #073b4c;
+  --sea-mist: #cdd8db;
+
+  --page: #f0f4f5;
+  --panel: #ffffff;
+  --ink: var(--midnight);
+  --muted: #4d6b75;
+  --heading: #037a5c;
+  --link: #0b6e8f;
+  --row: #e6eef0;
+
+  --sans: "Instrument Sans", system-ui, sans-serif;
+  --serif: "Instrument Serif", Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #04232e;
+    --panel: #000000;
+    --ink: var(--sea-mist);
+    --muted: #93aab1;
+    --heading: #5cf0c6;
+    --link: #6cc6e6;
+    --row: #0d2f3a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--link);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+h1 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0;
+  font-size: 1.75rem;
+}
+
+h2 {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 0.75rem;
+  color: var(--heading);
+  font-size: 1.15rem;
+}
+
+h3 {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.95rem;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.lead {
+  margin-top: 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 1rem 1.5rem;
+  background: var(--midnight);
+  color: var(--sea-mist);
+}
+
+.brand {
+  color: var(--sea-green);
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tagline {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.topbar nav a {
+  color: var(--sea-mist);
+  text-decoration: none;
+}
+
+.topbar nav a[aria-current="page"] {
+  color: var(--sea-green);
+  font-weight: 600;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 3rem;
+}
+
+.panel {
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.error {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+}
+
+.tile-count {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  color: var(--midnight);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-waiting {
+  background: var(--cerulean);
+  color: #ffffff;
+}
+
+.status-in_progress {
+  background: var(--marigold);
+}
+
+.status-awaiting_signoff {
+  background: var(--coral);
+}
+
+.status-decided,
+.decision-approve {
+  background: var(--sea-green);
+}
+
+.decision-decline {
+  background: var(--raspberry);
+  color: #ffffff;
+}
+
+.decision-refer {
+  background: var(--marigold);
+}
+
+.table-panel {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.6rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+tbody tr:nth-child(odd) {
+  background: var(--row);
+}
+
+tfoot th,
+tfoot td {
+  font-weight: 600;
+}
+
+.number {
+  text-align: right;
+}
+
+.summary {
+  min-width: 16rem;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.calculation,
+.instructions {
+  white-space: pre-wrap;
+}
+
+.document h3 {
+  margin-top: 0.75rem;
+}
+
+.document p {
+  margin-top: 0;
+}
+
+@media (max-width: 800px) {
+  main,
+  .topbar {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar nav {
+    margin-left: 0;
+  }
+}
+
+td.mono,
+td .mono,
+.nowrap {
+  white-space: nowrap;
+}
