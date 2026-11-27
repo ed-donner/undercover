@@ -84,16 +84,16 @@ Add the operations the agent and the handlers use to change a claim, with the $1
 
 Success criteria:
 
-- [ ] `uv run pytest backend` passes, with tests for each rule below
-- [ ] Approving CLM-1001 for $420.00, then `pay_claim` with 420.00, gives 200 and the claim is `decided` and paid
-- [ ] Approving a claim for $1,500.00 leaves it `awaiting_signoff`; `pay_claim` with 1500.00 gives 403 with a message that a handler must sign off, and no payment row exists
-- [ ] `sign_off` on that claim with HND-01 gives 200, the payment of $1,500.00 is recorded with the handler's id, and the claim is `decided`
-- [ ] `sign_off` with a handler who lacks `can_approve_over_limit` gives 403
-- [ ] `pay_claim` with the wrong amount, twice, or on a declined claim gives 409
-- [ ] Recording a decline with a payout above 0 gives 422
-- [ ] Steps posted with `record_step` come back in order from `list_steps`
-- [ ] `GET /api/instructions` returns the instructions text
-- [ ] `npm run check:python` passes with coverage at or above 80%
+- [x] `uv run pytest backend` passes, with tests for each rule below
+- [x] Approving CLM-1001 for $420.00, then `pay_claim` with 420.00, gives 200 and the claim is `decided` and paid
+- [x] Approving a claim for $1,500.00 leaves it `awaiting_signoff`; `pay_claim` with 1500.00 gives 403 with a message that a handler must sign off, and no payment row exists
+- [x] `sign_off` on that claim with HND-01 gives 200, the payment of $1,500.00 is recorded with the handler's id, and the claim is `decided`
+- [x] `sign_off` with a handler who lacks `can_approve_over_limit` gives 403
+- [x] `pay_claim` with the wrong amount, twice, or on a declined claim gives 409
+- [x] Recording a decline with a payout above 0 gives 422
+- [x] Steps posted with `record_step` come back in order from `list_steps`
+- [x] `GET /api/instructions` returns the instructions text
+- [x] `npm run check:python` passes with coverage at or above 80%
 
 ## Phase 3: The UnderCover Agent
 

@@ -117,5 +117,5 @@ def test_every_operation_is_documented_with_required_inputs(client):
             if "requestBody" in operation:
                 assert operation["requestBody"]["required"], f"{method} {path}"
     for name, model in schema["components"]["schemas"].items():
-        if name.endswith("Input"):
+        if name.endswith("Request"):
             assert set(model.get("required", [])) == set(model["properties"]), name

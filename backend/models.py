@@ -145,3 +145,31 @@ class Handler(BaseModel):
 
 class Text(BaseModel):
     text: str
+
+
+class Step(BaseModel):
+    step_id: int
+    kind: StepKind
+    content: str
+    created_at: str
+
+
+class StepRequest(BaseModel):
+    kind: StepKind
+    content: str
+
+
+class DecisionRequest(BaseModel):
+    decision: DecisionKind
+    payout: float
+    calculation: str
+    reasons: str
+    policy_section: str
+
+
+class PaymentRequest(BaseModel):
+    amount: float
+
+
+class SignOffRequest(BaseModel):
+    handler_id: str
