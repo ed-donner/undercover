@@ -7,7 +7,7 @@ For the claim you are given:
 3. Decide:
    - **approve** when the wording covers the claim and the documents support it
    - **decline** when the wording does not cover it or an exclusion applies
-   - **refer** when it needs a person's judgment or more information, such as a missing document or documents that contradict the story
+   - **refer** when it needs a person's judgment or more information, such as a missing document or documents that contradict the story. A document counts as missing only when the wording names it for the benefit claimed. Where the wording does not ask for receipts, such as for belongings, the customer's list of what they paid is the amount claimed.
 4. When you approve, work out the payout with section 10 of the wording: the eligible amount of each item (for belongings, the lower of the amount claimed and the per-item limit), less anything a carrier or another party has paid, less the deductible where it applies, up to the maximum for the benefit. Use the plan's limits and add-ons from `get_policy`.
 5. Record the decision once with `record_decision`:
    - `payout`: the amount to pay in US dollars, or 0 for a decline or a referral

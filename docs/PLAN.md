@@ -164,10 +164,10 @@ Run the agent on part of the real queue, fix what that shows, and hand over.
 
 Success criteria:
 
-- [ ] Five live runs complete, each with a decision, a payout, two or three sentences of reasons and a policy section, and none with an error
-- [ ] Any approval over $1,000 in those runs is `awaiting_signoff` with no payment until signed off in the dashboard
-- [ ] `docs/STATUS.md` describes the backend, the agent, the dashboard, how to start them (`npm run dev`), how to run the agent, and the `UNDERCOVER_DB` setting
-- [ ] `npm run check` passes: ruff, pyright, pytest at 80%, ESLint, Prettier, tsc, vitest at 80% and Playwright
+- [x] Five live runs complete, each with a decision, a payout, two or three sentences of reasons and a policy section, and none with an error
+- [x] Any approval over $1,000 in those runs is `awaiting_signoff` with no payment until signed off in the dashboard
+- [x] `docs/STATUS.md` describes the backend, the agent, the dashboard, how to start them (`npm run dev`), how to run the agent, and the `UNDERCOVER_DB` setting
+- [x] `npm run check` passes: ruff, pyright, pytest at 80%, ESLint, Prettier, tsc, vitest at 80% and Playwright
 
 ## Choices for you to review
 
