@@ -110,13 +110,13 @@ Why the agent pays through a tool rather than the backend paying on approval: th
 
 Success criteria:
 
-- [ ] `uv run pytest agent` passes, using the stub model (no test calls a real model), with tests that:
-  - [ ] a scripted run on CLM-1001 reads the claim, records an approval, pays it, and leaves the claim `decided` with steps recorded
-  - [ ] a scripted run that approves over $1,000 and then calls `pay_claim` gets the refusal back as a tool result, and the claim ends `awaiting_signoff` with no payment
-  - [ ] a run whose model raises an error leaves the claim `waiting` with an error step
-  - [ ] the agent's tools only call URLs under the backend (`/api/...`)
-- [ ] With the backend running, `uv run -m agent CLM-1001` on the real model (one live call, a few cents, or free with `MODEL_NAME=openrouter/free`) records a decision with a payout, reasons and a policy section, and the claim leaves `waiting`
-- [ ] `npm run check:python` passes with coverage at or above 80%
+- [x] `uv run pytest agent` passes, using the stub model (no test calls a real model), with tests that:
+  - [x] a scripted run on CLM-1001 reads the claim, records an approval, pays it, and leaves the claim `decided` with steps recorded
+  - [x] a scripted run that approves over $1,000 and then calls `pay_claim` gets the refusal back as a tool result, and the claim ends `awaiting_signoff` with no payment
+  - [x] a run whose model raises an error leaves the claim `waiting` with an error step
+  - [x] the agent's tools only call URLs under the backend (`/api/...`)
+- [x] With the backend running, `uv run -m agent CLM-1001` on the real model (one live call, a few cents, or free with `MODEL_NAME=openrouter/free`) records a decision with a payout, reasons and a policy section, and the claim leaves `waiting`
+- [x] `npm run check:python` passes with coverage at or above 80%
 
 ## Phase 4: The dashboard
 
