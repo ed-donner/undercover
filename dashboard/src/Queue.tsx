@@ -3,7 +3,7 @@ import { ErrorPanel, Loading, StatusBadge } from "./components";
 import { STATUSES, date, label, money } from "./format";
 
 export function Queue() {
-  const { data: claims, error } = useApi(endpoints.claims());
+  const { data: claims, error } = useApi(endpoints.claims(), 3000);
 
   if (error) return <ErrorPanel message={error} />;
   if (!claims) return <Loading what="the queue" />;

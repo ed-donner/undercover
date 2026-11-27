@@ -131,3 +131,23 @@ def test_model_name(monkeypatch):
     assert main.model().model_name == "openai/gpt-6-luna"
     monkeypatch.setenv("MODEL_NAME", "openrouter/free")
     assert main.model().model_name == "openrouter/free"
+
+
+def test_run_continues_a_claim_already_started(backend):
+    backend.post(f"/api/claims/{CLAIM}/start")
+    llm = stub(
+        AIMessage(content="", tool_calls=[call("record_decision", decision(420), "1")]),
+        AIMessage(content="Approved."),
+    )
+    assert main.run(CLAIM, "thread-1", llm) == "Approved."
+    assert backend.get(f"/api/claims/{CLAIM}").json()["status"] == "decided"
+
+
+def test_run_refuses_a_decided_claim(backend):
+    backend.post(f"/api/claims/{CLAIM}/start")
+    backend.post(
+        f"/api/claims/{CLAIM}/decision",
+        json=decision(420) | {"decision": "refer", "payout": 0},
+    )
+    with pytest.raises(ValueError, match="nothing to decide"):
+        main.run(CLAIM, "thread-1", stub())

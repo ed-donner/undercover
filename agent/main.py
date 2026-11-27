@@ -15,7 +15,8 @@ from pydantic import SecretStr
 
 load_dotenv(override=True)
 
-BACKEND_URL = "http://localhost:8000"
+# 127.0.0.1, not localhost: on Windows localhost tries IPv6 first and waits.
+BACKEND_URL = "http://127.0.0.1:8000"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "openai/gpt-6-luna"
 STEP_LIMIT = 1000
@@ -140,7 +141,11 @@ def record_step(claim_id: str, step: dict[str, str]) -> None:
 def run(claim_id: str, thread_id: str, llm: BaseChatModel | None = None) -> str:
     """Run the agent on one claim and return its final reply."""
     instructions = request("GET", "/api/instructions")["text"]
-    request("POST", f"/api/claims/{claim_id}/start")
+    status = request("GET", f"/api/claims/{claim_id}")["status"]
+    if status == "waiting":
+        request("POST", f"/api/claims/{claim_id}/start")
+    elif status != "in_progress":
+        raise ValueError(f"{claim_id} is {status}, so there is nothing to decide")
     reply = ""
     try:
         agent = create_agent(

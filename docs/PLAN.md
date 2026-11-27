@@ -148,12 +148,12 @@ Connect the two: a handler starts the agent, watches it work and signs off big p
 
 Success criteria:
 
-- [ ] Backend tests: `run_agent` starts the run (with `agent.run` stubbed) and returns at once; on a claim that isn't waiting it gives 409
-- [ ] Vitest tests for the Run button, the step list, the sign-off form and polling
-- [ ] Playwright: after steps are posted through the API, the claim page shows them in order while `In progress`
-- [ ] Playwright: a claim approved for $1,500.00 shows `Waiting for sign-off` in the queue; the claim page says the payment is blocked; choosing Dana Whitfield and clicking Sign off and pay shows it paid and `Decided`
-- [ ] Checked in the browser with the Playwright MCP server, with the real model: clicking Run agent on a waiting claim shows the steps arriving one by one, then the decision with its reasons and policy section
-- [ ] `npm run check` passes
+- [x] Backend tests: `run_agent` starts the run (with `agent.run` stubbed) and returns at once; on a claim that isn't waiting it gives 409
+- [x] Vitest tests for the Run button, the step list, the sign-off form and polling
+- [x] Playwright: after steps are posted through the API, the claim page shows them in order while `In progress`
+- [x] Playwright: a claim approved for $1,500.00 shows `Waiting for sign-off` in the queue; the claim page says the payment is blocked; choosing Dana Whitfield and clicking Sign off and pay shows it paid and `Decided`
+- [x] Checked in the browser with the Playwright MCP server, with the real model: clicking Run agent on a waiting claim shows the steps arriving one by one, then the decision with its reasons and policy section
+- [x] `npm run check` passes
 
 ## Phase 6: A pilot run and handover
 

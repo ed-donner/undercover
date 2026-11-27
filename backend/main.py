@@ -2,13 +2,15 @@
 
 import json
 import sqlite3
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 
+from agent.main import run as agent_run
 from backend import db
 from backend.models import (
     Claim,
@@ -176,6 +178,15 @@ def start_claim(claim_id: str, connection: Db) -> Claim:
     require_status(claim_id, load_claim(connection, claim_id)["status"], "waiting")
     set_status(connection, claim_id, "in_progress")
     return get_claim(claim_id, connection)
+
+
+@app.post("/api/claims/{claim_id}/run", operation_id="run_agent")
+def run_agent(claim_id: str, connection: Db, background: BackgroundTasks) -> Claim:
+    """Start the UnderCover Agent on a waiting claim, in the background."""
+    claim = start_claim(claim_id, connection)
+    connection.commit()
+    background.add_task(agent_run, claim_id, str(uuid.uuid4()))
+    return claim
 
 
 @app.post("/api/claims/{claim_id}/release", operation_id="release_claim")

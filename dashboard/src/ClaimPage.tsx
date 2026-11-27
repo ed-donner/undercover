@@ -1,3 +1,4 @@
+import { RunPanel, SignOffPanel, StepsPanel } from "./AgentPanels";
 import { type Claim, type Policy, endpoints, useApi } from "./api";
 import { DecisionBadge, ErrorPanel, Loading, StatusBadge } from "./components";
 import { date, label, money } from "./format";
@@ -132,7 +133,16 @@ function ClaimDetails({ claim }: Readonly<{ claim: Claim }>) {
 }
 
 export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
-  const { data: claim, error } = useApi(endpoints.claim(claimId));
+  const { data: claim, error, reload } = useApi(endpoints.claim(claimId), 2000);
+  const working = claim?.status === "in_progress";
+  const { data: steps, reload: reloadSteps } = useApi(
+    endpoints.steps(claimId),
+    working ? 1000 : 3000,
+  );
+  const refresh = () => {
+    reload();
+    reloadSteps();
+  };
   const { data: policy } = useApi(
     claim ? endpoints.policy(claim.policy_id) : null,
   );
@@ -152,7 +162,14 @@ export function ClaimPage({ claimId }: Readonly<{ claimId: string }>) {
       <p className="lead">{claim.summary}</p>
       <div className="columns">
         <div className="column">
+          {claim.status === "waiting" && (
+            <RunPanel claimId={claim.claim_id} onStarted={refresh} />
+          )}
+          {claim.status === "awaiting_signoff" && (
+            <SignOffPanel claim={claim} onSigned={refresh} />
+          )}
           <DecisionPanel claim={claim} />
+          <StepsPanel steps={steps ?? []} working={working} />
           <PolicyPanel policy={policy} />
         </div>
         <div className="column">

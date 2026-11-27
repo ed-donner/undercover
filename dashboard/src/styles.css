@@ -302,3 +302,87 @@ td .mono,
 .nowrap {
   white-space: nowrap;
 }
+
+.button {
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--sea-green);
+  color: var(--midnight);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sign-off-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+
+select {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--row);
+  color: var(--ink);
+  font: inherit;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 0 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.step-label {
+  font-weight: 600;
+}
+
+.step-time {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.step-content,
+.step details {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.step-content.mono,
+.step summary {
+  font-size: 0.85rem;
+}
+
+.step summary {
+  cursor: pointer;
+}
+
+.step-tool_call .step-label {
+  color: var(--link);
+}
+
+.step-message .step-label {
+  color: var(--heading);
+}
+
+.step-error .step-label {
+  color: var(--raspberry);
+}

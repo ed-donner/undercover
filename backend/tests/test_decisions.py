@@ -133,3 +133,17 @@ def test_steps_for_unknown_claim(client):
 def test_instructions(client):
     text = client.get("/api/instructions").json()["text"]
     assert text.startswith("You are the UnderCover Agent")
+
+
+def test_run_agent_starts_the_agent_in_the_background(client, monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "backend.main.agent_run",
+        lambda claim_id, thread_id: calls.append((claim_id, thread_id)),
+    )
+    response = client.post(f"/api/claims/{CLAIM}/run")
+    assert response.status_code == 200
+    assert response.json()["status"] == "in_progress"
+    assert calls[0][0] == CLAIM
+    assert calls[0][1]
+    assert client.post(f"/api/claims/{CLAIM}/run").status_code == 409
