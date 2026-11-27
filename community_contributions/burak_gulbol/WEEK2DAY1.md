@@ -30,9 +30,16 @@ I scored the same answers again without calling the model, and added the scores 
 | Full | 890 | 2,556 | 5,056 | 8,390 |
 | Concise | 1,065 | 2,398 | 4,398 | 7,065 |
 | Concise + examples | **385** | **1,052** | **2,052** | 3,385 |
-| DeepSeek V4.1 Flash, concise + rule | 1,884 | 1,884 | **1,884** | **1,884** |
+| DeepSeek V4.1 Flash, concise + rule | 1,884 | 1,884 | 1,884 | 1,884 |
+| DeepSeek V4.1 Flash, concise + examples | 1,060 | 1,060 | **1,060** | **1,060** |
 
-Between full and concise, the answer flips: full is cheaper at 500, concise from 1,500 up. Once the examples are back, the wording choice doesn't depend on the figure any more. The model choice does. DeepSeek made no wrongful declines, so above about 2,750 dollars it is the cheaper choice, even though its LLM cost is 7 times higher (0.058 against 0.008 dollars a run) and it is 3 times slower. The LLM cost is cents. The mistakes are thousands of dollars.
+Between full and concise, the answer flips: full is cheaper at 500, concise from 1,500 up. Once the examples are back, the wording choice doesn't depend on the figure any more. The model choice does.
+
+My first DeepSeek run used the concise + rule wording, without the examples. So it changed the model and the wording at once, and put the break-even at about 2,750 dollars. A comment on LinkedIn made me look again, and I reran DeepSeek on the same wording as Luna. The examples fixed two claims for DeepSeek (CLM-1216 and CLM-1202, both a camera with its lens). Its accuracy went from 90.7% to 97.3%, and its cost of mistakes from 1,884 to 1,060 dollars a run.
+
+The break-even is now about 1,510 dollars. At the lab's 1,500 the two models are tied, 1,052 against 1,060. DeepSeek made no wrongful declines, but its LLM cost is 7 times higher (0.060 against 0.0085 dollars a run) and it is 3 times slower. The LLM cost is cents. The mistakes are thousands of dollars.
+
+Both totals rest on one claim each. 95% of Luna's cost is CLM-1209, wrongly declined in 2 of 3 runs. 90% of DeepSeek's is CLM-1213, wrongly paid 2,868 dollars in one run. Without those two, Luna is about 52 dollars a run and DeepSeek about 104. With 25 claims, the model choice comes down to how often cases like these two turn up, and I'd want more claims like them before trusting it.
 
 Most of the wrongful-decline difference is CLM-1218. With the full wording, Luna (reasoning off) declined it in all 3 runs, and one rationale changes its mind halfway: "Decline under section 9 ... Actually the policy was purchased before the storm was named, so that exclusion does not apply". The decision still says decline.
 
@@ -41,3 +48,5 @@ Most of the wrongful-decline difference is CLM-1218. With the full wording, Luna
 - The eval found a different problem from the one I was told to expect.
 - Shortening a document can drop an example that makes a rule clear, not just the rule itself.
 - The cost of a wrongful decline is a business number, and it can decide the model.
+- Change one thing at a time. My first model comparison changed the wording too, and that moved the break-even from about 1,510 to 2,750 dollars.
+- Before trusting a total, look at which claims make it up.
