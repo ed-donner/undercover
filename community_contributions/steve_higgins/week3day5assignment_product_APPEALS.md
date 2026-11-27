@@ -2,7 +2,7 @@
 
 From the head of claims operations, with our complaints team and our compliance team.
 
-This isn't one of the course's briefs. It's the student's own extension of the product, written as UnderCover's brief so the plan can follow it. Draft for the student's review.
+This isn't one of the course's briefs. It's the student's own extension of the product, written as UnderCover's brief so the plan can follow it.
 
 ## Where we're heading
 
