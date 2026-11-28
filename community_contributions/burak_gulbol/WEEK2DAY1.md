@@ -41,6 +41,8 @@ The break-even is now about 1,510 dollars. At the lab's 1,500 the two models are
 
 Both totals rest on one claim each. 95% of Luna's cost is CLM-1209, wrongly declined in 2 of 3 runs. 90% of DeepSeek's is CLM-1213, wrongly paid 2,868 dollars in one run. Without those two, Luna is about 52 dollars a run and DeepSeek about 104. With 25 claims, the model choice comes down to how often cases like these two turn up, and I'd want more claims like them before trusting it.
 
+Did the three runs agree? Mostly. In each experiment 17 to 23 of the 25 claims were right in all three runs, and 2 to 7 flipped. CLM-1209 is one that flips: in all four Luna wordings it was approved in one run and declined in another, so a coin toss decides most of Luna's cost. The systematic mistakes came from the wording instead: CLM-1216 was wrong 3 of 3 with the concise wording and CLM-1218 3 of 3 with the full one. The better wording also flipped less: 4 claims on Luna, 2 on DeepSeek.
+
 Most of the wrongful-decline difference is CLM-1218. With the full wording, Luna (reasoning off) declined it in all 3 runs, and one rationale changes its mind halfway: "Decline under section 9 ... Actually the policy was purchased before the storm was named, so that exclusion does not apply". The decision still says decline.
 
 ## What I take away
@@ -49,4 +51,4 @@ Most of the wrongful-decline difference is CLM-1218. With the full wording, Luna
 - Shortening a document can drop an example that makes a rule clear, not just the rule itself.
 - The cost of a wrongful decline is a business number, and it can decide the model.
 - Change one thing at a time. My first model comparison changed the wording too, and that moved the break-even from about 1,510 to 2,750 dollars.
-- Before trusting a total, look at which claims make it up.
+- Before trusting a total, look at which claims make it up, and whether they are wrong every run or only sometimes.
